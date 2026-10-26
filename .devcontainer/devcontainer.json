@@ -5,6 +5,9 @@
   "workspaceFolder": "/workspace",
   "remoteUser": "vscode",
 
+  // Build the app image on the host before Compose starts (see docker-compose.yml)
+  "initializeCommand": "docker build -t hotel-kong-artur-dev:latest .devcontainer",
+
   "customizations": {
     "vscode": {
       "extensions": [

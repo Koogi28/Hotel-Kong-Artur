@@ -1,9 +1,10 @@
 services:
   # Main Development Environment (Spec Kit + VS Code)
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # Built by "initializeCommand" in devcontainer.json (plain docker build).
+    # No "build:" here on purpose: Compose 5.x builds via bake, which rejects the
+    # temp Dockerfile the Dev Containers extension generates outside the context.
+    image: hotel-kong-artur-dev:latest
     volumes:
       - ..:/workspace:cached
     command: /bin/sh -c "while sleep 1000; do :; done"
@@ -17,8 +18,7 @@ services:
   # MySQL Database Container - husk at fjerne for at gøre private - Kevin 
   db:
     image: mysql:8.0
-    container_name: mysql_project_db
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: project_db
