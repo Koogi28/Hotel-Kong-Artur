@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Main Development Environment (Spec Kit + VS Code)
   app:
@@ -28,7 +26,7 @@ services:
       MYSQL_PASSWORD: team_password
     ports:
       # Expose to localhost so Tableau Desktop can connect from your host machine - Template
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       # Automatically run startup scripts when the database initializes
