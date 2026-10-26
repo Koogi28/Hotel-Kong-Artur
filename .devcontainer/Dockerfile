@@ -17,3 +17,11 @@ ENV UV_TOOL_DIR="/usr/local/share/uv-tools"
 
 RUN uv tool install specify-cli --from git+https://github.com/github/spec-kit.git \
     && chmod -R a+rx /usr/local/share/uv-tools
+
+# Install Claude Code CLI for the non-root user (vscode)
+ENV CLAUDE_CONFIG_DIR="/home/vscode/.claude"
+ENV PATH="/home/vscode/.local/bin:${PATH}"
+USER vscode
+RUN mkdir -p /home/vscode/.claude \
+    && curl -fsSL https://claude.ai/install.sh | bash
+USER root

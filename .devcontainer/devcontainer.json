@@ -24,5 +24,5 @@
   },
 
   // Confirm installation of tools after build
-  "postCreateCommand": "specify --version && echo 'Dev Environment Ready!'"
+  "postCreateCommand": "specify --version && claude --version && echo 'Dev Environment Ready!'"
 }

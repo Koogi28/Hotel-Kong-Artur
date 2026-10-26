@@ -7,6 +7,8 @@ services:
     image: hotel-kong-artur-dev:latest
     volumes:
       - ..:/workspace:cached
+      # Keep Claude Code login/settings across container rebuilds
+      - claude_config:/home/vscode/.claude
     command: /bin/sh -c "while sleep 1000; do :; done"
     environment:
       - MYSQL_HOST=db
@@ -34,3 +36,4 @@ services:
 
 volumes:
   mysql_data:
+  claude_config:
