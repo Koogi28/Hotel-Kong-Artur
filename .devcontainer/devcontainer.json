@@ -1,0 +1,25 @@
+{
+  "name": "Spec-Kit & MySQL Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "vscode",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "cweijan.vscode-database-client2",  // Visual MySQL Client inside VS Code
+        "ms-python.python",                 // Python Intellisense & Debugging
+        "qwtel.sqlite-viewer",              // Database viewer utilities
+        "RedHat.vscode-xml",
+        "ms-azuretools.vscode-docker"       // Docker management inside VS Code
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  },
+
+  // Confirm installation of tools after build
+  "postCreateCommand": "specify --version && echo 'Dev Environment Ready!'"
+}

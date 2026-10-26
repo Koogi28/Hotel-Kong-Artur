@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Main Development Environment (Spec Kit + VS Code)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_USER=team_user
+      - MYSQL_PASSWORD=team_password
+      - MYSQL_DATABASE=project_db
+
+  # MySQL Database Container - husk at fjerne for at gøre private - Kevin 
+  db:
+    image: mysql:8.0
+    container_name: mysql_project_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: project_db
+      MYSQL_USER: team_user
+      MYSQL_PASSWORD: team_password
+    ports:
+      # Expose to localhost so Tableau Desktop can connect from your host machine - Template
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Automatically run startup scripts when the database initializes
+      - ../db-init:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:

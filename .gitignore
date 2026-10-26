@@ -1,0 +1,25 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+/mysql_data/
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
