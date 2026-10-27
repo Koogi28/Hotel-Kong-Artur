@@ -1,0 +1,40 @@
+services:
+  # Main Development Environment (Spec Kit + Claude Code)
+  app:
+    build: .
+    image: hotel-kong-artur-dev:latest
+    volumes:
+      - .:/workspace
+      # Keep Claude Code login/settings across container rebuilds
+      - claude_config:/home/dev/.claude
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_USER=team_user
+      - MYSQL_PASSWORD=team_password
+      - MYSQL_DATABASE=project_db
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+
+  # MySQL Database Container - husk at fjerne for at gøre private - Kevin
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: project_db
+      MYSQL_USER: team_user
+      MYSQL_PASSWORD: team_password
+    ports:
+      # Expose to localhost so Tableau Desktop can connect from your host machine - Template
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Automatically run startup scripts when the database initializes
+      - ./db-init:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:
+  claude_config:
