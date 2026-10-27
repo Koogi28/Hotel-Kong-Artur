@@ -24,6 +24,8 @@ opdigtes."
   mellemsæson = midterprisen, højsæson = højeste pris.
 - Q: Tæller historiske data uden datoer med i årets tal? → A: Ja. Alle registrerede data ligger
   inden for det samme år.
+- Q: Skal en ny booking have en afrejsedato? → A: Nej. En ny booking har ankomstdato og antal
+  nætter; afrejsedato fjernes (konstitution v3.0.0, princip VI).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -31,30 +33,31 @@ opdigtes."
 
 Som receptionist vil jeg kunne oprette, rette og slette bookinger for gæster, så hotellets
 belægning altid er opdateret. Receptionisten indtaster gæstedetaljer (fornavn, efternavn og land),
-værelsestype samt ankomst- og afrejsedato. Systemet udregner antal nætter, sæson og pris. Alle
+værelsestype, ankomstdato og antal nætter. Systemet udregner sæson og pris. Alle
 handlinger kan udføres fra browseren og er dokumenteret i Swagger UI.
 
 **Why this priority**: Bookinger er grundlaget for både belægningsgrad og omsætning. Uden dem har
 nøgletallene ingen nye data at vise.
 
 **Independent Test**: Kan testes alene ved at oprette, fremsøge, rette og afbestille en booking fra
-browseren, ved at forsøge at gemme en booking med ugyldige datoer eller manglende felter og ved at
+browseren, ved at forsøge at gemme en booking med ugyldig dato, ugyldigt antal nætter eller
+manglende felter og ved at
 afprøve de samme handlinger i Swagger UI.
 
 **Acceptance Scenarios**:
 
 1. **Given** der er ledige værelser i hele perioden, **When** receptionisten indtaster fornavn,
-   efternavn, land, værelsestype, ankomstdato og afrejsedato og gemmer, **Then** oprettes bookingen
-   med udregnet antal nætter, sæson og samlet pris, og den kan ses i bookinglisten.
+   efternavn, land, værelsestype, ankomstdato og antal nætter og gemmer, **Then** oprettes bookingen
+   med udregnet sæson og samlet pris, og den kan ses i bookinglisten.
 2. **Given** en eksisterende booking, **When** receptionisten søger på gæstens navn, **Then** vises
    bookingen i søgeresultatet (både nye og historiske bookinger).
-3. **Given** en eksisterende booking med datoer, **When** receptionisten ændrer gæstedetaljer,
-   værelsestype eller datoer og gemmer, **Then** gemmes ændringen, og nætter, sæson og pris udregnes
-   igen.
+3. **Given** en eksisterende ny booking, **When** receptionisten ændrer gæstedetaljer,
+   værelsestype, ankomstdato eller antal nætter og gemmer, **Then** gemmes ændringen, og sæson og
+   pris udregnes igen.
 4. **Given** en eksisterende booking, **When** receptionisten afbestiller den, **Then** slettes den
    fra bookinglisten og tæller ikke længere med i belægning eller omsætning.
-5. **Given** afrejsedatoen ligger samme dag som eller før ankomstdatoen, eller en dato er ugyldig
-   (fx 31. februar eller forkert format), **When** receptionisten forsøger at gemme, **Then** afvises
+5. **Given** ankomstdatoen er ugyldig (fx 31. februar eller forkert format), eller antal nætter er
+   mindre end 1 eller ikke et helt tal, **When** receptionisten forsøger at gemme, **Then** afvises
    bookingen med en forståelig fejlbesked, der nævner det ugyldige felt.
 6. **Given** et eller flere obligatoriske felter mangler, **When** receptionisten forsøger at gemme,
    **Then** afvises bookingen med en forståelig fejlbesked, der nævner de manglende felter.
@@ -83,7 +86,7 @@ udregnet manuelt fra datafilerne og derefter oprette én ny booking og opdatere 
 2. **Given** startdataene er indlæst, **When** administratoren åbner overblikket, **Then** vises
    indtjeningen fordelt på gæsteland, på værelsestype og på sæson, og hver fordeling summerer til
    den samlede indtjening.
-3. **Given** der findes bookinger med datoer, **When** administratoren vælger en nat, **Then** vises
+3. **Given** der findes bookinger med ankomstdato, **When** administratoren vælger en nat, **Then** vises
    belægningsgraden som antal bookede værelser den nat divideret med 214, angivet i procent.
 4. **Given** der findes barsalg, **When** administratoren åbner overblikket, **Then** vises den
    kaffe og den cocktail, der er solgt flest enheder af, med antal enheder.
@@ -154,13 +157,14 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 **Bookinger (US1)**
 
 - **FR-004**: Receptionisten SKAL kunne oprette en booking med fornavn, efternavn, land,
-  værelsestype, ankomstdato og afrejsedato; alle felter er påkrævede.
-- **FR-005**: Systemet SKAL afvise en booking med ugyldige datoer (ikke-eksisterende dato, forkert
-  format, eller afrejsedato der ikke ligger efter ankomstdatoen) og en booking, hvor et
-  obligatorisk felt mangler; fejlbeskeden SKAL være forståelig og nævne de berørte felter.
-- **FR-006**: Systemet SKAL udregne antal nætter som antallet af dage mellem ankomst- og afrejsedato.
+  værelsestype, ankomstdato og antal nætter; alle felter er påkrævede.
+- **FR-005**: Systemet SKAL afvise en booking med ugyldig ankomstdato (ikke-eksisterende dato eller
+  forkert format), et antal nætter der ikke er et helt tal på mindst 1, eller hvor et obligatorisk
+  felt mangler; fejlbeskeden SKAL være forståelig og nævne de berørte felter.
+- **FR-006**: Bookingens periode SKAL være nætterne fra ankomstdatoen og antal nætter frem
+  (fx ankomst 6. december og 3 nætter = nætterne 6., 7. og 8. december).
 - **FR-007**: Systemet SKAL fastsætte bookingens sæson alene ud fra ankomstdatoens måned;
-  afrejsedatoen indgår ikke:
+  alle nætter i bookingen får ankomstmånedens sæson:
 
   | Sæson | Måneder |
   |-------|---------|
@@ -184,8 +188,8 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 
 - **FR-009**: Bookingens samlede pris SKAL være prisen pr. nat × antal nætter.
 - **FR-010**: Receptionisten SKAL kunne fremsøge bookinger på gæstens for- eller efternavn.
-- **FR-011**: Receptionisten SKAL kunne rette gæstedetaljer, værelsestype og datoer på en booking med
-  datoer; antal nætter, sæson og pris udregnes igen ved hver ændring.
+- **FR-011**: Receptionisten SKAL kunne rette gæstedetaljer, værelsestype, ankomstdato og antal
+  nætter på en ny booking; sæson og pris udregnes igen ved hver ændring.
 - **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning,
   overbookingstjek eller omsætning.
 - **FR-013**: Systemet SKAL afvise oprettelse eller ændring af en booking, hvis der på mindst én nat
@@ -202,7 +206,7 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
   både historiske og nye, ligger inden for det samme år og tæller med.
 - **FR-016**: Systemet SKAL vise indtjeningen fordelt på gæsteland, på værelsestype og på sæson.
 - **FR-017**: Systemet SKAL vise belægningsgraden for en valgt nat som antal bookede værelser den nat
-  divideret med 214, kun ud fra bookinger med datoer.
+  divideret med 214, kun ud fra bookinger med ankomstdato.
 - **FR-018**: Systemet SKAL vise gruppens nøgletal: den kaffe og den cocktail, der er solgt flest
   enheder af, med antal enheder.
 - **FR-019**: Alle nøgletal SKAL udregnes ud fra de aktuelle data, hver gang de vises, så nye
@@ -223,7 +227,7 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 ### Key Entities *(include if feature involves data)*
 
 - **Booking**: Én gæsts ophold på ét værelse. Har fornavn, efternavn, land, værelsestype, antal
-  nætter, sæson og samlet pris. Nye bookinger har desuden ankomst- og afrejsedato; historiske
+  nætter, sæson og samlet pris. Nye bookinger har desuden en ankomstdato; historiske
   bookinger fra datafilen har ingen datoer og er markeret som historiske.
 - **Værelsestype**: En af de otte typer i datafilen: Standard Single, Standard Double, Superior
   Double, Grand Lit, Junior Suite, Spa Executive, Suite og LOFT Suite. Har et prisinterval pr. nat
