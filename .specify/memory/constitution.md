@@ -55,23 +55,31 @@ HTTP og uden database.
 
 ### VI. Bookinger har rigtige datoer
 
-- En booking SKAL have en ankomstdato og en afrejsedato.
+- En ny booking SKAL have en ankomstdato og en afrejsedato.
 - Afrejsedato SKAL ligge efter ankomstdato; ellers afvises bookingen (400).
-- Antal nætter, sæson og pris SKAL udregnes ud fra datoerne og værelsestypen og MÅ IKKE
-  indtastes eller gemmes separat, så tallene altid passer sammen.
+- For nye bookinger SKAL antal nætter, sæson og pris udregnes ud fra datoerne og
+  værelsestypen og MÅ IKKE indtastes separat, så tallene altid passer sammen.
+- De historiske bookinger fra datafilen har ingen datoer. De SKAL gemmes med sæson, antal
+  nætter og pris, præcis som de står i filen.
+- Data fra datafilen MÅ IKKE ændres eller opdigtes (fx må der ikke findes på datoer til de
+  historiske bookinger).
+
+Begrundelse: nye bookinger skal kunne tjekkes for overbooking, mens de historiske data skal
+forblive en tro kopi af kilden, så nøgletallene bygger på rigtige tal.
 
 ### VII. Ingen overbooking
 
-- Hotellet har et fast antal værelser af hver værelsestype (214 i alt).
-- En booking MÅ KUN oprettes eller ændres, hvis der er et ledigt værelse af den valgte type
-  på hver nat i hele perioden.
-- Ellers SKAL den afvises (409) med en tydelig besked.
+- Hotellet har 214 værelser i alt.
+- En booking MÅ KUN oprettes eller ændres, hvis der er under 214 bookede værelser på hver
+  nat i hele perioden.
+- Der er ingen fast fordeling af værelser pr. værelsestype; grænsen gælder hotellet samlet.
+- Ellers SKAL bookingen afvises (409) med en tydelig besked.
 - Reglen SKAL ligge i forretningslaget (se II).
 
 ### VIII. Barsalg registreres ét ad gangen
 
-- Hvert salg i baren SKAL gemmes som én registrering med drikkevare, antal, medarbejder og
-  tidspunkt.
+- Der er kun én medarbejder i baren, Helene Christine.
+- Hvert salg i baren SKAL gemmes som én registrering med drikkevare, antal og tidspunkt.
 - Menuen består af de 20 cocktails og 10 kaffetyper fra datafilen.
 - Omsætning og fordelinger SKAL beregnes ud fra registreringerne (se V).
 
@@ -135,4 +143,4 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ved hver kodegennemgang SKAL reviewer tjekke ændringen mod Kvalitetsporte.
 - Afvigelser fra et princip SKAL begrundes skriftligt i planen.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 2.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
