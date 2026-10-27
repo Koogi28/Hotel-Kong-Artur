@@ -1,0 +1,6 @@
+# Lets you run "docker compose up --build" from the project root.
+# The real setup lives in docker/docker-compose.yml.
+name: hotel-kong-artur
+
+include:
+  - docker/docker-compose.yml

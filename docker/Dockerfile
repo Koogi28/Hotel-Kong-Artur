@@ -37,5 +37,8 @@ RUN mkdir -p /home/${USERNAME}/.claude \
 
 WORKDIR /workspace
 
+# The bind-mounted repo is owned by the host user, so tell git to trust it (needed by Spec Kit scripts)
+RUN git config --global --add safe.directory /workspace
+
 # Keep the container running so you can "docker compose exec app bash" into it
 CMD ["sleep", "infinity"]
