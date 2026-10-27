@@ -53,12 +53,14 @@ HTTP og uden database.
 - "Live" betyder hos os: en ny booking eller et nyt barsalg kan ses i nøgletal og
   dashboard, når siden opdateres.
 
-### VI. Bookinger har rigtige datoer
+### VI. Bookinger har ankomstdato og antal nætter
 
-- En ny booking SKAL have en ankomstdato og en afrejsedato.
-- Afrejsedato SKAL ligge efter ankomstdato; ellers afvises bookingen (400).
-- For nye bookinger SKAL antal nætter, sæson og pris udregnes ud fra datoerne og
-  værelsestypen og MÅ IKKE indtastes separat, så tallene altid passer sammen.
+- En ny booking SKAL have en ankomstdato og et antal nætter på mindst 1; ellers afvises
+  bookingen (400). Afrejsedato indgår ikke.
+- Bookingens periode er nætterne fra ankomstdatoen og antal nætter frem; perioden bruges til
+  overbookingstjek og belægningsgrad.
+- For nye bookinger SKAL sæsonen udregnes ud fra ankomstdatoens måned, og prisen ud fra sæson,
+  værelsestype og antal nætter. Sæson og pris MÅ IKKE indtastes, så tallene altid passer sammen.
 - De historiske bookinger fra datafilen har ingen datoer. De SKAL gemmes med sæson, antal
   nætter og pris, præcis som de står i filen.
 - Data fra datafilen MÅ IKKE ændres eller opdigtes (fx må der ikke findes på datoer til de
@@ -143,4 +145,4 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ved hver kodegennemgang SKAL reviewer tjekke ændringen mod Kvalitetsporte.
 - Afvigelser fra et princip SKAL begrundes skriftligt i planen.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 3.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
