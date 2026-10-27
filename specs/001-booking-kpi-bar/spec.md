@@ -1,0 +1,260 @@
+# Feature Specification: Bookinger, nøgletal og barsalg
+
+**Feature Branch**: `001-booking-kpi-bar`
+
+**Created**: 2026-10-27
+
+**Status**: Draft
+
+**Input**: User description: "Hotel Kong Arthur ønsker et system til bookinger, nøgletal og barsalg.
+Receptionisten opretter, retter og afbestiller bookinger uden overbooking (214 værelser),
+hoteladministratoren ser belægningsgrad, omsætning og gruppens nøgletal (mest solgte drink i
+antal enheder for kaffe og cocktails), og bartender Helene Christine registrerer barsalg.
+Data fra https://github.com/ITAKEA/hoteldata bruges som startdata og må ikke ændres eller
+opdigtes."
+
+## Clarifications
+
+### Session 2026-10-27
+
+- Q: Hvilke datoer hører til hver sæson? → A: Sæsonen afgøres alene ud fra ankomstdatoens måned
+  (afrejsedatoen indgår ikke). Lavsæson: januar–februar og november. Mellemsæson: marts–maj og
+  september–oktober. Højsæson: juni–august og december.
+- Q: Hvilken pris pr. nat skal en ny booking have? → A: Lavsæson = laveste pris i intervallet,
+  mellemsæson = midterprisen, højsæson = højeste pris.
+- Q: Tæller historiske data uden datoer med i årets tal? → A: Ja. Alle registrerede data ligger
+  inden for det samme år.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Oprettelse og styring af bookinger (Priority: P1)
+
+Som receptionist vil jeg kunne oprette, rette og afbestille bookinger for gæster, så hotellets
+belægning altid er opdateret. Receptionisten indtaster gæstens navn, land, værelsestype samt
+ankomst- og afrejsedato. Systemet udregner antal nætter, sæson og pris og afviser bookingen, hvis
+hotellet er fuldt på en af nætterne.
+
+**Why this priority**: Bookinger er grundlaget for både belægningsgrad og omsætning. Uden dem har
+nøgletallene ingen nye data at vise.
+
+**Independent Test**: Kan testes alene ved at oprette, fremsøge, rette og afbestille en booking og
+ved at forsøge at booke en nat, hvor alle 214 værelser er optaget.
+
+**Acceptance Scenarios**:
+
+1. **Given** der er ledige værelser i hele perioden, **When** receptionisten indtaster fornavn,
+   efternavn, land, værelsestype, ankomstdato og afrejsedato og gemmer, **Then** oprettes bookingen
+   med udregnet antal nætter, sæson og samlet pris, og den kan ses i bookinglisten.
+2. **Given** en eksisterende booking, **When** receptionisten søger på gæstens navn, **Then** vises
+   bookingen i søgeresultatet (både nye og historiske bookinger).
+3. **Given** en eksisterende booking med datoer, **When** receptionisten ændrer værelsestype eller
+   datoer, og der er plads alle nætter, **Then** gemmes ændringen, og nætter, sæson og pris udregnes
+   igen.
+4. **Given** en eksisterende booking, **When** receptionisten afbestiller den, **Then** fjernes den
+   fra bookinglisten og tæller ikke længere med i belægning eller omsætning.
+5. **Given** at alle 214 værelser er optaget på mindst én nat i den ønskede periode, **When**
+   receptionisten forsøger at oprette eller ændre en booking til den periode, **Then** afvises
+   handlingen med en besked, der fortæller, at hotellet er fuldt, og hvilken nat det gælder.
+6. **Given** afrejsedatoen ligger samme dag som eller før ankomstdatoen, **When** receptionisten
+   forsøger at gemme, **Then** afvises bookingen med en forståelig fejlbesked.
+
+---
+
+### User Story 2 - Live overblik over belægning og omsætning (Priority: P2)
+
+Som hoteladministrator vil jeg se belægningsgrad og omsætning, så jeg kan optimere prissætning og
+markedsføring. Overblikket viser årets samlede indtjening, indtjening fordelt på gæsteland,
+værelsestype og sæson, belægningsgraden og gruppens eget nøgletal: den mest solgte drink målt i
+antal solgte enheder for henholdsvis kaffe og cocktails.
+
+**Why this priority**: Overblikket er hotellets beslutningsgrundlag, men det bygger på data fra
+bookinger (US1) og barsalg (US3).
+
+**Independent Test**: Kan testes alene på startdataene ved at sammenligne de viste tal med tal
+udregnet manuelt fra datafilerne og derefter oprette én ny booking og opdatere siden.
+
+**Acceptance Scenarios**:
+
+1. **Given** startdataene er indlæst, **When** administratoren åbner overblikket, **Then** vises
+   årets samlede indtjening.
+2. **Given** startdataene er indlæst, **When** administratoren åbner overblikket, **Then** vises
+   indtjeningen fordelt på gæsteland, på værelsestype og på sæson, og hver fordeling summerer til
+   den samlede indtjening.
+3. **Given** der findes bookinger med datoer, **When** administratoren vælger en nat, **Then** vises
+   belægningsgraden som antal bookede værelser den nat divideret med 214, angivet i procent.
+4. **Given** der findes barsalg, **When** administratoren åbner overblikket, **Then** vises den
+   kaffe og den cocktail, der er solgt flest enheder af, med antal enheder.
+5. **Given** overblikket er åbent, **When** receptionisten opretter en ny booking, og
+   administratoren opdaterer siden, **Then** indgår den nye booking i alle relevante nøgletal.
+6. **Given** nøgletallene er tilgængelige, **When** de hentes ind i et Tableau-dashboard, **Then**
+   viser dashboardet de samme tal som overblikket.
+
+---
+
+### User Story 3 - Registrering af barsalg (Priority: P3)
+
+Som bartender (Helene Christine) vil jeg nemt kunne registrere salg af kaffe og cocktails i
+lobbybaren, så omsætningen pr. drikkevare kan følges løbende.
+
+**Why this priority**: Barsalget er en selvstændig, mindre del af hotellets omsætning og afhænger
+ikke af bookingerne.
+
+**Independent Test**: Kan testes alene ved at registrere et salg og se, at Helenes samlede salg,
+omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig tilsvarende.
+
+**Acceptance Scenarios**:
+
+1. **Given** menuen med 20 cocktails og 10 kaffetyper, **When** Helene vælger en drikkevare, angiver
+   antal og registrerer salget, **Then** gemmes salget med drikkevare, antal og tidspunkt.
+2. **Given** der er registreret salg, **When** Helene åbner barens oversigt, **Then** vises, hvor
+   meget hun har solgt i alt i år (antal enheder og omsætning i DKK).
+3. **Given** der er registreret salg, **When** barens oversigt vises, **Then** vises den samlede
+   omsætning pr. drikkevare for alle 30 drikkevarer.
+4. **Given** der er registreret salg, **When** barens oversigt vises, **Then** vises den procentvise
+   fordeling af omsætningen mellem kaffe og cocktails, og de to procenter summerer til 100.
+5. **Given** barens nøgletal er tilgængelige, **When** de hentes ind i et Tableau-dashboard,
+   **Then** viser dashboardet de samme tal som barens oversigt.
+6. **Given** Helene angiver antal 0 eller et negativt antal, **When** hun forsøger at registrere,
+   **Then** afvises salget med en forståelig fejlbesked.
+
+---
+
+### Edge Cases
+
+- En booking, hvis sidste nat bringer antallet af bookede værelser op på præcis 214, MÅ gennemføres;
+  en booking, der ville kræve et 215. værelse på en nat, afvises.
+- Når en booking ændres, tælles bookingens egne nuværende nætter ikke med som optaget, så en
+  booking kan flyttes eller forlænges ind i sin egen periode.
+- En booking, der strækker sig over et månedsskifte til en anden sæson, får hele opholdet prissat
+  efter ankomstmånedens sæson (fx ankomst 30. november → lavsæson for alle nætter).
+- Historiske bookinger uden datoer indgår ikke i belægningsgraden og påvirker ikke
+  overbookingstjekket.
+- Historiske bookinger kan fremsøges og vises, men deres sæson, antal nætter og pris kan ikke
+  ændres, da data fra datafilen ikke må ændres.
+- Hvis der ikke er registreret barsalg eller bookinger i den valgte periode, vises 0 og ikke en fejl.
+- Hvis to drikkevarer har lige mange solgte enheder, vises begge som mest solgt.
+- Ukendt værelsestype eller drikkevare afvises med en forståelig fejlbesked.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Startdata**
+
+- **FR-001**: Systemet SKAL ved første opstart indlæse de 1000 historiske bookinger og de 30
+  drikkevarer fra datafilerne i https://github.com/ITAKEA/hoteldata.
+- **FR-002**: Historiske bookinger SKAL gemmes med fornavn, efternavn, land, værelsestype, antal
+  nætter, sæson og pris præcis som i datafilen og uden datoer.
+- **FR-003**: Systemet MÅ IKKE ændre, supplere eller opdigte data fra datafilerne (fx må der ikke
+  tildeles datoer til historiske bookinger eller tidspunkter til historiske barsalg).
+
+**Bookinger (US1)**
+
+- **FR-004**: Receptionisten SKAL kunne oprette en booking med fornavn, efternavn, land,
+  værelsestype, ankomstdato og afrejsedato; alle felter er påkrævede.
+- **FR-005**: Systemet SKAL afvise en booking, hvor afrejsedatoen ikke ligger efter ankomstdatoen.
+- **FR-006**: Systemet SKAL udregne antal nætter som antallet af dage mellem ankomst- og afrejsedato.
+- **FR-007**: Systemet SKAL fastsætte bookingens sæson alene ud fra ankomstdatoens måned;
+  afrejsedatoen indgår ikke:
+
+  | Sæson | Måneder |
+  |-------|---------|
+  | Lavsæson | januar, februar, november |
+  | Mellemsæson | marts, april, maj, september, oktober |
+  | Højsæson | juni, juli, august, december |
+
+- **FR-008**: Systemet SKAL fastsætte prisen pr. nat ud fra værelsestype og sæson: laveste pris i
+  intervallet i lavsæson, midterprisen i mellemsæson og højeste pris i højsæson (DKK pr. nat):
+
+  | Værelsestype | Lavsæson | Mellemsæson | Højsæson |
+  |--------------|---------:|------------:|---------:|
+  | Standard Single | 909 | 1.203,50 | 1.498 |
+  | Standard Double | 1.202 | 1.587,50 | 1.973 |
+  | Grand Lit | 1.107 | 1.450 | 1.793 |
+  | Superior Double | 1.400 | 1.794,50 | 2.189 |
+  | Junior Suite | 1.812 | 2.155 | 2.498 |
+  | Spa Executive | 2.028 | 2.411,50 | 2.795 |
+  | Suite | 2.509 | 2.996 | 3.483 |
+  | LOFT Suite | 3.000 | 3.498 | 3.996 |
+
+- **FR-009**: Bookingens samlede pris SKAL være prisen pr. nat × antal nætter.
+- **FR-010**: Receptionisten SKAL kunne fremsøge bookinger på gæstens for- eller efternavn.
+- **FR-011**: Receptionisten SKAL kunne rette navn, land, værelsestype og datoer på en booking med
+  datoer; antal nætter, sæson og pris udregnes igen ved hver ændring.
+- **FR-012**: Receptionisten SKAL kunne afbestille en booking, hvorefter den ikke indgår i belægning,
+  overbookingstjek eller omsætning.
+- **FR-013**: Systemet SKAL afvise oprettelse eller ændring af en booking, hvis der på mindst én nat
+  i perioden allerede er 214 bookede værelser, uanset værelsestype; beskeden SKAL nævne den
+  første nat, der er fuld.
+- **FR-014**: Hver booking optager præcis ét værelse.
+
+**Overblik og nøgletal (US2)**
+
+- **FR-015**: Systemet SKAL vise årets samlede indtjening fra bookinger; alle registrerede data,
+  både historiske og nye, ligger inden for det samme år og tæller med.
+- **FR-016**: Systemet SKAL vise indtjeningen fordelt på gæsteland, på værelsestype og på sæson.
+- **FR-017**: Systemet SKAL vise belægningsgraden for en valgt nat som antal bookede værelser den nat
+  divideret med 214, kun ud fra bookinger med datoer.
+- **FR-018**: Systemet SKAL vise gruppens nøgletal: den kaffe og den cocktail, der er solgt flest
+  enheder af, med antal enheder.
+- **FR-019**: Alle nøgletal SKAL udregnes ud fra de aktuelle data, hver gang de vises, så nye
+  bookinger og barsalg indgår, når siden opdateres.
+- **FR-020**: Nøgletallene SKAL kunne hentes ind i og vises i et Tableau-dashboard.
+
+**Barsalg (US3)**
+
+- **FR-021**: Helene SKAL kunne registrere et salg ved at vælge en drikkevare fra menuen og angive et
+  antal på mindst 1; tidspunktet sættes automatisk til registreringstidspunktet.
+- **FR-022**: Et salg SKAL gemmes med drikkevare, antal og tidspunkt; der registreres ingen
+  medarbejder, da Helene Christine er barens eneste medarbejder.
+- **FR-023**: Systemet SKAL vise Helenes samlede salg i år i antal enheder og omsætning (DKK).
+- **FR-024**: Systemet SKAL vise den samlede omsætning pr. drikkevare (pris × solgte enheder).
+- **FR-025**: Systemet SKAL vise den procentvise fordeling af omsætningen mellem kaffe og cocktails.
+- **FR-026**: Barens nøgletal SKAL kunne hentes ind i og vises i et Tableau-dashboard.
+
+### Key Entities *(include if feature involves data)*
+
+- **Booking**: Én gæsts ophold på ét værelse. Har fornavn, efternavn, land, værelsestype, antal
+  nætter, sæson og samlet pris. Nye bookinger har desuden ankomst- og afrejsedato; historiske
+  bookinger fra datafilen har ingen datoer og er markeret som historiske.
+- **Værelsestype**: En af de otte typer i datafilen: Standard Single, Standard Double, Superior
+  Double, Grand Lit, Junior Suite, Spa Executive, Suite og LOFT Suite. Har et prisinterval pr. nat
+  for hver sæson.
+- **Sæson**: Lav, mellem eller høj. Bestemmer prisen pr. nat for nye bookinger.
+- **Drikkevare**: En af de 30 varer på menuen med navn, kategori (kaffe eller cocktail) og pris i DKK.
+  Datafilen indeholder desuden et historisk antal solgte enheder pr. drikkevare uden tidspunkter.
+- **Barsalg**: Ét registreret salg med drikkevare, antal og tidspunkt.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: Receptionisten kan oprette en ny booking på under 2 minutter.
+- **SC-002**: 100 % af forsøg på at booke en nat med 214 optagne værelser bliver afvist, og 0
+  bookinger bliver afvist, når der er et ledigt værelse alle nætter.
+- **SC-003**: Helene kan registrere et salg på under 15 sekunder.
+- **SC-004**: En ny booking eller et nyt barsalg indgår i alle relevante nøgletal første gang siden
+  opdateres efter registreringen.
+- **SC-005**: Samlet indtjening og fordelinger beregnet på startdataene stemmer 100 % overens med
+  tal udregnet manuelt fra datafilerne.
+- **SC-006**: Efter indlæsning findes præcis 1000 historiske bookinger og 30 drikkevarer, og alle
+  værdier er identiske med datafilerne.
+- **SC-007**: Tableau-dashboardet viser de samme tal som systemets egne oversigter.
+
+## Assumptions
+
+- Receptionist, hoteladministrator og bartender bruger systemet på hotellets egne computere; login
+  og adgangsstyring er uden for scope.
+- Hver booking svarer til ét værelse, ligesom hver række i datafilen.
+- Datafilernes priser er i DKK; den historiske bookingpris er bookingens samlede pris (alle nætter).
+- Sæsonerne i datafilen (low, mid, high) svarer til lav-, mellem- og højsæson.
+- Prisintervallerne i FR-008 er aflæst i datafilen som laveste og højeste pris pr. nat (pris /
+  antal nætter) for hver værelsestype; midterprisen er gennemsnittet af de to. Casens officielle
+  intervaller bruges, hvis de afviger.
+- Alle registrerede data, både historiske bookinger, historiske solgte enheder og nye
+  registreringer, ligger inden for det samme år. Nøgletal "i år" medregner derfor alt.
+- Gruppens nøgletal "mest solgte drink" medregner både datafilens historiske antal solgte enheder og
+  nye registrerede salg.
+- Belægningsgraden vises pr. nat; et gennemsnit over en periode er uden for scope.
+- Afbestilte bookinger slettes og gemmes ikke som historik.
+- Valuta er DKK; der er ingen rabatter, moms-opdeling eller betaling i systemet.
