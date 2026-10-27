@@ -7,7 +7,7 @@
 **Status**: Draft
 
 **Input**: User description: "Hotel Kong Arthur ønsker et system til bookinger, nøgletal og barsalg.
-Receptionisten opretter, retter og afbestiller bookinger uden overbooking (214 værelser),
+Receptionisten opretter, retter og afbestiller bookinger på hotellets 214 værelser,
 hoteladministratoren ser belægningsgrad, omsætning og gruppens nøgletal (mest solgte drink i
 antal enheder for kaffe og cocktails), og bartender Helene Christine registrerer barsalg.
 Data fra https://github.com/ITAKEA/hoteldata bruges som startdata og må ikke ændres eller
@@ -127,14 +127,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 
 ### Edge Cases
 
-- En booking, hvis sidste nat bringer antallet af bookede værelser op på præcis 214, MÅ gennemføres;
-  en booking, der ville kræve et 215. værelse på en nat, afvises.
-- Når en booking ændres, tælles bookingens egne nuværende nætter ikke med som optaget, så en
-  booking kan flyttes eller forlænges ind i sin egen periode.
 - En booking, der strækker sig over et månedsskifte til en anden sæson, får hele opholdet prissat
   efter ankomstmånedens sæson (fx ankomst 30. november → lavsæson for alle nætter).
-- Historiske bookinger uden datoer indgår ikke i belægningsgraden og påvirker ikke
-  overbookingstjekket.
+- Historiske bookinger uden datoer indgår ikke i belægningsgraden.
 - Historiske bookinger kan fremsøges og vises, men deres sæson, antal nætter og pris kan ikke
   ændres, da data fra datafilen ikke må ændres.
 - Hvis der ikke er registreret barsalg eller bookinger i den valgte periode, vises 0 og ikke en fejl.
@@ -172,29 +167,27 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
   | Mellemsæson | marts, april, maj, september, oktober |
   | Højsæson | juni, juli, august, december |
 
-- **FR-008**: Systemet SKAL fastsætte prisen pr. nat ud fra værelsestype og sæson: laveste pris i
-  intervallet i lavsæson, midterprisen i mellemsæson og højeste pris i højsæson (DKK pr. nat):
+- **FR-008**: Systemet SKAL fastsætte prisen pr. nat ud fra værelsestype og sæson efter casens
+  prisintervaller: laveste pris i lavsæson, midterprisen i mellemsæson og højeste pris i
+  højsæson. Alle priser er hele kroner (DKK pr. nat):
 
-  | Værelsestype | Lavsæson | Mellemsæson | Højsæson |
-  |--------------|---------:|------------:|---------:|
-  | Standard Single | 909 | 1.203,50 | 1.498 |
-  | Standard Double | 1.202 | 1.587,50 | 1.973 |
-  | Grand Lit | 1.107 | 1.450 | 1.793 |
-  | Superior Double | 1.400 | 1.794,50 | 2.189 |
-  | Junior Suite | 1.812 | 2.155 | 2.498 |
-  | Spa Executive | 2.028 | 2.411,50 | 2.795 |
-  | Suite | 2.509 | 2.996 | 3.483 |
-  | LOFT Suite | 3.000 | 3.498 | 3.996 |
+  | Værelsestype | Casens interval | Lavsæson | Mellemsæson | Højsæson |
+  |--------------|-----------------|---------:|------------:|---------:|
+  | Standard Single | 900–1.200 | 900 | 1.050 | 1.200 |
+  | Grand Lit | 1.100–1.400 | 1.100 | 1.250 | 1.400 |
+  | Standard Double | 1.200–1.600 | 1.200 | 1.400 | 1.600 |
+  | Superior Double | 1.400–2.000 | 1.400 | 1.700 | 2.000 |
+  | Junior Suite | 1.800–2.500 | 1.800 | 2.150 | 2.500 |
+  | Spa Executive | 2.000–2.800 | 2.000 | 2.400 | 2.800 |
+  | Suite | 2.500–3.500 | 2.500 | 3.000 | 3.500 |
+  | LOFT Suite | 3.000–4.000 | 3.000 | 3.500 | 4.000 |
 
 - **FR-009**: Bookingens samlede pris SKAL være prisen pr. nat × antal nætter.
 - **FR-010**: Receptionisten SKAL kunne fremsøge bookinger på gæstens for- eller efternavn.
 - **FR-011**: Receptionisten SKAL kunne rette gæstedetaljer, værelsestype, ankomstdato og antal
   nætter på en ny booking; sæson og pris udregnes igen ved hver ændring.
-- **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning,
-  overbookingstjek eller omsætning.
-- **FR-013**: Systemet SKAL afvise oprettelse eller ændring af en booking, hvis der på mindst én nat
-  i perioden allerede er 214 bookede værelser, uanset værelsestype; beskeden SKAL nævne den
-  første nat, der er fuld.
+- **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning
+  eller omsætning.
 - **FR-014**: Hver booking optager præcis ét værelse.
 - **FR-027**: Receptionisten SKAL kunne oprette, fremsøge, rette og slette bookinger fra browseren.
 - **FR-028**: Opret, hent, ret og slet af bookinger SKAL være dokumenteret i Swagger UI og kunne
@@ -242,8 +235,8 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 ### Measurable Outcomes
 
 - **SC-001**: Receptionisten kan oprette en ny booking på under 2 minutter.
-- **SC-002**: 100 % af forsøg på at booke en nat med 214 optagne værelser bliver afvist, og 0
-  bookinger bliver afvist, når der er et ledigt værelse alle nætter.
+- **SC-002**: 100 % af nye bookinger får den sæson og samlede pris, der følger af ankomstmåneden,
+  værelsestypen og antal nætter (FR-007–FR-009).
 - **SC-003**: Helene kan registrere et salg på under 15 sekunder.
 - **SC-004**: En ny booking eller et nyt barsalg indgår i alle relevante nøgletal første gang siden
   opdateres efter registreringen.
@@ -260,9 +253,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - Hver booking svarer til ét værelse, ligesom hver række i datafilen.
 - Datafilernes priser er i DKK; den historiske bookingpris er bookingens samlede pris (alle nætter).
 - Sæsonerne i datafilen (low, mid, high) svarer til lav-, mellem- og højsæson.
-- Prisintervallerne i FR-008 er aflæst i datafilen som laveste og højeste pris pr. nat (pris /
-  antal nætter) for hver værelsestype; midterprisen er gennemsnittet af de to. Casens officielle
-  intervaller bruges, hvis de afviger.
+- Prisintervallerne i FR-008 er casens intervaller; midterprisen er gennemsnittet af laveste og
+  højeste pris. De historiske bookinger i datafilen kan have priser uden for intervallerne (fx
+  op til 1.498 DKK pr. nat for Standard Single); de bevares uændrede.
 - Alle registrerede data, både historiske bookinger, historiske solgte enheder og nye
   registreringer, ligger inden for det samme år. Nøgletal "i år" medregner derfor alt.
 - Gruppens nøgletal "mest solgte drink" medregner både datafilens historiske antal solgte enheder og
