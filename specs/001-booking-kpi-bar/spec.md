@@ -29,16 +29,17 @@ opdigtes."
 
 ### User Story 1 - Oprettelse og styring af bookinger (Priority: P1)
 
-Som receptionist vil jeg kunne oprette, rette og afbestille bookinger for gæster, så hotellets
-belægning altid er opdateret. Receptionisten indtaster gæstens navn, land, værelsestype samt
-ankomst- og afrejsedato. Systemet udregner antal nætter, sæson og pris og afviser bookingen, hvis
-hotellet er fuldt på en af nætterne.
+Som receptionist vil jeg kunne oprette, rette og slette bookinger for gæster, så hotellets
+belægning altid er opdateret. Receptionisten indtaster gæstedetaljer (fornavn, efternavn og land),
+værelsestype samt ankomst- og afrejsedato. Systemet udregner antal nætter, sæson og pris. Alle
+handlinger kan udføres fra browseren og er dokumenteret i Swagger UI.
 
 **Why this priority**: Bookinger er grundlaget for både belægningsgrad og omsætning. Uden dem har
 nøgletallene ingen nye data at vise.
 
-**Independent Test**: Kan testes alene ved at oprette, fremsøge, rette og afbestille en booking og
-ved at forsøge at booke en nat, hvor alle 214 værelser er optaget.
+**Independent Test**: Kan testes alene ved at oprette, fremsøge, rette og afbestille en booking fra
+browseren, ved at forsøge at gemme en booking med ugyldige datoer eller manglende felter og ved at
+afprøve de samme handlinger i Swagger UI.
 
 **Acceptance Scenarios**:
 
@@ -47,16 +48,18 @@ ved at forsøge at booke en nat, hvor alle 214 værelser er optaget.
    med udregnet antal nætter, sæson og samlet pris, og den kan ses i bookinglisten.
 2. **Given** en eksisterende booking, **When** receptionisten søger på gæstens navn, **Then** vises
    bookingen i søgeresultatet (både nye og historiske bookinger).
-3. **Given** en eksisterende booking med datoer, **When** receptionisten ændrer værelsestype eller
-   datoer, og der er plads alle nætter, **Then** gemmes ændringen, og nætter, sæson og pris udregnes
+3. **Given** en eksisterende booking med datoer, **When** receptionisten ændrer gæstedetaljer,
+   værelsestype eller datoer og gemmer, **Then** gemmes ændringen, og nætter, sæson og pris udregnes
    igen.
-4. **Given** en eksisterende booking, **When** receptionisten afbestiller den, **Then** fjernes den
+4. **Given** en eksisterende booking, **When** receptionisten afbestiller den, **Then** slettes den
    fra bookinglisten og tæller ikke længere med i belægning eller omsætning.
-5. **Given** at alle 214 værelser er optaget på mindst én nat i den ønskede periode, **When**
-   receptionisten forsøger at oprette eller ændre en booking til den periode, **Then** afvises
-   handlingen med en besked, der fortæller, at hotellet er fuldt, og hvilken nat det gælder.
-6. **Given** afrejsedatoen ligger samme dag som eller før ankomstdatoen, **When** receptionisten
-   forsøger at gemme, **Then** afvises bookingen med en forståelig fejlbesked.
+5. **Given** afrejsedatoen ligger samme dag som eller før ankomstdatoen, eller en dato er ugyldig
+   (fx 31. februar eller forkert format), **When** receptionisten forsøger at gemme, **Then** afvises
+   bookingen med en forståelig fejlbesked, der nævner det ugyldige felt.
+6. **Given** et eller flere obligatoriske felter mangler, **When** receptionisten forsøger at gemme,
+   **Then** afvises bookingen med en forståelig fejlbesked, der nævner de manglende felter.
+7. **Given** systemet kører, **When** en bruger åbner Swagger UI, **Then** er opret, hent, ret og
+   slet af bookinger dokumenteret og kan afprøves derfra.
 
 ---
 
@@ -152,7 +155,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 
 - **FR-004**: Receptionisten SKAL kunne oprette en booking med fornavn, efternavn, land,
   værelsestype, ankomstdato og afrejsedato; alle felter er påkrævede.
-- **FR-005**: Systemet SKAL afvise en booking, hvor afrejsedatoen ikke ligger efter ankomstdatoen.
+- **FR-005**: Systemet SKAL afvise en booking med ugyldige datoer (ikke-eksisterende dato, forkert
+  format, eller afrejsedato der ikke ligger efter ankomstdatoen) og en booking, hvor et
+  obligatorisk felt mangler; fejlbeskeden SKAL være forståelig og nævne de berørte felter.
 - **FR-006**: Systemet SKAL udregne antal nætter som antallet af dage mellem ankomst- og afrejsedato.
 - **FR-007**: Systemet SKAL fastsætte bookingens sæson alene ud fra ankomstdatoens måned;
   afrejsedatoen indgår ikke:
@@ -179,14 +184,17 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 
 - **FR-009**: Bookingens samlede pris SKAL være prisen pr. nat × antal nætter.
 - **FR-010**: Receptionisten SKAL kunne fremsøge bookinger på gæstens for- eller efternavn.
-- **FR-011**: Receptionisten SKAL kunne rette navn, land, værelsestype og datoer på en booking med
+- **FR-011**: Receptionisten SKAL kunne rette gæstedetaljer, værelsestype og datoer på en booking med
   datoer; antal nætter, sæson og pris udregnes igen ved hver ændring.
-- **FR-012**: Receptionisten SKAL kunne afbestille en booking, hvorefter den ikke indgår i belægning,
+- **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning,
   overbookingstjek eller omsætning.
 - **FR-013**: Systemet SKAL afvise oprettelse eller ændring af en booking, hvis der på mindst én nat
   i perioden allerede er 214 bookede værelser, uanset værelsestype; beskeden SKAL nævne den
   første nat, der er fuld.
 - **FR-014**: Hver booking optager præcis ét værelse.
+- **FR-027**: Receptionisten SKAL kunne oprette, fremsøge, rette og slette bookinger fra browseren.
+- **FR-028**: Opret, hent, ret og slet af bookinger SKAL være dokumenteret i Swagger UI og kunne
+  afprøves derfra.
 
 **Overblik og nøgletal (US2)**
 

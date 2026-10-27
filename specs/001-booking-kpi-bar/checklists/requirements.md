@@ -31,6 +31,7 @@
 
 ## Notes
 
-- Tableau nævnes, fordi det er et krav fra opdragsgiver (acceptkriterie), ikke et teknisk valg.
+- Tableau, browser og Swagger UI nævnes, fordi de er acceptkriterier fra opdragsgiver
+  (US1, US2, US3), ikke tekniske valg.
 - De 3 [NEEDS CLARIFICATION]-markører er besvaret 2026-10-27 (se Clarifications i spec.md).
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
