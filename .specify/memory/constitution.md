@@ -1,21 +1,3 @@
-<!--
-Sync Impact Report
-==================
-Version change: (template, unversioned) → 1.0.0
-Modified principles: alle pladsholdere erstattet (første udgave)
-  - [PRINCIPLE_1..5] → I–XII (12 principper i stedet for skabelonens 5)
-Added sections:
-  - Kvalitetsporte (erstatter [SECTION_2_NAME])
-  - Udviklingsforløb (erstatter [SECTION_3_NAME])
-  - Governance udfyldt
-Removed sections: ingen
-Templates: plan-, spec- og tasks-templates læser konstitutionen ved kørsel; ingen ændret.
-Follow-up TODOs:
-  - .devcontainer/docker-compose.yml indeholder i dag passwords i klartekst → strider mod XII.
-  - docker-compose.yml mangler healthcheck på db, så backend kan vente på databasen → IX.
-Denne kommentar er arbejdsnoter og fjernes, før filen committes.
--->
-
 # Hotel Kong Arthur Constitution
 
 ## Core Principles
