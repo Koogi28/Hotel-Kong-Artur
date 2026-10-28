@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: Hotel Kong Arthur API
+  version: 1.0.0
+  description: |
+    REST API til bookinger, nøgletal og barsalg (feature 001-booking-kpi-bar).
+    Alle nøgletal beregnes ud fra databasen ved hvert kald. Beløb er i DKK.
+    Frontend og Tableau bruger kun dette API. Tableau henter færdigberegnede nøgletal som CSV under /api/export.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Bookinger
+  - name: Nøgletal
+  - name: Bar
+  - name: Eksport
+  - name: Drift
+
+paths:
+  /api/health:
+    get:
+      tags: [Drift]
+      summary: Sundhedstjek (bruges af Docker)
+      responses:
+        '200':
+          description: Backend og database svarer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: Databasen svarer ikke
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /api/bookings:
+    get:
+      tags: [Bookinger]
+      summary: List eller søg bookinger (nye og historiske)
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Del af fornavn, efternavn eller fulde navn. Søgningen er ufølsom over for store/små bogstaver og accenter.
+          schema: { type: string, maxLength: 100 }
+      responses:
+        '200':
+          description: Bookinger, nyeste først
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Booking' }
+    post:
+      tags: [Bookinger]
+      summary: Opret ny booking (sæson og pris udregnes)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingInput' }
+      responses:
+        '201':
+          description: Oprettet
+          headers:
+            Location:
+              schema: { type: string, example: /api/bookings/1001 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/bookings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      tags: [Bookinger]
+      summary: Hent én booking
+      responses:
+        '200':
+          description: Bookingen
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Bookinger]
+      summary: Ret en ny booking (sæson og pris udregnes igen)
+      description: Alle felter i BookingInput skal sendes. Historiske bookinger kan ikke rettes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingInput' }
+      responses:
+        '200':
+          description: Opdateret
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/HistoricalConflict' }
+    delete:
+      tags: [Bookinger]
+      summary: Afbestil (slet) en ny booking
+      responses:
+        '204':
+          description: Slettet
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/HistoricalConflict' }
+
+  /api/kpi/revenue/total:
+    get:
+      tags: [Nøgletal]
+      summary: Årets samlede indtjening fra bookinger (FR-016)
+      responses:
+        '200':
+          description: Total
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RevenueTotal' }
+
+  /api/kpi/revenue/by-country:
+    get:
+      tags: [Nøgletal]
+      summary: Indtjening pr. gæsteland (FR-017)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroups' }
+
+  /api/kpi/revenue/by-room-type:
+    get:
+      tags: [Nøgletal]
+      summary: Indtjening pr. værelsestype (FR-017)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroups' }
+
+  /api/kpi/revenue/by-season:
+    get:
+      tags: [Nøgletal]
+      summary: Indtjening pr. sæson (FR-017)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroups' }
+
+  /api/kpi/occupancy:
+    get:
+      tags: [Nøgletal]
+      summary: Belægningsgrad for én nat (FR-018)
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date, example: '2026-12-06' }
+      responses:
+        '200':
+          description: Belægning
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Occupancy' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/kpi/top-drinks:
+    get:
+      tags: [Nøgletal]
+      summary: Gruppens nøgletal – mest solgte kaffe og cocktail i enheder (FR-019)
+      responses:
+        '200':
+          description: Topdrinks pr. kategori (flere ved uafgjort)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TopDrinks' }
+
+  /api/bar/drinks:
+    get:
+      tags: [Bar]
+      summary: Menuen (30 drikkevarer)
+      responses:
+        '200':
+          description: Drikkevarer sorteret efter kategori og navn
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Drink' }
+
+  /api/bar/sales:
+    post:
+      tags: [Bar]
+      summary: Registrér ét salg (tidspunkt sættes automatisk)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BarSaleInput' }
+      responses:
+        '201':
+          description: Registreret
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarSale' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/bar/kpi/total:
+    get:
+      tags: [Bar]
+      summary: Helenes samlede salg i år – enheder og omsætning (FR-024)
+      responses:
+        '200':
+          description: Total
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BarTotal' }
+
+  /api/bar/kpi/revenue-by-drink:
+    get:
+      tags: [Bar]
+      summary: Omsætning pr. drikkevare for alle 30 (FR-025)
+      responses:
+        '200':
+          description: Én række pr. drikkevare, også ved 0 salg
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DrinkRevenue' }
+
+  /api/bar/kpi/category-split:
+    get:
+      tags: [Bar]
+      summary: Procentvis fordeling af omsætning mellem kaffe og cocktails (FR-026)
+      responses:
+        '200':
+          description: Procenterne summerer til 100 (eller begge 0 uden salg)
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 2
+                maxItems: 2
+                items: { $ref: '#/components/schemas/CategoryShare' }
+
+  # CSV-eksport til Tableau Public. Hver fil indeholder tal, som backenden har beregnet
+  # med de samme services som JSON-nøgletallene; Tableau skal kun vise dem (research R7).
+  /api/export/kpi-totals.csv:
+    get:
+      tags: [Eksport]
+      summary: Samlede nøgletal som CSV (FR-016, FR-024, FR-021, FR-027)
+      responses:
+        '200':
+          description: |
+            Én række pr. nøgletal. Header: metric,value
+            metric ∈ booking_revenue_total, booking_count, bar_units_sold, bar_revenue
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/export/revenue-by-country.csv:
+    get:
+      tags: [Eksport]
+      summary: Indtjening pr. gæsteland som CSV (FR-017, FR-021)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
+
+  /api/export/revenue-by-room-type.csv:
+    get:
+      tags: [Eksport]
+      summary: Indtjening pr. værelsestype som CSV (FR-017, FR-021)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
+
+  /api/export/revenue-by-season.csv:
+    get:
+      tags: [Eksport]
+      summary: Indtjening pr. sæson som CSV (FR-017, FR-021)
+      responses:
+        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
+
+  /api/export/occupancy.csv:
+    get:
+      tags: [Eksport]
+      summary: Belægning pr. nat som CSV (FR-018, FR-021)
+      description: Én række for hver nat fra den tidligste til den seneste nat, der er dækket af en booking med ankomstdato. Kun header, hvis der ingen sådanne bookinger er.
+      responses:
+        '200':
+          description: |
+            Header: date,booked_rooms,capacity,occupancy_percent
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/export/top-drinks.csv:
+    get:
+      tags: [Eksport]
+      summary: Mest solgte kaffe og cocktail som CSV (FR-019, FR-021)
+      responses:
+        '200':
+          description: |
+            Én række pr. topdrink (flere ved uafgjort). Header: category,name,units_sold
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/export/revenue-by-drink.csv:
+    get:
+      tags: [Eksport]
+      summary: Enheder og omsætning pr. drikkevare som CSV (FR-025, FR-027)
+      responses:
+        '200':
+          description: |
+            Én række pr. drikkevare (30). units_sold = historical_units + registered_units.
+            Header: drink_id,name,category,price,historical_units,registered_units,units_sold,revenue
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/export/bar-category-split.csv:
+    get:
+      tags: [Eksport]
+      summary: Omsætningsfordeling kaffe/cocktail som CSV (FR-026, FR-027)
+      responses:
+        '200':
+          description: |
+            To rækker, percent summerer til 100. Header: category,units_sold,revenue,percent
+          content:
+            text/csv:
+              schema: { type: string }
+
+components:
+  parameters:
+    BookingId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+
+  responses:
+    ValidationError:
+      description: Ugyldigt input. Fejlen nævner de berørte felter.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: 'Ugyldige felter: arrival_date skal være en gyldig dato (YYYY-MM-DD); nights skal være et helt tal mellem 1 og 365'
+            fields: [arrival_date, nights]
+    NotFound:
+      description: Findes ikke
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: 'Booking 42 findes ikke' }
+    HistoricalConflict:
+      description: Historiske bookinger fra datafilen må ikke ændres eller slettes (FR-003)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: 'Booking 17 er historisk og kan ikke ændres eller slettes' }
+    RevenueGroupsCsv:
+      description: |
+        Én række pr. gruppe, sorteret efter indtjening (faldende). Header: key,revenue,booking_count
+      content:
+        text/csv:
+          schema: { type: string }
+    RevenueGroups:
+      description: Én række pr. gruppe, sorteret efter indtjening (faldende). Summen af `revenue` er lig den samlede indtjening.
+      content:
+        application/json:
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/RevenueGroup' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        fields:
+          type: array
+          items: { type: string }
+
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok, error] }
+
+    BookingInput:
+      type: object
+      required: [first_name, last_name, country, room_type, arrival_date, nights]
+      properties:
+        first_name: { type: string, minLength: 1, maxLength: 100, example: Elena }
+        last_name: { type: string, minLength: 1, maxLength: 100, example: Müller }
+        country: { type: string, minLength: 1, maxLength: 100, example: Germany }
+        room_type: { $ref: '#/components/schemas/RoomTypeName' }
+        arrival_date: { type: string, format: date, example: '2026-12-06' }
+        nights: { type: integer, minimum: 1, maximum: 365, example: 3 }
+
+    Booking:
+      type: object
+      required: [id, first_name, last_name, country, room_type, nights, season, total_price, is_historical, arrival_date]
+      properties:
+        id: { type: integer, example: 1001 }
+        first_name: { type: string }
+        last_name: { type: string }
+        country: { type: string }
+        room_type: { $ref: '#/components/schemas/RoomTypeName' }
+        nights: { type: integer, example: 3 }
+        season: { $ref: '#/components/schemas/Season' }
+        total_price:
+          type: integer
+          description: Samlet pris i hele DKK
+          example: 4500
+        is_historical: { type: boolean, example: false }
+        arrival_date:
+          type: string
+          format: date
+          nullable: true
+          description: null for historiske bookinger
+          example: '2026-12-06'
+
+    RoomTypeName:
+      type: string
+      enum: [Standard Single, Grand Lit, Standard Double, Superior Double, Junior Suite, Spa Executive, Suite, LOFT Suite]
+
+    Season:
+      type: string
+      enum: [low, mid, high]
+
+    RevenueTotal:
+      type: object
+      required: [total_revenue, booking_count]
+      properties:
+        total_revenue: { type: integer, example: 11234034 }
+        booking_count: { type: integer, example: 1000 }
+
+    RevenueGroup:
+      type: object
+      required: [key, revenue, booking_count]
+      properties:
+        key:
+          type: string
+          description: Land, værelsestype eller sæson
+        revenue: { type: integer }
+        booking_count: { type: integer }
+
+    Occupancy:
+      type: object
+      required: [date, booked_rooms, capacity, occupancy_percent]
+      properties:
+        date: { type: string, format: date }
+        booked_rooms: { type: integer, example: 1 }
+        capacity: { type: integer, example: 214 }
+        occupancy_percent:
+          type: number
+          description: booked_rooms / capacity × 100, afrundet til 1 decimal
+          example: 0.5
+
+    TopDrinks:
+      type: object
+      required: [coffee, cocktail]
+      properties:
+        coffee:
+          type: array
+          items: { $ref: '#/components/schemas/DrinkUnits' }
+        cocktail:
+          type: array
+          items: { $ref: '#/components/schemas/DrinkUnits' }
+
+    DrinkUnits:
+      type: object
+      required: [drink_id, name, units_sold]
+      properties:
+        drink_id: { type: integer }
+        name: { type: string, example: Espresso }
+        units_sold:
+          type: integer
+          description: Historiske enheder + registrerede salg
+          example: 14656
+
+    Category:
+      type: string
+      enum: [Coffee, Cocktail]
+
+    Drink:
+      type: object
+      required: [id, name, category, price]
+      properties:
+        id: { type: integer }
+        name: { type: string, example: Mojito }
+        category: { $ref: '#/components/schemas/Category' }
+        price: { type: number, example: 142.38 }
+
+    BarSaleInput:
+      type: object
+      required: [drink_id, quantity]
+      properties:
+        drink_id: { type: integer, minimum: 1 }
+        quantity: { type: integer, minimum: 1, maximum: 1000, example: 2 }
+
+    BarSale:
+      type: object
+      required: [id, drink_id, quantity, sold_at]
+      properties:
+        id: { type: integer }
+        drink_id: { type: integer }
+        quantity: { type: integer }
+        sold_at:
+          type: string
+          description: Lokal tid (Europe/Copenhagen), 'YYYY-MM-DD HH:MM:SS'
+          example: '2026-10-28 14:03:12'
+
+    BarTotal:
+      type: object
+      required: [units_sold, revenue]
+      properties:
+        units_sold: { type: integer, example: 179958 }
+        revenue: { type: number, example: 13448640.34 }
+
+    DrinkRevenue:
+      type: object
+      required: [drink_id, name, category, price, units_sold, revenue]
+      properties:
+        drink_id: { type: integer }
+        name: { type: string }
+        category: { $ref: '#/components/schemas/Category' }
+        price: { type: number }
+        units_sold: { type: integer }
+        revenue: { type: number }
+
+    CategoryShare:
+      type: object
+      required: [category, revenue, percent]
+      properties:
+        category: { $ref: '#/components/schemas/Category' }
+        revenue: { type: number, example: 7104755.43 }
+        percent: { type: number, example: 52.83 }
