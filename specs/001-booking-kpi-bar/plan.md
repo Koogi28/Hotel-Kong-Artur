@@ -55,7 +55,7 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 |---|---------|--------|-------------------------------|
 | I | Simpelt frem for smart | ✅ | 4 runtime-biblioteker, hver med begrundelse (tabel nedenfor). Ingen ORM, intet dato-/xlsx-/CSV-/test-bibliotek |
 | II | 3-lagsarkitektur | ✅ | `controllers/` → `services/` → `repositories/`. SQL kun i repositories. Controllers kun HTTP ↔ service |
-| III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 503 (health) og `text/csv` (eksport). Se Complexity Tracking |
+| III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 500 (uventet fejl), 503 (health) og `text/csv` (eksport). Se Complexity Tracking |
 | IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau bruger API'et (CSV-endpoints), ingen DB-genvej. DB-porten udstilles ikke |
 | V | Databasen er sandheden | ✅ | Seed kun ved første opstart. Ingen nøgletalskolonner. Alle KPI'er beregnes pr. kald |
 | VI | Ankomstdato + nætter | ✅ | Ny booking kræver `arrival_date` + `nights ≥ 1`. Sæson/pris kan ikke indtastes. Historiske uden datoer (DB-CHECK), PUT/DELETE → 409 |
@@ -138,6 +138,7 @@ backend/
 │   │   ├── barCalculations.js    # rene funktioner: units, revenue (øre), categorySplit
 │   │   ├── exportService.js      # bygger CSV-rækker ud fra de andre services
 │   │   ├── csv.js                # ren funktion: rækker → CSV-tekst (escaping)
+│   │   ├── healthService.js      # kalder healthRepository.ping → ok/error
 │   │   └── errors.js             # ValidationError(fields), NotFoundError, ConflictError
 │   └── repositories/
 │       ├── bookingRepository.js
@@ -183,6 +184,7 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | III: statuskode **409** ud over 200/201/204/400/404 | PUT/DELETE på historisk booking skal afvises (FR-003). Bookingen findes og input er gyldigt, så hverken 400 eller 404 er korrekt | 400 ville sige "dit input er forkert", selvom det er ressourcen, der er låst. Receptionisten og Swagger-brugeren kunne ikke skelne fejlene |
+| III: statuskode **500** ved uventede fejl | Fejl-middlewaren skal svare på fejl, der ikke er brugerens skyld (fx kodefejl eller tabt DB-forbindelse midt i et kald). Svaret er stadig JSON: `{"error": "Intern fejl"}` | 400 eller 404 ville fejlagtigt give brugeren skylden. Express' standardsvar er HTML og bryder kravet om JSON-fejl |
 | III: statuskode **503** på `/api/health` | Docker-healthcheck og drift skal kunne se, at DB er nede | 200 med `"status":"error"` ville få Docker til at melde backend sund |
 | III: **`text/csv`** på `/api/export/*.csv` | Tableau Public kan hverken læse fra MySQL eller (dokumenteret) bruge WDC (research R7). CSV-tekstfil er den eneste stabile vej via API'et (FR-021, FR-027, princip IV) | JSON-endpoints: Tableau Public læser ikke JSON fra en URL og kræver fil-download alligevel. CSV er fladere og enklere i Tableau. CSV'erne indeholder færdigberegnede nøgletal (ikke rå rækker), så Tableau ikke beregner noget selv. Fejl fra eksport-endpoints er stadig JSON |
 | `scripts/generate-seed.js` (kode uden for backend) | 1030 INSERT-rækker skal laves korrekt én gang, med Müller-rettelsen (research R2, R3) | Håndskrevet SQL giver tastefejl. `LOAD DATA` kræver ekstra MySQL-opsætning og retter ikke tegnfejlen |

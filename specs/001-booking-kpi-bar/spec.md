@@ -54,7 +54,7 @@ afprøve de samme handlinger i Swagger UI.
 3. **Given** en eksisterende ny booking, **When** receptionisten ændrer gæstedetaljer,
    værelsestype, ankomstdato eller antal nætter og gemmer, **Then** gemmes ændringen, og sæson og
    pris udregnes igen.
-4. **Given** en eksisterende booking, **When** receptionisten afbestiller den, **Then** slettes den
+4. **Given** en eksisterende ny booking, **When** receptionisten afbestiller den, **Then** slettes den
    fra bookinglisten og tæller ikke længere med i belægning eller omsætning.
 5. **Given** ankomstdatoen er ugyldig (fx 31. februar eller forkert format), eller antal nætter er
    mindre end 1 eller ikke et helt tal, **When** receptionisten forsøger at gemme, **Then** afvises
@@ -130,8 +130,8 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - En booking, der strækker sig over et månedsskifte til en anden sæson, får hele opholdet prissat
   efter ankomstmånedens sæson (fx ankomst 30. november → lavsæson for alle nætter).
 - Historiske bookinger uden datoer indgår ikke i belægningsgraden.
-- Historiske bookinger kan fremsøges og vises, men deres sæson, antal nætter og pris kan ikke
-  ændres, da data fra datafilen ikke må ændres.
+- Historiske bookinger kan fremsøges og vises, men de kan hverken rettes eller slettes, da data
+  fra datafilen ikke må ændres. Forsøg afvises med en forståelig fejlbesked.
 - Hvis der ikke er registreret barsalg eller bookinger i den valgte periode, vises 0 og ikke en fejl.
 - Hvis to drikkevarer har lige mange solgte enheder, vises begge som mest solgt.
 - Ukendt værelsestype eller drikkevare afvises med en forståelig fejlbesked.
@@ -186,8 +186,8 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **FR-010**: Receptionisten SKAL kunne fremsøge bookinger på gæstens for- eller efternavn.
 - **FR-011**: Receptionisten SKAL kunne rette gæstedetaljer, værelsestype, ankomstdato og antal
   nætter på en ny booking; sæson og pris udregnes igen ved hver ændring.
-- **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning
-  eller omsætning.
+- **FR-012**: Receptionisten SKAL kunne afbestille (slette) en ny booking, hvorefter den ikke indgår i
+  belægning eller omsætning. Historiske bookinger kan hverken rettes eller slettes (FR-003).
 - **FR-013**: Hver booking optager præcis ét værelse.
 - **FR-014**: Receptionisten SKAL kunne oprette, fremsøge, rette og slette bookinger fra browseren.
 - **FR-015**: Opret, hent, ret og slet af bookinger SKAL være dokumenteret i Swagger UI og kunne
