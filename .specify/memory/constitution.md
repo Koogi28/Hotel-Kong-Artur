@@ -17,7 +17,7 @@ Vi er studerende på 3. semester, og koden skal kunne læses og forklares af all
 Backenden har præcis tre lag:
 
 1. **Præsentationslag**: REST-controllere.
-2. **Forretningslag**: beregninger, validering og regler som "ingen overbooking".
+2. **Forretningslag**: beregninger, validering og regler som udregning af sæson og pris.
 3. **Datalag**: adgang til MySQL.
 
 - Et lag MÅ KUN kalde laget lige under sig.
@@ -32,10 +32,9 @@ HTTP og uden database.
 - Al kommunikation med backenden SKAL ske via et REST API, der sender og modtager JSON.
 - Endpoints SKAL bruge korrekte HTTP-metoder: GET (hent), POST (opret), PUT (ændr),
   DELETE (slet).
-- Svar SKAL bruge korrekte statuskoder: 200, 201, 204, 400, 404 og 409
-  (409 bruges fx ved overbooking).
-- Fejl SKAL returneres som JSON med en forståelig besked, fx `{"error": "Ingen ledige
-  dobbeltværelser i perioden"}`.
+- Svar SKAL bruge korrekte statuskoder: 200, 201, 204, 400 og 404.
+- Fejl SKAL returneres som JSON med en forståelig besked, fx `{"error": "Antal nætter skal
+  være mindst 1"}`.
 
 ### IV. OpenAPI og Swagger
 
@@ -53,25 +52,33 @@ HTTP og uden database.
 - "Live" betyder hos os: en ny booking eller et nyt barsalg kan ses i nøgletal og
   dashboard, når siden opdateres.
 
-### VI. Bookinger har rigtige datoer
+### VI. Bookinger har ankomstdato og antal nætter
 
-- En booking SKAL have en ankomstdato og en afrejsedato.
-- Afrejsedato SKAL ligge efter ankomstdato; ellers afvises bookingen (400).
-- Antal nætter, sæson og pris SKAL udregnes ud fra datoerne og værelsestypen og MÅ IKKE
-  indtastes eller gemmes separat, så tallene altid passer sammen.
+- En ny booking SKAL have en ankomstdato og et antal nætter på mindst 1; ellers afvises
+  bookingen (400). Afrejsedato indgår ikke.
+- Bookingens periode er nætterne fra ankomstdatoen og antal nætter frem; perioden bruges til
+  belægningsgrad.
+- For nye bookinger SKAL sæsonen udregnes ud fra ankomstdatoens måned, og prisen ud fra sæson,
+  værelsestype og antal nætter. Sæson og pris MÅ IKKE indtastes, så tallene altid passer sammen.
+- De historiske bookinger fra datafilen har ingen datoer. De SKAL gemmes med sæson, antal
+  nætter og pris, præcis som de står i filen.
+- Data fra datafilen MÅ IKKE ændres eller opdigtes (fx må der ikke findes på datoer til de
+  historiske bookinger).
 
-### VII. Ingen overbooking
+Begrundelse: nye bookinger skal kunne indgå i belægningsgraden, mens de historiske data skal
+forblive en tro kopi af kilden, så nøgletallene bygger på rigtige tal.
 
-- Hotellet har et fast antal værelser af hver værelsestype (214 i alt).
-- En booking MÅ KUN oprettes eller ændres, hvis der er et ledigt værelse af den valgte type
-  på hver nat i hele perioden.
-- Ellers SKAL den afvises (409) med en tydelig besked.
-- Reglen SKAL ligge i forretningslaget (se II).
+### VII. Hotellets kapacitet
+
+- Hotellet har 214 værelser i alt, uden fast fordeling pr. værelsestype.
+- Belægningsgraden for en nat SKAL beregnes som antal bookede værelser den nat divideret
+  med 214, kun ud fra bookinger med ankomstdato.
+- Beregningen SKAL ligge i forretningslaget (se II).
 
 ### VIII. Barsalg registreres ét ad gangen
 
-- Hvert salg i baren SKAL gemmes som én registrering med drikkevare, antal, medarbejder og
-  tidspunkt.
+- Der er kun én medarbejder i baren, Helene Christine.
+- Hvert salg i baren SKAL gemmes som én registrering med drikkevare, antal og tidspunkt.
 - Menuen består af de 20 cocktails og 10 kaffetyper fra datafilen.
 - Omsætning og fordelinger SKAL beregnes ud fra registreringerne (se V).
 
@@ -99,7 +106,7 @@ HTTP og uden database.
 
 - Passwords og andre hemmeligheder MÅ IKKE ligge i GitHub. De ligger i en `.env`-fil, som
   står i `.gitignore`; en `.env.example` uden rigtige værdier må gerne committes.
-- Beregning af nøgletal og reglen om overbooking SKAL have simple automatiske tests.
+- Beregning af nøgletal, sæson og pris SKAL have simple automatiske tests.
 
 ## Kvalitetsporte
 
@@ -110,7 +117,7 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Bruger nye endpoints rigtige metoder, statuskoder og JSON-fejl? (III)
 - Er OpenAPI-specifikationen opdateret? (IV)
 - Beregnes nøgletal fra databasen ved hver forespørgsel? (V)
-- Har bookingændringer test for datoer og overbooking? (VI, VII, XII)
+- Har bookingændringer test for ankomstdato, antal nætter, sæson og pris? (VI, XII)
 - Starter systemet stadig med `docker compose up`? (IX)
 - Er der ingen hemmeligheder i de ændrede filer? (XII)
 
@@ -135,4 +142,4 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ved hver kodegennemgang SKAL reviewer tjekke ændringen mod Kvalitetsporte.
 - Afvigelser fra et princip SKAL begrundes skriftligt i planen.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 4.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27

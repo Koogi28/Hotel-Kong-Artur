@@ -1,23 +1,28 @@
+name: hotel-kong-artur
+
 services:
-  # Main Development Environment (Spec Kit + VS Code)
+  # Main Development Environment (Spec Kit + Claude Code)
   app:
-    # Built by "initializeCommand" in devcontainer.json (plain docker build).
-    # No "build:" here on purpose: Compose 5.x builds via bake, which rejects the
-    # temp Dockerfile the Dev Containers extension generates outside the context.
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     image: hotel-kong-artur-dev:latest
     volumes:
-      - ..:/workspace:cached
+      - ..:/workspace
       # Keep Claude Code login/settings across container rebuilds
-      - claude_config:/home/vscode/.claude
-    command: /bin/sh -c "while sleep 1000; do :; done"
+      - claude_config:/home/dev/.claude
     environment:
       - MYSQL_HOST=db
       - MYSQL_PORT=3306
       - MYSQL_USER=team_user
       - MYSQL_PASSWORD=team_password
       - MYSQL_DATABASE=project_db
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
 
-  # MySQL Database Container - husk at fjerne for at gøre private - Kevin 
+  # MySQL Database Container - husk at fjerne for at gøre private - Kevin
   db:
     image: mysql:8.0
     restart: unless-stopped
