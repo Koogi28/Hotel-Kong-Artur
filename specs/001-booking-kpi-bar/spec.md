@@ -25,7 +25,7 @@ opdigtes."
 - Q: Tæller historiske data uden datoer med i årets tal? → A: Ja. Alle registrerede data ligger
   inden for det samme år.
 - Q: Skal en ny booking have en afrejsedato? → A: Nej. En ny booking har ankomstdato og antal
-  nætter; afrejsedato fjernes (konstitution v3.0.0, princip VI).
+  nætter; afrejsedato fjernes (konstitution v4.0.0, princip VI).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -46,7 +46,7 @@ afprøve de samme handlinger i Swagger UI.
 
 **Acceptance Scenarios**:
 
-1. **Given** der er ledige værelser i hele perioden, **When** receptionisten indtaster fornavn,
+1. **Given** receptionisten har gæstens oplysninger, **When** receptionisten indtaster fornavn,
    efternavn, land, værelsestype, ankomstdato og antal nætter og gemmer, **Then** oprettes bookingen
    med udregnet sæson og samlet pris, og den kan ses i bookinglisten.
 2. **Given** en eksisterende booking, **When** receptionisten søger på gæstens navn, **Then** vises
@@ -188,34 +188,34 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
   nætter på en ny booking; sæson og pris udregnes igen ved hver ændring.
 - **FR-012**: Receptionisten SKAL kunne afbestille (slette) en booking, hvorefter den ikke indgår i belægning
   eller omsætning.
-- **FR-014**: Hver booking optager præcis ét værelse.
-- **FR-027**: Receptionisten SKAL kunne oprette, fremsøge, rette og slette bookinger fra browseren.
-- **FR-028**: Opret, hent, ret og slet af bookinger SKAL være dokumenteret i Swagger UI og kunne
+- **FR-013**: Hver booking optager præcis ét værelse.
+- **FR-014**: Receptionisten SKAL kunne oprette, fremsøge, rette og slette bookinger fra browseren.
+- **FR-015**: Opret, hent, ret og slet af bookinger SKAL være dokumenteret i Swagger UI og kunne
   afprøves derfra.
 
 **Overblik og nøgletal (US2)**
 
-- **FR-015**: Systemet SKAL vise årets samlede indtjening fra bookinger; alle registrerede data,
+- **FR-016**: Systemet SKAL vise årets samlede indtjening fra bookinger; alle registrerede data,
   både historiske og nye, ligger inden for det samme år og tæller med.
-- **FR-016**: Systemet SKAL vise indtjeningen fordelt på gæsteland, på værelsestype og på sæson.
-- **FR-017**: Systemet SKAL vise belægningsgraden for en valgt nat som antal bookede værelser den nat
+- **FR-017**: Systemet SKAL vise indtjeningen fordelt på gæsteland, på værelsestype og på sæson.
+- **FR-018**: Systemet SKAL vise belægningsgraden for en valgt nat som antal bookede værelser den nat
   divideret med 214, kun ud fra bookinger med ankomstdato.
-- **FR-018**: Systemet SKAL vise gruppens nøgletal: den kaffe og den cocktail, der er solgt flest
+- **FR-019**: Systemet SKAL vise gruppens nøgletal: den kaffe og den cocktail, der er solgt flest
   enheder af, med antal enheder.
-- **FR-019**: Alle nøgletal SKAL udregnes ud fra de aktuelle data, hver gang de vises, så nye
+- **FR-020**: Alle nøgletal SKAL udregnes ud fra de aktuelle data, hver gang de vises, så nye
   bookinger og barsalg indgår, når siden opdateres.
-- **FR-020**: Nøgletallene SKAL kunne hentes ind i og vises i et Tableau-dashboard.
+- **FR-021**: Nøgletallene SKAL kunne hentes ind i og vises i et Tableau-dashboard.
 
 **Barsalg (US3)**
 
-- **FR-021**: Helene SKAL kunne registrere et salg ved at vælge en drikkevare fra menuen og angive et
+- **FR-022**: Helene SKAL kunne registrere et salg ved at vælge en drikkevare fra menuen og angive et
   antal på mindst 1; tidspunktet sættes automatisk til registreringstidspunktet.
-- **FR-022**: Et salg SKAL gemmes med drikkevare, antal og tidspunkt; der registreres ingen
+- **FR-023**: Et salg SKAL gemmes med drikkevare, antal og tidspunkt; der registreres ingen
   medarbejder, da Helene Christine er barens eneste medarbejder.
-- **FR-023**: Systemet SKAL vise Helenes samlede salg i år i antal enheder og omsætning (DKK).
-- **FR-024**: Systemet SKAL vise den samlede omsætning pr. drikkevare (pris × solgte enheder).
-- **FR-025**: Systemet SKAL vise den procentvise fordeling af omsætningen mellem kaffe og cocktails.
-- **FR-026**: Barens nøgletal SKAL kunne hentes ind i og vises i et Tableau-dashboard.
+- **FR-024**: Systemet SKAL vise Helenes samlede salg i år i antal enheder og omsætning (DKK).
+- **FR-025**: Systemet SKAL vise den samlede omsætning pr. drikkevare (pris × solgte enheder).
+- **FR-026**: Systemet SKAL vise den procentvise fordeling af omsætningen mellem kaffe og cocktails.
+- **FR-027**: Barens nøgletal SKAL kunne hentes ind i og vises i et Tableau-dashboard.
 
 ### Key Entities *(include if feature involves data)*
 
