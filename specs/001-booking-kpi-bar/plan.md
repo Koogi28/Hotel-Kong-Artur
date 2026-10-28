@@ -111,7 +111,7 @@ db-init/
 scripts/
 ├── generate-seed.js          # engangsscript, ingen afhængigheder (research R3)
 └── source/                               # committes, så seed kan genskabes
-    ├── international_names_with_rooms_1000.csv   # byte-identisk kopi af kilden
+    ├── international_names_with_rooms_1000.csv   # samme indhold som kilden (linjeskift normaliseret til LF)
     └── drinks_menu_with_sales.csv          # skrevet fra xlsx-celler, komma + decimalpunktum
 backend/
 ├── Dockerfile                # node:20-alpine, build-context = repo-roden
@@ -175,7 +175,7 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 
 | Service | Fil | Nøglepunkter |
 |---------|-----|--------------|
-| `db` | `compose.yaml` | `mysql:8.0`, `env_file: .env`, `TZ=Europe/Copenhagen`, healthcheck `mysqladmin ping -h 127.0.0.1`, volume `mysql_data:/var/lib/mysql`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten |
+| `db` | `compose.yaml` | `mysql:8.0`, `env_file: .env`, `TZ=Europe/Copenhagen`, healthcheck `mysqladmin ping -h 127.0.0.1` med login fra miljøet, volume `mysql_data:/var/lib/mysql`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten |
 | `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `MYSQL_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
 | `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `MYSQL_HOST=db`, ingen `depends_on` (kan ikke pege ud af en included fil) |
 

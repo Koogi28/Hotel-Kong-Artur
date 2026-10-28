@@ -19,8 +19,10 @@ services:
       - ./db-init:/docker-entrypoint-initdb.d:ro
     # Ingen ports: databasen er kun tilgængelig for backend (princip IV, research R5)
     healthcheck:
-      # Ping via TCP (127.0.0.1), så db ikke bliver "healthy" mens init-scripts kører (research R4)
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      # Ping via TCP (127.0.0.1), så db ikke bliver "healthy" mens init-scripts kører (research R4).
+      # Med login, fordi ping uden login giver "Access denied" og exit 1 i nyere MySQL 8.0.
+      # $$ betyder, at compose ikke selv udfylder variablerne; det gør containerens shell.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
       retries: 20

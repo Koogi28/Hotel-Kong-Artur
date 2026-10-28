@@ -63,8 +63,11 @@ committes og gennemgås. Scriptet køres ikke ved opstart.
 Excel. Dansk Excel gemmer CSV med semikolon og decimalkomma (`72,47`), og så ville scriptet
 læse priserne forkert. Filen er kommasepareret, UTF-8, med decimalpunktum, 2 decimaler
 (R1) og samme header som kilden. Kontrol: 30 rækker, 179.958 enheder, omsætning
-13.448.640,34 DKK, svarende til tallene i R1. `international_names_with_rooms_1000.csv` er en
-byte-identisk kopi af kilden (inkl. `�`, som scriptet retter, se R2).
+13.448.640,34 DKK, svarende til tallene i R1. `international_names_with_rooms_1000.csv` er
+**ikke byte-identisk** med kilden, fordi Git har normaliseret linjeskiftene til LF ved commit,
+og på Windows kan filen blive checket ud med CRLF. **Indholdet er det samme** (alle 1000 rækker
+inkl. `�`, som scriptet retter, se R2). Derfor læser `generate-seed.js` både `\n` og `\r\n`
+og en eventuel BOM. Scriptet giver præcis samme `02-seed.sql` med begge linjeskift (testet).
 **Begrundelse**: Node findes allerede i projektet. Et xlsx-bibliotek kun til 30 rækker ville
 bryde princip I. Scriptet er kort og kan forklares, og den committede SQL kan tjekkes i
 review.
@@ -77,15 +80,24 @@ Seed-filen starter med `SET NAMES utf8mb4;`, så "ü" gemmes korrekt uanset klie
 
 ## R4. MySQL-healthcheck og init-rækkefølge
 
-**Beslutning**: `healthcheck: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]`
+**Beslutning**:
+`healthcheck: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]`
 med `interval: 5s`, `timeout: 5s`, `retries: 20`, `start_period: 30s`.
 **Begrundelse**: Under første opstart kører MySQL-imagets entrypoint en midlertidig server
 med `--skip-networking`, mens `/docker-entrypoint-initdb.d/*.sql` afvikles. En ping via
 socket (`localhost`) svarer allerede "alive" i den fase. Ping via TCP (`127.0.0.1`) lykkes
-først, når den rigtige server lytter, dvs. efter seed. `mysqladmin ping` returnerer exit-kode 0,
-når serveren kører, også ved adgangsfejl, så det kræver intet password i healthchecken.
-**Alternativer**: Et `sh -c`-check med `SELECT COUNT(*) FROM booking`. Det er afvist, fordi
-det kræver password i kommandoen og er mere kompliceret.
+først, når den rigtige server lytter, dvs. efter seed.
+**Hvorfor login**: Første version pingede uden login, ud fra at `mysqladmin ping` returnerer
+exit-kode 0 også ved adgangsfejl. Hos gruppen gav ping uden login på MySQL 8.0.46 i stedet
+"Access denied" og exit 1, så `db` blev aldrig *healthy*, og `backend` startede aldrig.
+Healthchecken logger derfor ind med `MYSQL_USER`/`MYSQL_PASSWORD` fra containerens miljø
+(kommer fra `.env`). `$$` gør, at Compose ikke selv udfylder variablerne. Det gør
+containerens shell, så passwordet ikke står i `compose.yaml`. Brugeren oprettes under init,
+så login lykkes først, når init er færdig. Det understøtter TCP-reglen ovenfor.
+(Bemærk: På én maskine med samme version gav ping uden login exit 0. Opførslen er altså ikke
+ens alle steder, og login virker begge steder.)
+**Alternativer**: Et check med `SELECT COUNT(*) FROM booking`. Det er afvist, fordi det er mere
+kompliceret og koblet til skemaet.
 
 Init-scripts afvikles i alfabetisk rækkefølge og **kun når data-volumen er tom**. Derfor:
 `01-schema.sql` før `02-seed.sql`. `README.md` i `db-init/` ignoreres af entrypointet.

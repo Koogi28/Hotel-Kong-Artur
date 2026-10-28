@@ -30,11 +30,19 @@ Dev-containeren startes separat: `docker compose --profile dev up -d app`.
 
 ## 2. Startdata (FR-001–FR-003, SC-006)
 
+SQL'en sendes ind via stdin (heredoc) og ikke som `-e "..."`-argument. I Git Bash på Windows
+bliver "ü" i kommandolinje-argumenter ødelagt, så `Müller`-tjekket fejlagtigt giver 0.
+`-T` er nødvendig, når der sendes data ind via stdin.
+
 ```bash
-docker compose exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "
-  SELECT COUNT(*), SUM(is_historical), SUM(arrival_date IS NULL) FROM booking;
-  SELECT category, COUNT(*) FROM drink GROUP BY category;
-  SELECT COUNT(*) FROM booking WHERE last_name = \"Müller\";"'
+docker compose exec -T db sh -c 'mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -t' <<'SQL'
+SELECT COUNT(*), SUM(is_historical), SUM(arrival_date IS NULL) FROM booking;
+SELECT category, COUNT(*) FROM drink GROUP BY category;
+SELECT COUNT(*) FROM booking WHERE last_name = 'Müller';
+SELECT SUM(total_price) FROM booking;
+SELECT ROUND(SUM(price * historical_units_sold), 2) FROM drink;
+SELECT COUNT(*) FROM room_type;
+SQL
 ```
 
 | Tjek | Forventet |
@@ -42,6 +50,12 @@ docker compose exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_
 | bookinger / historiske / uden dato | 1000 / 1000 / 1000 |
 | drinks | Cocktail 20, Coffee 10 |
 | `Müller` | 54 (ingen `�`) |
+| `SUM(total_price)` | 11234034 |
+| barens historiske omsætning | 13448640.34 |
+| værelsestyper | 8 |
+
+**Persistens** (princip IX): `docker compose down` (uden `-v`) og derefter `docker compose up -d`.
+`db` skal blive *healthy* igen, og det første SELECT skal stadig give 1000.
 
 ## 3. Unit-tests (princip XII)
 
