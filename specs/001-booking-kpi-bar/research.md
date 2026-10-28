@@ -152,7 +152,18 @@ De må ikke genbruges i `.env`.
   Desktop, Tableau Prep og Tableau Server. Tableau Public nævnes ikke. Desuden er WDC 3.0
   kun til udtræk (extract), og GitHub-repoet med WDC 3.0-ressourcerne er markeret som udfaset.
 
-**Beslutning**: Vi bruger ikke WDC. API'et får CSV-eksport-endpoints, som Tableau Public
+**Afprøvet 28/10** (Tableau Public **[VERSION]**):
+- Under *Connect* findes bl.a. **Text file**, **JSON file**, **OData** og
+  **"Web Data Connector (deprecated)"** (WDC 2.x).
+- **WDC findes altså i Tableau Public, men er markeret som udfaset.** Det retter fundet ovenfor:
+  manglen er ikke, at WDC er utilgængelig, men at den er på vej ud.
+- **OData-test** mod den offentlige Northwind-tjeneste: virker. 77 rækker blev hentet direkte
+  via URL.
+- **CSV-test**: virker. Decimaler læses korrekt (decimalpunktum), og *Refresh* (F5) viser
+  ændrede tal, når filen er overskrevet.
+
+**Beslutning**: CSV-eksport er **plan A**. WDC fravælges, fordi den er udfaset. Ny kode bør ikke
+bygge på en connector, der er på vej ud. API'et får CSV-eksport-endpoints, som Tableau Public
 åbner som tekstfil. **Hver CSV indeholder færdigberegnede nøgletal, ikke rå rækker**:
 
 | Endpoint | Svarer til JSON | Indhold (én række pr.) |
@@ -188,10 +199,18 @@ Alle ligger under `/api/export/`.
 **"Live" i Tableau**: Efter nye bookinger eller barsalg hentes CSV-filerne igen (browser eller
 `curl -o revenue-by-country.csv ...`), filen overskrives samme sted, og man vælger *Data → Refresh* i
 Tableau Public.
-**Alternativer**: (a) WDC 3.0. Det er afvist, fordi Tableau Public ikke er dokumenteret som
-understøttet, og det kræver TACO Toolkit (ny afhængighed, i strid med princip I). (b) JSON-filer.
-Tableau kan læse JSON, men flade CSV-tabeller er enklere at modellere. (c) Google Sheets som
-mellemled. Det er afvist, fordi det er en genvej uden om API'et og ikke "live".
+**Mulig forbedring i uge 2: OData.** Testen viser, at Tableau Public kan læse OData direkte
+fra en URL. Hvis API'et udstiller nøgletallene som OData-feeds, kan Tableau læse direkte fra
+REST API'et uden at hente filer ned først, og *Refresh* henter så nye tal. Det kræver nye
+endpoints i OData-format (`$metadata` og JSON-svar efter OData-standarden), og det skal
+afklares, om det kan laves uden nyt bibliotek (princip I). Kontrakten skal opdateres i samme
+commit (princip IV). Indtil da er CSV plan A.
+**Alternativer**: (a) WDC 2.x. Den findes i Tableau Public, men er markeret som udfaset og derfor
+afvist. (b) WDC 3.0. Det er afvist, fordi Tableau Public ikke er dokumenteret som understøttet,
+og det kræver TACO Toolkit (ny afhængighed, i strid med princip I). (c) JSON-filer. Tableau kan
+læse JSON, men flade CSV-tabeller er enklere at modellere. (d) Google Sheets som mellemled. Det
+er afvist, fordi det er en genvej uden om API'et og ikke "live". (e) OData, se ovenfor. Det er
+ikke afvist, men udskudt til uge 2.
 
 Kilder: [WDC deprecated in 2023.1 (Tableau KB)](https://kb.tableau.com/articles/en_US/Issue/web-data-connectors-deprecated-in-2023-1-release),
 [Connectors built with the WDC 3.0 SDK (Tableau Help)](https://help.tableau.com/current/pro/desktop/en-us/examples_wdc_connector_sdk.htm),
