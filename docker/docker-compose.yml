@@ -1,8 +1,11 @@
 name: hotel-kong-artur
 
+# Inkluderes af compose.yaml i roden. db og backend ligger dér.
 services:
   # Main Development Environment (Spec Kit + Claude Code)
+  # Starter kun med profilen "dev":  docker compose --profile dev up -d app
   app:
+    profiles: [dev]
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -11,34 +14,14 @@ services:
       - ..:/workspace
       # Keep Claude Code login/settings across container rebuilds
       - claude_config:/home/dev/.claude
+    # Passwords hentes fra .env i roden (stien er relativ til denne fil)
+    env_file: ../.env
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_PORT=3306
-      - MYSQL_USER=team_user
-      - MYSQL_PASSWORD=team_password
-      - MYSQL_DATABASE=project_db
-    depends_on:
-      - db
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+    # Ingen depends_on: db, fordi en inkluderet fil ikke kan pege på services i compose.yaml (research R5)
     stdin_open: true
     tty: true
 
-  # MySQL Database Container - husk at fjerne for at gøre private - Kevin
-  db:
-    image: mysql:8.0
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: project_db
-      MYSQL_USER: team_user
-      MYSQL_PASSWORD: team_password
-    ports:
-      # Expose to localhost so Tableau Desktop can connect from your host machine - Template
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      # Automatically run startup scripts when the database initializes
-      - ../db-init:/docker-entrypoint-initdb.d
-
 volumes:
-  mysql_data:
   claude_config:
