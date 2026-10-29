@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test tests/unit"
+    "test": "node --test tests/unit/*.test.js"
   },
   "dependencies": {
     "express": "^4.22.3",

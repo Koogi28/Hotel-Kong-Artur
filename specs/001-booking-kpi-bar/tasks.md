@@ -76,11 +76,11 @@ Swagger UI. Ingen forretningslogik endnu.
 
 **Purpose**: Fælles fejlhåndtering og drikkedata, som US2 og US3 begge bruger.
 
-- [ ] T015 Opret `backend/src/services/errors.js` med klasserne `ValidationError(message, fields)`, `NotFoundError(message)` og `ConflictError(message)`. Udvid fejl-middlewaren i `backend/src/app.js`: `ValidationError` → `400 {"error", "fields"}`, `NotFoundError` → `404 {"error"}`, `ConflictError` → `409 {"error"}`, andre → 500
-- [ ] T016 [P] Opret `backend/src/repositories/roomTypeRepository.js` med `findByName(name)` og `findAll()` (returnerer `id, name, price_low, price_mid, price_high`)
-- [ ] T017 [P] Opret `backend/src/repositories/drinkRepository.js` med `findAll()` (`id, name, category, price`, sorteret efter category og name), `findById(id)` og `findAllWithRegisteredUnits()`, der returnerer `id, name, category, price, historical_units_sold` og `registered_units` (`COALESCE(SUM(bar_sale.quantity), 0)` via `LEFT JOIN ... GROUP BY drink.id`, så alle 30 kommer med)
-- [ ] T018 [P] Skriv `backend/tests/unit/barCalculations.test.js` for `withUnitsSold(rows)`: `units_sold = historical_units_sold + registered_units`, `registered_units` som streng/tal og 0 salg
-- [ ] T019 Opret `backend/src/services/barCalculations.js` med den rene funktion `withUnitsSold(rows)` og `toOre(price)` (`Math.round(Number(price) * 100)`, research R8), så T018 bliver grøn
+- [X] T015 Opret `backend/src/services/errors.js` med klasserne `ValidationError(message, fields)`, `NotFoundError(message)` og `ConflictError(message)`. Udvid fejl-middlewaren i `backend/src/app.js`: `ValidationError` → `400 {"error", "fields"}`, `NotFoundError` → `404 {"error"}`, `ConflictError` → `409 {"error"}`, andre → 500
+- [X] T016 [P] Opret `backend/src/repositories/roomTypeRepository.js` med `findByName(name)` og `findAll()` (returnerer `id, name, price_low, price_mid, price_high`)
+- [X] T017 [P] Opret `backend/src/repositories/drinkRepository.js` med `findAll()` (`id, name, category, price`, sorteret efter category og name), `findById(id)` og `findAllWithRegisteredUnits()`, der returnerer `id, name, category, price, historical_units_sold` og `registered_units` (`COALESCE(SUM(bar_sale.quantity), 0)` via `LEFT JOIN ... GROUP BY drink.id`, så alle 30 kommer med)
+- [X] T018 [P] Skriv `backend/tests/unit/barCalculations.test.js` for `withUnitsSold(rows)`: `units_sold = historical_units_sold + registered_units`, `registered_units` som streng/tal og 0 salg
+- [X] T019 Opret `backend/src/services/barCalculations.js` med den rene funktion `withUnitsSold(rows)` og `toOre(price)` (`Math.round(Number(price) * 100)`, research R8), så T018 bliver grøn
 
 **Checkpoint**: Fundamentet er klar. US1, US2 og US3 kan begynde.
 

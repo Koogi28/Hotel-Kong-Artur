@@ -5,6 +5,7 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yaml');
 const routes = require('./routes');
+const { ValidationError, NotFoundError, ConflictError } = require('./services/errors');
 
 // OpenAPI-kontrakten findes kun ét sted: specs/.../contracts/openapi.yaml (plan: én kilde).
 // I Docker kopieres den til /app/openapi.yaml, og stien gives via OPENAPI_PATH.
@@ -26,9 +27,19 @@ app.use('/api', (req, res) => {
 
 // Fejlhåndtering: alle fejl sendes som JSON.
 // Express kender en fejl-middleware på, at den har fire parametre, så `next` skal stå der.
+// Fejlklasserne fra services/errors.js bliver til 400/404/409. Alt andet er 500.
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'Body er ikke gyldig JSON' });
+  }
+  if (err instanceof ValidationError) {
+    return res.status(400).json({ error: err.message, fields: err.fields });
+  }
+  if (err instanceof NotFoundError) {
+    return res.status(404).json({ error: err.message });
+  }
+  if (err instanceof ConflictError) {
+    return res.status(409).json({ error: err.message });
   }
   console.error(err);
   res.status(500).json({ error: 'Intern fejl' });
