@@ -107,19 +107,19 @@ PUT/DELETE → 409.
   - `totalPrice(perNight, nights)`
   - `isValidDate(s)`: `^\d{4}-\d{2}-\d{2}$` + `Date.UTC`-tjek af år/måned/dag
   - `validateBookingInput(body)`: returnerer en liste af fejlfelter efter data-model.md. `first_name`, `last_name`, `country` er "mangler, ikke tekst, tom efter trim eller > 100 tegn". `room_type` er "mangler" (eksistens tjekkes i service). `arrival_date` er "mangler, ikke `YYYY-MM-DD` eller ikke en rigtig dato". `nights` er "mangler, ikke et heltal eller uden for 1–365". `season`, `total_price` og `is_historical` i input ignoreres
-- [ ] T022 [P] [US1] Opret `backend/src/repositories/bookingRepository.js`. Alle forespørgsler joiner `room_type` og returnerer `room_type` som navn plus `is_historical` som boolean. Funktioner:
+- [X] T022 [P] [US1] Opret `backend/src/repositories/bookingRepository.js`. Alle forespørgsler joiner `room_type` og returnerer `room_type` som navn plus `is_historical` som boolean. Funktioner:
   - `findAll(search)`: uden `search` alle sorteret `id DESC`. Med `search` `WHERE first_name LIKE ? OR last_name LIKE ? OR CONCAT(first_name,' ',last_name) LIKE ?` med `%search%`
   - `findById(id)`
   - `create({first_name, last_name, country, room_type_id, nights, season, total_price, arrival_date})` med `is_historical = FALSE`. Returnerer id
   - `update(id, {...})`
   - `remove(id)`
-- [ ] T023 [US1] Opret `backend/src/services/bookingService.js`:
+- [X] T023 [US1] Opret `backend/src/services/bookingService.js`:
   - `list(search)`: `search` trimmes, max 100 tegn
   - `get(id)`: ugyldigt id (ikke et positivt heltal) → `ValidationError(['id'])`. Ukendt → `NotFoundError('Booking {id} findes ikke')`
   - `create(body)`: kald `validateBookingInput` og `roomTypeRepository.findByName`. Ukendt `room_type` lægges i `fields`, og alle fejl samles i én `ValidationError` med dansk besked, der nævner felterne. Udregn sæson og pris med `bookingRules`, og gem
   - `update(id, body)`: findes ikke → 404, `is_historical` → `ConflictError('Booking {id} er historisk og kan ikke ændres eller slettes')`. Ellers valider og genberegn som `create`
   - `remove(id)`: samme 404/409-regler
-- [ ] T024 [US1] Opret `backend/src/controllers/bookingController.js` og routes i `backend/src/routes.js`:
+- [X] T024 [US1] Opret `backend/src/controllers/bookingController.js` og routes i `backend/src/routes.js`:
   - `GET /api/bookings?search=` → 200 array
   - `GET /api/bookings/:id` → 200
   - `POST /api/bookings` → 201 + `Location: /api/bookings/{id}` + booking
