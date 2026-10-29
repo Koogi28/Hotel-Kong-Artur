@@ -1,18 +1,19 @@
 openapi: 3.0.3
 info:
   title: Hotel Kong Arthur API
-  version: 1.0.0
+  version: 2.0.0
   description: |
     REST API til bookinger, nøgletal og barsalg (feature 001-booking-kpi-bar).
     Alle nøgletal beregnes ud fra databasen ved hvert kald. Beløb er i DKK.
-    Frontend og Tableau bruger kun dette API. Tableau henter færdigberegnede nøgletal som CSV under /api/export.
+    Frontend og Tableau bruger kun dette API. Tableau Desktop henter nøgletallene som JSON
+    med REST API Connector (research R7). Alle nøgletalssvar er flade: et objekt (JSONPath `$`)
+    eller et array af objekter (JSONPath `$[*]`) uden nestede objekter.
 servers:
   - url: http://localhost:3000
 tags:
   - name: Bookinger
   - name: Nøgletal
   - name: Bar
-  - name: Eksport
   - name: Drift
 
 paths:
@@ -160,16 +161,34 @@ paths:
               schema: { $ref: '#/components/schemas/Occupancy' }
         '400': { $ref: '#/components/responses/ValidationError' }
 
+  /api/kpi/occupancy/nights:
+    get:
+      tags: [Nøgletal]
+      summary: Belægningsgrad pr. nat (FR-018, FR-021)
+      description: |
+        Én række for hver nat fra den tidligste til den seneste nat, der er dækket af en booking
+        med ankomstdato. Tomt array, hvis der ingen sådanne bookinger er. Til Tableau: JSONPath `$[*]`.
+      responses:
+        '200':
+          description: Belægning pr. nat, sorteret efter dato
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Occupancy' }
+
   /api/kpi/top-drinks:
     get:
       tags: [Nøgletal]
       summary: Gruppens nøgletal – mest solgte kaffe og cocktail i enheder (FR-019)
       responses:
         '200':
-          description: Topdrinks pr. kategori (flere ved uafgjort)
+          description: Én række pr. topdrink pr. kategori (flere ved uafgjort)
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/TopDrinks' }
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TopDrink' }
 
   /api/bar/drinks:
     get:
@@ -240,92 +259,6 @@ paths:
                 maxItems: 2
                 items: { $ref: '#/components/schemas/CategoryShare' }
 
-  # CSV-eksport til Tableau Public. Hver fil indeholder tal, som backenden har beregnet
-  # med de samme services som JSON-nøgletallene; Tableau skal kun vise dem (research R7).
-  /api/export/kpi-totals.csv:
-    get:
-      tags: [Eksport]
-      summary: Samlede nøgletal som CSV (FR-016, FR-024, FR-021, FR-027)
-      responses:
-        '200':
-          description: |
-            Én række pr. nøgletal. Header: metric,value
-            metric ∈ booking_revenue_total, booking_count, bar_units_sold, bar_revenue
-          content:
-            text/csv:
-              schema: { type: string }
-
-  /api/export/revenue-by-country.csv:
-    get:
-      tags: [Eksport]
-      summary: Indtjening pr. gæsteland som CSV (FR-017, FR-021)
-      responses:
-        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
-
-  /api/export/revenue-by-room-type.csv:
-    get:
-      tags: [Eksport]
-      summary: Indtjening pr. værelsestype som CSV (FR-017, FR-021)
-      responses:
-        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
-
-  /api/export/revenue-by-season.csv:
-    get:
-      tags: [Eksport]
-      summary: Indtjening pr. sæson som CSV (FR-017, FR-021)
-      responses:
-        '200': { $ref: '#/components/responses/RevenueGroupsCsv' }
-
-  /api/export/occupancy.csv:
-    get:
-      tags: [Eksport]
-      summary: Belægning pr. nat som CSV (FR-018, FR-021)
-      description: Én række for hver nat fra den tidligste til den seneste nat, der er dækket af en booking med ankomstdato. Kun header, hvis der ingen sådanne bookinger er.
-      responses:
-        '200':
-          description: |
-            Header: date,booked_rooms,capacity,occupancy_percent
-          content:
-            text/csv:
-              schema: { type: string }
-
-  /api/export/top-drinks.csv:
-    get:
-      tags: [Eksport]
-      summary: Mest solgte kaffe og cocktail som CSV (FR-019, FR-021)
-      responses:
-        '200':
-          description: |
-            Én række pr. topdrink (flere ved uafgjort). Header: category,name,units_sold
-          content:
-            text/csv:
-              schema: { type: string }
-
-  /api/export/revenue-by-drink.csv:
-    get:
-      tags: [Eksport]
-      summary: Enheder og omsætning pr. drikkevare som CSV (FR-025, FR-027)
-      responses:
-        '200':
-          description: |
-            Én række pr. drikkevare (30). units_sold = historical_units + registered_units.
-            Header: drink_id,name,category,price,historical_units,registered_units,units_sold,revenue
-          content:
-            text/csv:
-              schema: { type: string }
-
-  /api/export/bar-category-split.csv:
-    get:
-      tags: [Eksport]
-      summary: Omsætningsfordeling kaffe/cocktail som CSV (FR-026, FR-027)
-      responses:
-        '200':
-          description: |
-            To rækker, percent summerer til 100. Header: category,units_sold,revenue,percent
-          content:
-            text/csv:
-              schema: { type: string }
-
 components:
   parameters:
     BookingId:
@@ -355,12 +288,6 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
           example: { error: 'Booking 17 er historisk og kan ikke ændres eller slettes' }
-    RevenueGroupsCsv:
-      description: |
-        Én række pr. gruppe, sorteret efter indtjening (faldende). Header: key,revenue,booking_count
-      content:
-        text/csv:
-          schema: { type: string }
     RevenueGroups:
       description: Én række pr. gruppe, sorteret efter indtjening (faldende). Summen af `revenue` er lig den samlede indtjening.
       content:
@@ -456,21 +383,11 @@ components:
           description: booked_rooms / capacity × 100, afrundet til 1 decimal
           example: 0.5
 
-    TopDrinks:
+    TopDrink:
       type: object
-      required: [coffee, cocktail]
+      required: [category, drink_id, name, units_sold]
       properties:
-        coffee:
-          type: array
-          items: { $ref: '#/components/schemas/DrinkUnits' }
-        cocktail:
-          type: array
-          items: { $ref: '#/components/schemas/DrinkUnits' }
-
-    DrinkUnits:
-      type: object
-      required: [drink_id, name, units_sold]
-      properties:
+        category: { $ref: '#/components/schemas/Category' }
         drink_id: { type: integer }
         name: { type: string, example: Espresso }
         units_sold:
@@ -519,19 +436,28 @@ components:
 
     DrinkRevenue:
       type: object
-      required: [drink_id, name, category, price, units_sold, revenue]
+      required: [drink_id, name, category, price, historical_units, registered_units, units_sold, revenue]
       properties:
         drink_id: { type: integer }
         name: { type: string }
         category: { $ref: '#/components/schemas/Category' }
         price: { type: number }
-        units_sold: { type: integer }
+        historical_units:
+          type: integer
+          description: Units Sold fra datafilen
+        registered_units:
+          type: integer
+          description: Sum af registrerede salg (bar_sale)
+        units_sold:
+          type: integer
+          description: historical_units + registered_units
         revenue: { type: number }
 
     CategoryShare:
       type: object
-      required: [category, revenue, percent]
+      required: [category, units_sold, revenue, percent]
       properties:
         category: { $ref: '#/components/schemas/Category' }
+        units_sold: { type: integer }
         revenue: { type: number, example: 7104755.43 }
         percent: { type: number, example: 52.83 }

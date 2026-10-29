@@ -11,8 +11,9 @@ omsætning og belægning og registrering af barsalg. Backenden er Node.js 20 + E
 (controllers → services → repositories) mod MySQL 8.0. Sæson, pris og alle nøgletal beregnes i
 forretningslaget ved hvert kald. Databasen seedes én gang fra ITAKEA/hoteldata (1000 historiske
 bookinger og 30 drinks) via `db-init/*.sql`. API'et beskrives i
-[contracts/openapi.yaml](contracts/openapi.yaml) og serveres i Swagger UI. Tableau Public
-henter færdigberegnede nøgletal via CSV-eksport-endpoints i samme API (research R7). `docker compose up` starter
+[contracts/openapi.yaml](contracts/openapi.yaml) og serveres i Swagger UI. Tableau Desktop
+henter færdigberegnede nøgletal som JSON direkte fra de samme endpoints med REST API Connector
+(research R7). `docker compose up` starter
 `db` og `backend`. Dev-containeren ligger bag profilen `dev`. Frontenden (ren HTML/CSS/JS i
 `backend/public`) bygges i uge 2.
 
@@ -34,7 +35,7 @@ og nyere Node lokalt.
 End-to-end manuelt via [quickstart.md](quickstart.md) og Swagger UI.
 
 **Target Platform**: Docker (Linux-containere) på gruppens Windows/macOS-maskiner. Browser og
-Tableau Public på værten.
+Tableau Desktop 2023.3+ (gruppen bruger 2026.3.0) med REST API Connector på værten.
 
 **Project Type**: Web-service (REST API) med statisk frontend serveret af samme Express-app
 
@@ -45,8 +46,8 @@ i hukommelsen pr. kald på < 100 ms. SC-001/SC-003 handler om brugerens tid, ikk
 (princip II). Ingen gemte nøgletal (princip V). Passwords kun i `.env` (princip XII). Ét
 `docker compose up` (princip IX).
 
-**Scale/Scope**: 3 brugerroller uden login, 4 tabeller, 25 endpoints (inkl. 8 KPI-CSV-eksporter
-og health), 1 hotel med 214 værelser
+**Scale/Scope**: 3 brugerroller uden login, 4 tabeller, 18 endpoints (inkl. health), 1 hotel
+med 214 værelser
 
 Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](research.md).
 
@@ -58,8 +59,8 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 |---|---------|--------|-------------------------------|
 | I | Simpelt frem for smart | ✅ | 4 runtime-biblioteker, hver med begrundelse (tabel nedenfor). Ingen ORM, intet dato-/xlsx-/CSV-/test-bibliotek |
 | II | 3-lagsarkitektur | ✅ | `controllers/` → `services/` → `repositories/`. SQL kun i repositories. Controllers kun HTTP ↔ service |
-| III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 500 (uventet fejl), 503 (health) og `text/csv` (eksport). Se Complexity Tracking |
-| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau bruger API'et (CSV-endpoints), ingen DB-genvej. DB-porten udstilles ikke |
+| III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 500 (uventet fejl) og 503 (health). Se Complexity Tracking |
+| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau henter JSON fra de samme endpoints (REST API Connector), ingen DB-genvej. DB-porten udstilles ikke |
 | V | Databasen er sandheden | ✅ | Seed kun ved første opstart. Ingen nøgletalskolonner. Alle KPI'er beregnes pr. kald |
 | VI | Ankomstdato + nætter | ✅ | Ny booking kræver `arrival_date` + `nights ≥ 1`. Sæson/pris kan ikke indtastes. Historiske uden datoer (DB-CHECK), PUT/DELETE → 409 |
 | VII | Kapacitet 214 | ✅ | Belægning = bookede værelser pr. nat ÷ 214, kun bookinger med dato, beregnet i `kpiCalculations.js`. Intet kapacitetstjek ved oprettelse: 214 er hotellets samlede kapacitet uden fordeling pr. værelsestype og bruges kun til belægningsgraden (research R9). Hver booking tæller som ét værelse (FR-013) |
@@ -130,7 +131,6 @@ backend/
 │   │   ├── bookingController.js
 │   │   ├── kpiController.js
 │   │   ├── barController.js
-│   │   ├── exportController.js   # sætter text/csv og kalder services
 │   │   └── healthController.js
 │   ├── services/
 │   │   ├── bookingService.js     # validering, sæson/pris, 404/409-regler
@@ -139,8 +139,6 @@ backend/
 │   │   ├── kpiCalculations.js    # rene funktioner: revenue, groupBy, occupancy, topDrinks
 │   │   ├── barService.js
 │   │   ├── barCalculations.js    # rene funktioner: units, revenue (øre), categorySplit
-│   │   ├── exportService.js      # bygger CSV-rækker ud fra de andre services
-│   │   ├── csv.js                # ren funktion: rækker → CSV-tekst (escaping)
 │   │   ├── healthService.js      # kalder healthRepository.ping → ok/error
 │   │   └── errors.js             # ValidationError(fields), NotFoundError, ConflictError
 │   └── repositories/
@@ -153,8 +151,7 @@ backend/
     └── unit/
         ├── bookingRules.test.js
         ├── kpiCalculations.test.js
-        ├── barCalculations.test.js
-        └── csv.test.js
+        └── barCalculations.test.js
 ```
 
 **Structure Decision**: Én web-service i `backend/` med frontend i `backend/public` (ingen
@@ -163,12 +160,21 @@ separat frontend-projekt eller build-step). Lagene svarer 1:1 til mapperne `cont
 400/404/409 i én fejl-middleware i `app.js`, så controllers ikke indeholder statuslogik for
 fejl.
 
-`bookingRules.js`, `kpiCalculations.js`, `barCalculations.js` og `csv.js` ligger i `services/`
+`bookingRules.js`, `kpiCalculations.js` og `barCalculations.js` ligger i `services/`
 og **er** forretningslaget. Det er rene funktioner (data ind, resultat ud) uden SQL og HTTP. De
 `*Service.js`-filer i samme mappe henter rækker fra repositories og kalder de rene funktioner.
 Der er stadig præcis tre lag. Opdelingen gør, at sæson, pris og nøgletal kan unit-testes uden
-database (princip XII). `exportService.js` kalder `kpiService`/`barService` og formaterer kun
-resultatet som CSV, så Tableau-tallene ikke beregnes et andet sted (research R7).
+database (princip XII). Tableau læser de samme JSON-svar som frontenden, så Tableau-tallene
+ikke beregnes et andet sted (research R7).
+
+### Tableau (research R7)
+
+Tableau Desktop forbinder med **REST API Connector** (Tableau Exchange, kræver 2023.3+) til
+`http://localhost:3000/api/...` med HTTP GET. Flade arrays læses med JSONPath `$[*]`, og flade
+objekter med `$`. Connectoren laver udtræk, så nye bookinger og barsalg vises efter
+*Data → Refresh* (princip V). Alle nøgletalssvar er flade, så Tableau ikke skal folde nestede
+felter ud. Tableau forbinder ikke direkte til MySQL (princip IV), og `db` har ingen port på
+værten.
 
 Backend-imaget bygges med repo-roden som context, så
 `specs/001-booking-kpi-bar/contracts/openapi.yaml` kan kopieres ind som den eneste kopi af
@@ -189,5 +195,4 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 | III: statuskode **409** ud over 200/201/204/400/404 | PUT/DELETE på historisk booking skal afvises (FR-003). Bookingen findes og input er gyldigt, så hverken 400 eller 404 er korrekt | 400 ville sige "dit input er forkert", selvom det er ressourcen, der er låst. Receptionisten og Swagger-brugeren kunne ikke skelne fejlene |
 | III: statuskode **500** ved uventede fejl | Fejl-middlewaren skal svare på fejl, der ikke er brugerens skyld (fx kodefejl eller tabt DB-forbindelse midt i et kald). Svaret er stadig JSON: `{"error": "Intern fejl"}` | 400 eller 404 ville fejlagtigt give brugeren skylden. Express' standardsvar er HTML og bryder kravet om JSON-fejl |
 | III: statuskode **503** på `/api/health` | Docker-healthcheck og drift skal kunne se, at DB er nede | 200 med `"status":"error"` ville få Docker til at melde backend sund |
-| III: **`text/csv`** på `/api/export/*.csv` | Tableau Public kan ikke læse fra MySQL, og dens Web Data Connector er markeret som udfaset (afprøvet 28/10, research R7). CSV-tekstfil er den simpleste stabile vej via API'et (FR-021, FR-027, princip IV). OData er en mulig forbedring i uge 2 | JSON-endpoints: Tableau Public læser ikke JSON fra en URL og kræver fil-download alligevel. WDC: udfaset. CSV er fladere og enklere i Tableau. CSV'erne indeholder færdigberegnede nøgletal (ikke rå rækker), så Tableau ikke beregner noget selv. Fejl fra eksport-endpoints er stadig JSON |
 | `scripts/generate-seed.js` (kode uden for backend) | 1030 INSERT-rækker skal laves korrekt én gang, med Müller-rettelsen (research R2, R3) | Håndskrevet SQL giver tastefejl. `LOAD DATA` kræver ekstra MySQL-opsætning og retter ikke tegnfejlen |

@@ -142,9 +142,71 @@ variabelnavne bruges af MySQL-imaget og backend.
 **Bemærk**: De nuværende passwords (`team_password`, `root_password`) står i Git-historikken.
 De må ikke genbruges i `.env`.
 
-## R7. Tableau Public og datatilgang
+## R7. Tableau og datatilgang
 
-**Fund**:
+**Beslutning (ændret 29/10)**: Tableau **Desktop** henter nøgletallene direkte fra REST API'et
+som JSON med Tableaus **REST API Connector** fra Tableau Exchange. Det er **plan A**.
+CSV-eksport er fravalgt (se nedenfor). Den første beslutning (CSV-eksport til Tableau Public)
+og testen, der førte til den, står under *Baggrund*.
+
+**Opsætning**: Tableau Desktop 2026.3.0 (20263.26.1022.1645). REST API Connector kræver
+Desktop 2023.3 eller nyere. Den henter JSON via HTTP GET og udpeger rækkerne med en JSONPath:
+
+| Svar fra API'et | JSONPath | Rækker i Tableau |
+|-----------------|----------|------------------|
+| Fladt array, fx `kpi/revenue/by-country` | `$[*]` | én pr. element |
+| Fladt objekt, fx `kpi/revenue/total` | `$` | én |
+
+Connectoren laver kun udtræk (extract). Nye tal vises, når man vælger *Data → Refresh*. Det
+passer med princip V ("live" = synligt, når man opdaterer).
+
+**Afprøvet 29/10** mod `GET /api/bookings` med JSONPath `$[*]`: 1000 rækker hentet. Nye
+bookinger kom med efter *Data → Refresh* (1000 → 1002) og forsvandt igen efter `DELETE`.
+
+**Endpoints til Tableau** (alle JSON, alle flade, ingen nestede objekter):
+
+| Endpoint | JSONPath | Indhold (én række pr.) |
+|----------|----------|------------------------|
+| `kpi/revenue/total` | `$` | `total_revenue`, `booking_count` |
+| `kpi/revenue/by-country`, `by-room-type`, `by-season` | `$[*]` | gruppe: `key`, `revenue`, `booking_count` |
+| `kpi/occupancy/nights` | `$[*]` | nat: `date`, `booked_rooms`, `capacity`, `occupancy_percent` |
+| `kpi/top-drinks` | `$[*]` | topdrink: `category`, `drink_id`, `name`, `units_sold` (flere ved uafgjort) |
+| `bar/kpi/total` | `$` | `units_sold`, `revenue` |
+| `bar/kpi/revenue-by-drink` | `$[*]` | drikkevare: historiske + registrerede enheder, i alt og omsætning |
+| `bar/kpi/category-split` | `$[*]` | kategori: `units_sold`, `revenue`, `percent` |
+
+Alt, hvad de tidligere CSV-filer indeholdt, findes nu som JSON. `kpi/occupancy/nights` er ny
+og dækker samme interval som `occupancy.csv`: hver nat fra den tidligste til den seneste nat,
+der er dækket af en booking med ankomstdato. `kpi/top-drinks` er gjort flad (før
+`{coffee: [...], cocktail: [...]}`), og `revenue-by-drink`/`category-split` har fået de felter,
+som kun CSV'erne havde.
+
+**Begrundelse**:
+- *Nøgletal i backenden, ikke i Tableau*: Tableau får færdigberegnede nøgletal og viser dem.
+  Hvis Tableau fik rå bookingrækker og selv lavede `SUM`/`GROUP BY`, ville nøgletallene være
+  beregnet i Tableau. Det strider mod princip II og SC-007, og to implementeringer kan give
+  forskellige tal.
+- *Én kilde*: Tableau, frontend og Swagger UI bruger de samme JSON-endpoints. Der er ingen
+  ekstra `exportService` eller CSV-formattering, der kan give andre tal end JSON.
+- *Flade svar*: Med ét niveau kan hvert endpoint læses med `$` eller `$[*]` uden at folde
+  nestede felter ud i Tableau.
+- *Live*: Hvert endpoint beregnes ved hvert kald (princip V), og *Refresh* henter nye tal.
+
+**CSV-eksport er fravalgt**, fordi:
+- Den kun var nødvendig, så længe vi brugte Tableau Public, som ikke kan læse JSON fra en URL.
+- Den krævede et ekstra lag (`exportService`, `csv.js`, 8 endpoints), som gentog JSON-svarene.
+- "Live" krævede, at filerne blev hentet ned igen med browser eller `curl` før hver *Refresh*.
+  Med REST API Connector henter Tableau selv.
+- `text/csv` var en begrundet afvigelse fra princip III (JSON). Den afvigelse forsvinder.
+
+**Direkte MySQL-forbindelse fravælges bevidst**: Tableau Desktop kan forbinde direkte til
+MySQL, men det gør vi ikke. Princip IV kræver, at Tableau henter data via det samme API som
+frontenden, og nøgletallene ville så skulle beregnes igen i Tableau. Desuden har `db` ingen åben
+port på værten (R5), så forbindelsen ville kræve, at vi udstillede databasen.
+
+**Baggrund: Tableau Public (første beslutning, 28/10)**
+
+*Fund*:
 - Tableau Public kan ikke forbinde til MySQL (krav fra gruppen) og forbinder til filer
   (tekst/CSV, Excel, JSON m.fl.).
 - Web Data Connector 2.x blev markeret som udfaset i Tableau 2023.1 og skulle udgå i 2025.
@@ -152,65 +214,26 @@ De må ikke genbruges i `.env`.
   Desktop, Tableau Prep og Tableau Server. Tableau Public nævnes ikke. Desuden er WDC 3.0
   kun til udtræk (extract), og GitHub-repoet med WDC 3.0-ressourcerne er markeret som udfaset.
 
-**Afprøvet 28/10** (Tableau Public **[VERSION]**):
+*Afprøvet 28/10* (Tableau Public, version ikke noteret):
 - Under *Connect* findes bl.a. **Text file**, **JSON file**, **OData** og
   **"Web Data Connector (deprecated)"** (WDC 2.x).
-- **WDC findes altså i Tableau Public, men er markeret som udfaset.** Det retter fundet ovenfor:
-  manglen er ikke, at WDC er utilgængelig, men at den er på vej ud.
+- WDC findes altså i Tableau Public, men er markeret som udfaset.
 - **OData-test** mod den offentlige Northwind-tjeneste: virker. 77 rækker blev hentet direkte
   via URL.
 - **CSV-test**: virker. Decimaler læses korrekt (decimalpunktum), og *Refresh* (F5) viser
   ændrede tal, når filen er overskrevet.
 
-**Beslutning**: CSV-eksport er **plan A**. WDC fravælges, fordi den er udfaset. Ny kode bør ikke
-bygge på en connector, der er på vej ud. API'et får CSV-eksport-endpoints, som Tableau Public
-åbner som tekstfil. **Hver CSV indeholder færdigberegnede nøgletal, ikke rå rækker**:
+Ud fra testen blev CSV-eksport valgt som plan A for Tableau Public, med OData som mulig
+forbedring. **Hvorfor beslutningen er ændret**: Gruppen har skiftet til Tableau Desktop, hvor
+REST API Connector kan læse JSON direkte fra API'et. Så er der ikke længere brug for CSV-filer
+som mellemled, og OData (nyt format og nye endpoints) er heller ikke nødvendigt.
 
-| Endpoint | Svarer til JSON | Indhold (én række pr.) |
-|----------|-----------------|------------------------|
-| `kpi-totals.csv` | `kpi/revenue/total`, `bar/kpi/total` | nøgletal (`metric,value`): bookingomsætning, antal bookinger, barens enheder og omsætning |
-| `revenue-by-country.csv` | `kpi/revenue/by-country` | land |
-| `revenue-by-room-type.csv` | `kpi/revenue/by-room-type` | værelsestype |
-| `revenue-by-season.csv` | `kpi/revenue/by-season` | sæson |
-| `occupancy.csv` | `kpi/occupancy` | nat (bookede værelser, 214, %) |
-| `top-drinks.csv` | `kpi/top-drinks` | topdrink pr. kategori (flere ved uafgjort) |
-| `revenue-by-drink.csv` | `bar/kpi/revenue-by-drink` | drikkevare: historiske + registrerede enheder, i alt og omsætning |
-| `bar-category-split.csv` | `bar/kpi/category-split` | kategori (enheder, omsætning, %) |
-
-Alle ligger under `/api/export/`.
-
-**Begrundelse**:
-- *Nøgletal i backenden, ikke i Tableau*: Hvis Tableau fik rå bookingrækker og selv lavede
-  `SUM`/`GROUP BY`, ville nøgletallene være beregnet i Tableau. Det strider mod princip II
-  (beregninger i forretningslaget) og SC-007, og to implementeringer kan give forskellige tal.
-  Med KPI-CSV'er viser Tableau kun tal, som backenden har beregnet, og hvert mærke i dashboardet
-  svarer til én række. Den rå `bookings.csv` er derfor fravalgt.
-- *Ingen dubleret logik*: `exportService` kalder de samme funktioner i `kpiService` og
-  `barService` som JSON-controllerne. `csv.js` formaterer kun rækker til tekst. CSV og JSON kan
-  derfor ikke vise forskellige tal.
-- *Live*: Hver CSV beregnes ved hvert kald (princip V). `revenue-by-drink.csv`,
-  `top-drinks.csv`, `bar-category-split.csv` og `kpi-totals.csv` bruger historiske enheder plus
-  alle registrerede `bar_sale`, så Helenes nye salg kommer med i Tableau næste gang filen hentes.
-- CSV virker i alle Tableau-udgaver uden ekstra værktøj, og endpoints er dokumenteret i
-  OpenAPI (princip IV).
-- *Gruppevalg*: Alternativet er rå rækker, hvor Tableau selv aggregerer. Det giver mere frihed
-  i dashboardet, men nøgletallene beregnes så uden for backenden. Vi vælger KPI-CSV'erne.
-  Vælger gruppen om, skal det begrundes her.
-**"Live" i Tableau**: Efter nye bookinger eller barsalg hentes CSV-filerne igen (browser eller
-`curl -o revenue-by-country.csv ...`), filen overskrives samme sted, og man vælger *Data → Refresh* i
-Tableau Public.
-**Mulig forbedring i uge 2: OData.** Testen viser, at Tableau Public kan læse OData direkte
-fra en URL. Hvis API'et udstiller nøgletallene som OData-feeds, kan Tableau læse direkte fra
-REST API'et uden at hente filer ned først, og *Refresh* henter så nye tal. Det kræver nye
-endpoints i OData-format (`$metadata` og JSON-svar efter OData-standarden), og det skal
-afklares, om det kan laves uden nyt bibliotek (princip I). Kontrakten skal opdateres i samme
-commit (princip IV). Indtil da er CSV plan A.
-**Alternativer**: (a) WDC 2.x. Den findes i Tableau Public, men er markeret som udfaset og derfor
-afvist. (b) WDC 3.0. Det er afvist, fordi Tableau Public ikke er dokumenteret som understøttet,
-og det kræver TACO Toolkit (ny afhængighed, i strid med princip I). (c) JSON-filer. Tableau kan
-læse JSON, men flade CSV-tabeller er enklere at modellere. (d) Google Sheets som mellemled. Det
-er afvist, fordi det er en genvej uden om API'et og ikke "live". (e) OData, se ovenfor. Det er
-ikke afvist, men udskudt til uge 2.
+**Alternativer**: (a) CSV-eksport. Fravalgt, se ovenfor. (b) Direkte MySQL-forbindelse.
+Fravalgt, se ovenfor. (c) WDC 2.x. Udfaset og derfor afvist. (d) WDC 3.0. Det er afvist, fordi
+det kræver TACO Toolkit (ny afhængighed, i strid med princip I), og REST API Connector løser
+det samme uden egen kode. (e) OData. Det er ikke længere nødvendigt, fordi Tableau Desktop
+læser almindelig JSON. (f) JSON-filer downloadet til disk. Det er afvist, fordi REST API
+Connector henter direkte fra URL'en.
 
 Kilder: [WDC deprecated in 2023.1 (Tableau KB)](https://kb.tableau.com/articles/en_US/Issue/web-data-connectors-deprecated-in-2023-1-release),
 [Connectors built with the WDC 3.0 SDK (Tableau Help)](https://help.tableau.com/current/pro/desktop/en-us/examples_wdc_connector_sdk.htm),
@@ -240,7 +263,7 @@ der kan unit-testes.
 |------|------------|-------------|
 | Historisk booking ved PUT/DELETE | `409 Conflict` med JSON-fejl | FR-003 + edge case. 409 skelner "findes, men må ikke ændres" fra 400/404 |
 | Kapacitetstjek ved oprettelse | Ingen. Belægning kan i teorien overstige 100 % | Princip VII: hotellet har 214 værelser uden fast fordeling pr. værelsestype, og kapaciteten bruges kun til at beregne belægningsgraden. Der findes ikke data til at tjekke ledighed pr. type. (FR-013 betyder "hver booking optager ét værelse" og er ikke et kapacitetskrav.) |
-| Øvre grænse for nætter | 1–365 | Beskytter `occupancy.csv` mod absurde værdier. Kildedata har 1–10 |
+| Øvre grænse for nætter | 1–365 | Beskytter `kpi/occupancy/nights` mod absurde intervaller. Kildedata har 1–10 |
 | Øvre grænse for antal i barsalg | 1–1000 | Holder sig inden for `SMALLINT` og fanger tastefejl. Specen kræver kun ≥ 1 |
 | Søgning | `?search=` matcher for-, efter- og fulde navn (`LIKE %…%`). Kollationen `utf8mb4_0900_ai_ci` gør "muller" = "Müller" | FR-010 |
 | Lige mange solgte enheder | Alle drinks med maks.-antallet returneres pr. kategori | Edge case |

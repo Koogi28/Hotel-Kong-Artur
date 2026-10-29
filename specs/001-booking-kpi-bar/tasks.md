@@ -26,10 +26,12 @@ US3 → Polish. Frontend-tasks (`backend/public/`) er markeret **(uge 2)**.
 
 ## Lagregler (gælder alle tasks, princip II)
 
-- `controllers/`: kun HTTP ind/ud (læs params/body, kald service, sæt status, send JSON/CSV).
+- `controllers/`: kun HTTP ind/ud (læs params/body, kald service, sæt status, send JSON).
   Ingen SQL, ingen beregninger.
-- `services/`: validering, sæson, pris, nøgletal. Rene funktioner ligger i `*Rules.js`,
-  `*Calculations.js` og `csv.js`. `*Service.js` henter rækker fra repositories og kalder dem.
+- `services/`: validering, sæson, pris, nøgletal. Rene funktioner ligger i `*Rules.js` og
+  `*Calculations.js`. `*Service.js` henter rækker fra repositories og kalder dem.
+- Nøgletalssvar er flade (et objekt eller et array af objekter uden nestede felter), så
+  Tableau kan læse dem med JSONPath `$` eller `$[*]` (research R7).
 - `repositories/`: al SQL (`mysql2/promise`, parametriserede `?`-forespørgsler, ingen ORM).
 - Fejl kastes som `ValidationError(fields)` → 400, `NotFoundError` → 404 eller
   `ConflictError` → 409 fra `services/errors.js`. Én fejl-middleware oversætter dem.
@@ -66,7 +68,7 @@ Swagger UI. Ingen forretningslogik endnu.
   - `bar_sale(id INT UNSIGNED AUTO_INCREMENT PK, drink_id INT UNSIGNED NOT NULL FK → drink.id, quantity SMALLINT UNSIGNED NOT NULL, sold_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)` med `CHECK (quantity >= 1)`
 - [X] T012 [P] Opret `scripts/generate-seed.js` (Node, kun indbyggede moduler). Scriptet læser `scripts/source/international_names_with_rooms_1000.csv` og `scripts/source/drinks_menu_with_sales.csv` (komma, UTF-8, decimalpunktum) og skriver `db-init/02-seed.sql`. Indhold: en kommentar øverst (genereret af scriptet, kilde ITAKEA/hoteldata, `M�ller` → `Müller` i 54 rækker jf. research R2), `SET NAMES utf8mb4;`, 8 `room_type`-rækker med priserne fra FR-008, 1000 `booking`-rækker (`is_historical = TRUE`, `arrival_date = NULL`, `room_type_id` slås op via `(SELECT id FROM room_type WHERE name = ...)`, Days Rented → `nights`, Season → `season`, Price → `total_price`) og 30 `drink`-rækker (Units Sold → `historical_units_sold`). Strenge escapes for `'`. Scriptet skal fejle, hvis antallet ikke er 1000/30, eller hvis en værelsestype er ukendt. Det udskriver antal rettede navne
 - [X] T013 Kør `node scripts/generate-seed.js` og commit den genererede `db-init/02-seed.sql`. Kontrollér i filen: 1000 bookinger, 30 drinks, 54 × `Müller`, ingen `�` og prisen `91.40` for Cosmopolitan
-- [x] T014 Validér Setup: `cp .env.example .env` (udfyld), `docker compose down -v`, `docker compose up --build`. Kør derefter [quickstart.md](quickstart.md) trin 1 og 2: kun `db` + `backend` starter, `backend` venter på healthy `db`, `curl localhost:3000/api/health` → `{"status":"ok"}`, `/api-docs` viser alle 25 endpoints, og SQL-tjekket giver 1000/1000/1000, Cocktail 20/Coffee 10 og 54 Müller
+- [x] T014 Validér Setup: `cp .env.example .env` (udfyld), `docker compose down -v`, `docker compose up --build`. Kør derefter [quickstart.md](quickstart.md) trin 1 og 2: kun `db` + `backend` starter, `backend` venter på healthy `db`, `curl localhost:3000/api/health` → `{"status":"ok"}`, `/api-docs` viser alle 25 endpoints (nu 18, se R7), og SQL-tjekket giver 1000/1000/1000, Cocktail 20/Coffee 10 og 54 Müller
 
 **Checkpoint**: Systemet starter med ét `docker compose up`, databasen er seedet, og Swagger UI kører.
 
@@ -136,7 +138,7 @@ PUT/DELETE → 409.
 ## Phase 4: User Story 2 – Live overblik over belægning og omsætning (P2)
 
 **Goal**: Administratoren ser samlet indtjening, fordelinger, belægning pr. nat og mest solgte
-kaffe/cocktail. Tableau henter de samme tal som CSV.
+kaffe/cocktail. Tableau henter de samme tal som JSON via REST API Connector.
 
 **Independent Test**: [quickstart.md](quickstart.md) trin 5. Total 11234034, fordelinger
 summerer til totalen, belægning 0 → 0.5 % efter ny booking, Espresso 14656 / Whiskey Sour 3824.
@@ -148,24 +150,24 @@ summerer til totalen, belægning 0 → 0.5 % efter ny booking, Espresso 14656 / 
   - `revenueBy(rows, key)`: sorteret faldende, og summen er lig totalen
   - `occupancyForDate(stays, date)`: ankomst 6/12 + 3 nætter tæller 6., 7. og 8./12., men ikke 9./12. Månedsskifte 30/11 + 3. `booked_rooms / 214 × 100` afrundet til 1 decimal, 1 værelse → 0.5
   - `occupancyPerNight(stays)`: alle nætter fra tidligste til seneste, tom → `[]`
-  - `topDrinks(rows)`: én pr. kategori og alle ved uafgjort
-- [ ] T028 [P] [US2] Skriv `backend/tests/unit/csv.test.js` for `toCsv(columns, rows)`: header, komma, felter med `,` eller `"` eller linjeskift citeres, og `"` fordobles. `null` giver et tomt felt. Linjeskift er `\n`
+  - `topDrinks(rows)`: fladt array `[{category, drink_id, name, units_sold}]`, én pr. kategori og alle ved uafgjort
+- ~~T028~~ **Udgået (29/10)**: `csv.test.js` er ikke nødvendig, fordi CSV-eksport er fravalgt. Tableau læser JSON (research R7)
 
 ### Implementation for User Story 2
 
 - [ ] T029 [US2] Opret `backend/src/services/kpiCalculations.js` med de rene funktioner fra T027 og konstanten `CAPACITY = 214` (princip VII). Datoaritmetik i UTC (research R8), så T027 bliver grøn
-- [ ] T030 [P] [US2] Opret `backend/src/services/csv.js` med `toCsv(columns, rows)`, så T028 bliver grøn
+- ~~T030~~ **Udgået (29/10)**: `csv.js` er ikke nødvendig, fordi CSV-eksport er fravalgt (research R7)
 - [ ] T031 [US2] Udvid `backend/src/repositories/bookingRepository.js` med `findRevenueRows()` (`country, room_type`-navn, `season, total_price` for alle bookinger) og `findDatedStays()` (`arrival_date, nights` hvor `arrival_date IS NOT NULL`). Ingen `SUM` eller `GROUP BY` her, da nøgletal beregnes i services (princip V)
 - [ ] T032 [US2] Opret `backend/src/services/kpiService.js`:
   - `getTotal()` → `{total_revenue, booking_count}`
   - `getRevenueByCountry()`, `getRevenueByRoomType()`, `getRevenueBySeason()` → `[{key, revenue, booking_count}]`
   - `getOccupancy(date)`: ugyldig/manglende dato → `ValidationError(['date'])`. Returnerer `{date, booked_rooms, capacity, occupancy_percent}`
-  - `getOccupancyPerNight()`
-  - `getTopDrinks()`: `drinkRepository.findAllWithRegisteredUnits` → `withUnitsSold` → `topDrinks`, så historiske + nye salg tæller med. Returnerer `{coffee: [...], cocktail: [...]}`
+  - `getOccupancyPerNight()` → `[{date, booked_rooms, capacity, occupancy_percent}]` for hver nat fra den tidligste til den seneste dækkede nat, `[]` uden bookinger med ankomstdato
+  - `getTopDrinks()`: `drinkRepository.findAllWithRegisteredUnits` → `withUnitsSold` → `topDrinks`, så historiske + nye salg tæller med. Returnerer et fladt array `[{category, drink_id, name, units_sold}]`
 - [ ] T033 [US2] Opret `backend/src/controllers/kpiController.js` og routes: `GET /api/kpi/revenue/total`, `/api/kpi/revenue/by-country`, `/api/kpi/revenue/by-room-type`, `/api/kpi/revenue/by-season`, `/api/kpi/occupancy?date=` og `/api/kpi/top-drinks` efter kontrakten
-- [ ] T034 [US2] Opret `backend/src/services/exportService.js` og `backend/src/controllers/exportController.js` med routes for `GET /api/export/revenue-by-country.csv`, `revenue-by-room-type.csv` og `revenue-by-season.csv` (`key,revenue,booking_count`), `occupancy.csv` (`date,booked_rooms,capacity,occupancy_percent`) og `top-drinks.csv` (`category,name,units_sold`). `exportService` kalder **kun** `kpiService` og `csv.toCsv` og beregner intet selv (research R7). Controlleren sætter `Content-Type: text/csv; charset=utf-8`
+- [ ] T034 [US2] *(omskrevet 29/10, før: CSV-eksport)* Tilføj route `GET /api/kpi/occupancy/nights` i `backend/src/controllers/kpiController.js` og `backend/src/routes.js`, der kalder `kpiService.getOccupancyPerNight()` og svarer med et fladt array efter kontrakten. Tjek i Swagger UI, at alle `/api/kpi/*`-svar er flade (research R7)
 - [ ] T035 [US2] **(uge 2)** Opret `backend/public/overview.html` og `backend/public/js/overview.js`: samlet indtjening, tre fordelingstabeller, datovælger til belægning (vis %) og mest solgte kaffe/cocktail. Kun `fetch` mod `/api/kpi/*`. Link fra `backend/public/index.html`
-- [ ] T036 [US2] Validér US2 med [quickstart.md](quickstart.md) trin 5 inkl. "Live" (opret booking → tal ændres ved næste kald) og de tilsvarende CSV'er
+- [ ] T036 [US2] Validér US2 med [quickstart.md](quickstart.md) trin 5 inkl. "Live" (opret booking → tal ændres ved næste kald, også i `occupancy/nights`)
 
 **Checkpoint**: US1 og US2 virker hver for sig.
 
@@ -182,9 +184,9 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 ### Tests for User Story 3
 
 - [ ] T037 [P] [US3] Udvid `backend/tests/unit/barCalculations.test.js` med tests af:
-  - `revenueByDrink(rows)`: alle drinks med også 0 salg. Omsætning = enheder × pris regnet i øre, fx `69.10 × 2 = 138.20`
+  - `revenueByDrink(rows)`: alle drinks med også 0 salg, med felterne `historical_units`, `registered_units` og `units_sold`. Omsætning = enheder × pris regnet i øre, fx `69.10 × 2 = 138.20`
   - `barTotal(rows)` → `{units_sold, revenue}`
-  - `categorySplit(rows)`: Cocktail afrundes til 2 decimaler, Coffee = 100 − Cocktail, summen præcis 100, uden salg begge 0
+  - `categorySplit(rows)`: `[{category, units_sold, revenue, percent}]`. Cocktail afrundes til 2 decimaler, Coffee = 100 − Cocktail, summen præcis 100, uden salg begge 0
   - `validateSaleInput(body)`: `drink_id` mangler eller ikke et positivt heltal. `quantity` mangler, ikke et heltal eller uden for 1–1000
 
 ### Implementation for User Story 3
@@ -195,10 +197,10 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
   - `listDrinks()`
   - `registerSale(body)`: `validateSaleInput` og `drinkRepository.findById`. Ukendt drink → `ValidationError(['drink_id'])`. Returnerer det gemte salg
   - `getTotal()`, `getRevenueByDrink()`, `getCategorySplit()`: alle via `findAllWithRegisteredUnits` → `withUnitsSold` → beregning
-- [ ] T041 [US3] Opret `backend/src/controllers/barController.js` og routes: `GET /api/bar/drinks`, `POST /api/bar/sales` (201), `GET /api/bar/kpi/total`, `/api/bar/kpi/revenue-by-drink` og `/api/bar/kpi/category-split` efter kontrakten
-- [ ] T042 [US3] Udvid `backend/src/services/exportService.js` og `backend/src/controllers/exportController.js` med `GET /api/export/revenue-by-drink.csv` (`drink_id,name,category,price,historical_units,registered_units,units_sold,revenue`), `bar-category-split.csv` (`category,units_sold,revenue,percent`) og `kpi-totals.csv` (`metric,value` med `booking_revenue_total`, `booking_count`, `bar_units_sold`, `bar_revenue` fra `kpiService.getTotal` og `barService.getTotal`). Kun kald til services + `toCsv`
+- [ ] T041 [US3] Opret `backend/src/controllers/barController.js` og routes: `GET /api/bar/drinks`, `POST /api/bar/sales` (201), `GET /api/bar/kpi/total`, `/api/bar/kpi/revenue-by-drink` og `/api/bar/kpi/category-split` efter kontrakten. Svar er flade (R7)
+- ~~T042~~ **Udgået (29/10)**: Bar-CSV'erne er fravalgt. Felterne fra `revenue-by-drink.csv` og `bar-category-split.csv` ligger nu i JSON-svarene (T037/T038/T041), og `kpi-totals.csv` dækkes af `kpi/revenue/total` + `bar/kpi/total` (research R7)
 - [ ] T043 [US3] **(uge 2)** Opret `backend/public/bar.html` og `backend/public/js/bar.js`: drikkevarer grupperet i Kaffe/Cocktails som store knapper, antal (standard 1), "Registrér" (SC-003: under 15 sek.), visning af total, omsætning pr. drink og procentfordeling. Kun `fetch` mod `/api/bar/*`. Link fra `backend/public/index.html`
-- [ ] T044 [US3] Validér US3 med [quickstart.md](quickstart.md) trin 6 og trin 7 (Tableau: alle 8 CSV'er = JSON-tal, "live" efter nyt salg)
+- [ ] T044 [US3] Validér US3 med [quickstart.md](quickstart.md) trin 6 og trin 7 (Tableau Desktop via REST API Connector: alle KPI-endpoints giver samme tal som i Swagger UI, og nye tal vises efter tilføjet data → *Data → Refresh*)
 
 **Checkpoint**: Alle tre user stories virker.
 
@@ -209,8 +211,8 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - [ ] T045 [P] Opret `README.md` i roden: formål, `cp .env.example .env`, `docker compose up --build`, `docker compose down -v` første gang, URL'er (`/`, `/api-docs`), `npm test`, dev-container (`docker compose --profile dev up -d app`) og Tableau-flowet. Opdatér `db-init/README.md` med, hvordan `02-seed.sql` genskabes
 - [ ] T046 [P] Kontrollér, at hver route i `backend/src/routes.js` findes i `specs/001-booking-kpi-bar/contracts/openapi.yaml` med samme metode, sti, statuskoder og svarfelter, og omvendt (princip IV). Ret forskelle i samme commit
 - [ ] T047 Konstitutionstjek ([quickstart.md](quickstart.md) trin 8): SQL kun i `backend/src/repositories/`, ingen beregninger i `controllers/`, ingen hemmeligheder i trackede filer, kun de fire afhængigheder i `backend/package.json`
-- [ ] T048 Byg Tableau Public-dashboardet ud fra de 8 CSV'er (`tableau/`-mappen gitignores) med omsætning pr. land, værelsestype og sæson, belægning pr. nat, topdrinks, omsætning pr. drink og kategorifordeling. Tjek SC-007 mod JSON-tallene
-- [ ] T049 Kør hele [quickstart.md](quickstart.md) fra en tom volumen (`docker compose down -v`) og ret eventuelle afvigelser
+- [ ] T048 Byg Tableau Desktop-dashboardet med REST API Connector mod KPI-endpoints (JSONPath `$` / `$[*]`, se [quickstart.md](quickstart.md) trin 7) med omsætning pr. land, værelsestype og sæson, belægning pr. nat, topdrinks, omsætning pr. drink og kategorifordeling. Tjek SC-007 mod JSON-tallene i Swagger UI
+- [ ] T049 Kør hele [quickstart.md](quickstart.md) fra en tom volumen (`docker compose down -v`) og ret eventuelle afvigelser. Når frontenden findes (uge 2), mål også tidsmålene i browseren: en ny booking oprettes på under 2 minutter (SC-001), og et barsalg registreres på under 15 sekunder (SC-003)
 
 ---
 
@@ -228,14 +230,14 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - **Foundational (T015–T019)**: kræver Setup. Blokerer alle user stories
 - **US1 (T020–T026)**: kræver Foundational
 - **US2 (T027–T036)**: kræver Foundational. Bruger `bookingRepository` fra T022, så lav US1 først eller koordinér filen
-- **US3 (T037–T044)**: kræver Foundational. T042 (`kpi-totals.csv`) kræver `kpiService` fra T032
+- **US3 (T037–T044)**: kræver Foundational
 - **Polish (T045–T049)**: kræver de ønskede user stories
 
 ### User Story Dependencies
 
 - **US1 (P1)**: ingen afhængighed af andre stories
 - **US2 (P2)**: deler fil med US1 (`bookingRepository.js`), men kan testes alene på seed-data
-- **US3 (P3)**: uafhængig af US1. Kun `kpi-totals.csv` i T042 bruger US2's `kpiService`
+- **US3 (P3)**: uafhængig af US1 og US2
 
 ### Within Each User Story
 
@@ -246,7 +248,7 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - **Setup**: T002, T011 og T012 kan laves samtidig med backend-skelettet (T001–T007)
 - **Foundational**: T016, T017 og T018 parallelt
 - **US1**: T020 og T022 parallelt
-- **US2**: T027, T028 og T030 parallelt
+- **US2**: T027 kan skrives, mens T031 laves (T028 og T030 er udgået)
 - **US3**: T037 og T039 parallelt
 - **Efter Foundational**: US1, US2 og US3 kan fordeles på tre personer (se afhængigheder ovenfor)
 
@@ -281,8 +283,8 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 
 1. Setup + Foundational → fundament
 2. US1 → bookinger (MVP)
-3. US2 → nøgletal + Tableau-CSV'er
-4. US3 → barsalg + bar-CSV'er
+3. US2 → nøgletal (JSON, også til Tableau)
+4. US3 → barsalg + barens nøgletal (JSON, også til Tableau)
 5. Uge 2: frontend-tasks T025, T035 og T043
 6. Polish
 
