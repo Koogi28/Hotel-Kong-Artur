@@ -28,6 +28,9 @@ rå SQL), `swagger-ui-express` (Swagger UI på `/api-docs`), `yaml` (indlæser
 `db-init/01-schema.sql` + `02-seed.sql`
 
 **Testing**: `node --test` (unit-tests af rene funktioner i services, uden database).
+Scriptet er `"test": "node --test tests/unit/*.test.js"` og ikke `node --test tests/unit` som i
+T001, fordi Node 22+ ikke accepterer en mappe som argument. Mønsteret virker på Node 20 (Docker)
+og nyere Node lokalt.
 End-to-end manuelt via [quickstart.md](quickstart.md) og Swagger UI.
 
 **Target Platform**: Docker (Linux-containere) på gruppens Windows/macOS-maskiner. Browser og
