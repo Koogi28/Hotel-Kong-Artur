@@ -97,11 +97,11 @@ PUT/DELETE → 409.
 
 ### Tests for User Story 1
 
-- [ ] T020 [P] [US1] Skriv `backend/tests/unit/bookingRules.test.js`: `seasonForDate` for alle 12 måneder (jan, feb, nov → `low`; mar, apr, maj, sep, okt → `mid`; jun, jul, aug, dec → `high`), `pricePerNight` for alle 8 × 3 kombinationer fra FR-008, `totalPrice` (pr. nat × nætter), ankomst `2026-11-30` + 3 nætter → `low`, `isValidDate` (`2026-02-31`, `2026-13-01`, `26-1-1` og `2028-02-29` gyldig) samt `validateBookingInput` (alle seks felter mangler → seks felter i `fields`, `nights` 0/1.5/366/"3" afvist, navne over 100 tegn afvist, tom streng efter trim afvist)
+- [X] T020 [P] [US1] Skriv `backend/tests/unit/bookingRules.test.js`: `seasonForDate` for alle 12 måneder (jan, feb, nov → `low`; mar, apr, maj, sep, okt → `mid`; jun, jul, aug, dec → `high`), `pricePerNight` for alle 8 × 3 kombinationer fra FR-008, `totalPrice` (pr. nat × nætter), ankomst `2026-11-30` + 3 nætter → `low`, `isValidDate` (`2026-02-31`, `2026-13-01`, `26-1-1` og `2028-02-29` gyldig) samt `validateBookingInput` (alle seks felter mangler → seks felter i `fields`, `nights` 0/1.5/366/"3" afvist, navne over 100 tegn afvist, tom streng efter trim afvist)
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Opret `backend/src/services/bookingRules.js` med rene funktioner, så T020 bliver grøn:
+- [X] T021 [US1] Opret `backend/src/services/bookingRules.js` med rene funktioner, så T020 bliver grøn:
   - `seasonForDate(dateString)`, kun ud fra måneden (FR-007)
   - `pricePerNight(roomType, season)` med `price_low/mid/high`
   - `totalPrice(perNight, nights)`
