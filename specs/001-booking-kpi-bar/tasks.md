@@ -127,7 +127,7 @@ PUT/DELETE → 409.
   - `DELETE /api/bookings/:id` → 204 uden body
   - Svarformat som kontraktens `Booking`. Controlleren kalder kun `bookingService`
 - [ ] T025 [US1] **(uge 2)** Opret `backend/public/bookings.html`, `backend/public/js/bookings.js` og `backend/public/css/style.css`: formular (fornavn, efternavn, land, værelsestype som dropdown med de 8 typer, ankomstdato, nætter), liste med søgefelt, ret- og slet-knapper (skjult for historiske) og visning af `error` og `fields` fra 400/409. Kun `fetch` mod `/api/bookings` (FR-014). Link fra `backend/public/index.html`
-- [ ] T026 [US1] Validér US1 med [quickstart.md](quickstart.md) trin 3 (`npm test` grøn) og trin 4 (alle rækker i tabellen) via curl og Swagger UI (FR-015)
+- [X] T026 [US1] Validér US1 med [quickstart.md](quickstart.md) trin 3 (`npm test` grøn) og trin 4 (alle rækker i tabellen) via curl og Swagger UI (FR-015)
 
 **Checkpoint**: US1 virker alene. Det er MVP.
 
