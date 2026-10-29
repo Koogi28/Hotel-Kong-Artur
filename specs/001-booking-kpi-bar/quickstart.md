@@ -10,7 +10,7 @@ kildefilerne (se [research.md](research.md) R1).
 
 - Docker Desktop med Compose v2.20+ (kræves for `include`)
 - `curl` (Git Bash på Windows)
-- Tableau Public (kun for trin 7)
+- Tableau Desktop 2023.3+ med **REST API Connector** fra Tableau Exchange (kun for trin 7)
 
 ## 1. Start systemet
 
@@ -98,11 +98,13 @@ Kør på frisk startdata, dvs. før/efter oprettelse og sletning i trin 4:
 | `GET $API/kpi/revenue/by-country` / `by-room-type` / `by-season` | 20 / 8 / 3 rækker. Σ `revenue` = 11234034 i hver |
 | `GET $API/kpi/occupancy?date=2026-12-07` | `booked_rooms: 0`, `occupancy_percent: 0` (historiske tæller ikke) |
 | `GET $API/kpi/occupancy?date=2026-13-01` | `400` |
-| `GET $API/kpi/top-drinks` | coffee `[Espresso 14656]`, cocktail `[Whiskey Sour 3824]` |
+| `GET $API/kpi/occupancy/nights` | `[]` (ingen bookinger med ankomstdato endnu) |
+| `GET $API/kpi/top-drinks` | `[{category: "Coffee", name: "Espresso", units_sold: 14656, ...}, {category: "Cocktail", name: "Whiskey Sour", units_sold: 3824, ...}]` (fladt array) |
 
 **Live (US2-5, SC-004)**: Opret bookingen fra trin 4 igen og kald endpoints igen.
 `total_revenue` stiger med 3600, `Denmark` dukker op i `by-country`, og `occupancy?date=2026-12-07`
 giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedagen) er værdien 0.
+`occupancy/nights` giver nu 3 rækker (`2026-12-06`, `-07`, `-08`), hver med `booked_rooms: 1`.
 
 ## 6. Barsalg (US3)
 
@@ -117,31 +119,30 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 | `POST $API/bar/sales` med `quantity: 0` eller `-1` | `400`, `fields: ["quantity"]` |
 | `POST $API/bar/sales` med ukendt `drink_id` | `400`, `fields: ["drink_id"]` |
 
-## 7. Tableau Public (FR-021, FR-027, SC-007)
+## 7. Tableau Desktop (FR-021, FR-027, SC-007)
 
-```bash
-mkdir -p tableau && cd tableau
-for f in kpi-totals revenue-by-country revenue-by-room-type revenue-by-season \
-         occupancy top-drinks revenue-by-drink bar-category-split; do
-  curl -so $f.csv localhost:3000/api/export/$f.csv
-done
-```
+1. I Tableau Desktop: *Connect → REST API Connector* (installeret fra Tableau Exchange). Opret
+   én datakilde pr. endpoint med metoden GET og URL `http://localhost:3000/api/...`:
 
-1. I Tableau Public: *Connect → Text file →* hver CSV. Vis værdierne direkte (én række = ét
-   mærke). Tableau skal ikke selv beregne nøgletal (research R7).
-2. Sammenlign med JSON-endpoints (SC-007):
+   | Endpoint | JSONPath | Forventet på frisk startdata |
+   |----------|----------|------------------------------|
+   | `kpi/revenue/total` | `$` | 1 række: `total_revenue` 11234034, `booking_count` 1000 |
+   | `kpi/revenue/by-country` / `by-room-type` / `by-season` | `$[*]` | 20 / 8 / 3 rækker |
+   | `kpi/occupancy/nights` | `$[*]` | 0 rækker (ingen bookinger med ankomstdato endnu) |
+   | `kpi/top-drinks` | `$[*]` | 2 rækker: Espresso 14656, Whiskey Sour 3824 |
+   | `bar/kpi/total` | `$` | 1 række: `units_sold` 179958, `revenue` 13448640.34 |
+   | `bar/kpi/revenue-by-drink` | `$[*]` | 30 rækker |
+   | `bar/kpi/category-split` | `$[*]` | 2 rækker: Cocktail 52.83, Coffee 47.17 |
 
-   | CSV | Skal være lig |
-   |-----|---------------|
-   | `kpi-totals.csv` | `kpi/revenue/total` og `bar/kpi/total` hentet samtidig |
-   | `revenue-by-*.csv` | samme rækker som `kpi/revenue/by-*` |
-   | `top-drinks.csv` | `kpi/top-drinks` (på frisk startdata: Espresso 14656, Whiskey Sour 3824) |
-   | `revenue-by-drink.csv` | `bar/kpi/revenue-by-drink` |
-   | `bar-category-split.csv` | `bar/kpi/category-split` (på frisk startdata: Cocktail 52.83, Coffee 47.17) |
-
-3. "Live": Opret en booking og registrér et barsalg. Hent filerne igen til samme mappe og vælg
-   *Data → Refresh*. `kpi-totals.csv` og `revenue-by-country.csv` ændrer sig, og den solgte
-   drinks `units_sold` i `revenue-by-drink.csv` stiger, fordi historiske + nye salg er med.
+   Vis værdierne direkte (én række = ét mærke). Tableau skal ikke selv beregne nøgletal
+   (research R7).
+2. Sammenlign hvert tal i Tableau med det samme endpoint i Swagger UI eller med `curl` (SC-007).
+3. **Tilføj data → Refresh → nye tal vises** ("live", princip V):
+   - Opret bookingen fra trin 4 og registrér 2 × Espresso (trin 6).
+   - Vælg *Data → Refresh* for hver datakilde i Tableau.
+   - Forventet: `total_revenue` stiger med 3600, `Denmark` dukker op i `by-country`,
+     `occupancy/nights` får 3 rækker med `booked_rooms: 1`, og Espresso får `units_sold` 14658 i
+     `revenue-by-drink` og `top-drinks`.
 
 ## 8. Konstitutionstjek efter implementering
 
