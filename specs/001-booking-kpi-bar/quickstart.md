@@ -96,6 +96,7 @@ Kør på frisk startdata, dvs. før/efter oprettelse og sletning i trin 4:
 |------|-----------|
 | `GET $API/kpi/revenue/total` | `total_revenue: 11234034`, `booking_count: 1000` |
 | `GET $API/kpi/revenue/by-country` / `by-room-type` / `by-season` | 20 / 8 / 3 rækker. Σ `revenue` = 11234034 i hver |
+| `GET $API/kpi/revenue/by-room-type-season` | 24 rækker (8 × 3, også med `revenue: 0`). Σ `revenue` = 11234034 |
 | `GET $API/kpi/occupancy?date=2026-12-07` | `booked_rooms: 0`, `occupancy_percent: 0` (historiske tæller ikke) |
 | `GET $API/kpi/occupancy?date=2026-13-01` | `400` |
 | `GET $API/kpi/occupancy/nights` | `[]` (ingen bookinger med ankomstdato endnu) |
@@ -128,6 +129,7 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
    |----------|----------|------------------------------|
    | `kpi/revenue/total` | `$` | 1 række: `total_revenue` 11234034, `booking_count` 1000 |
    | `kpi/revenue/by-country` / `by-room-type` / `by-season` | `$[*]` | 20 / 8 / 3 rækker |
+   | `kpi/revenue/by-room-type-season` | `$[*]` | 24 rækker. Læg `season` på *Filters* |
    | `kpi/occupancy/nights` | `$[*]` | 0 rækker (ingen bookinger med ankomstdato endnu) |
    | `kpi/top-drinks` | `$[*]` | 2 rækker: Espresso 14656, Whiskey Sour 3824 |
    | `bar/kpi/total` | `$` | 1 række: `units_sold` 179958, `revenue` 13448640.34 |

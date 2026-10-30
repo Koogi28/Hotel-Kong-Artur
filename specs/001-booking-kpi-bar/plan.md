@@ -46,7 +46,7 @@ i hukommelsen pr. kald på < 100 ms. SC-001/SC-003 handler om brugerens tid, ikk
 (princip II). Ingen gemte nøgletal (princip V). Passwords kun i `.env` (princip XII). Ét
 `docker compose up` (princip IX).
 
-**Scale/Scope**: 3 brugerroller uden login, 4 tabeller, 18 endpoints (inkl. health), 1 hotel
+**Scale/Scope**: 3 brugerroller uden login, 4 tabeller, 19 endpoints (inkl. health), 1 hotel
 med 214 værelser
 
 Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](research.md).

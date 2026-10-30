@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: Hotel Kong Arthur API
-  version: 2.0.0
+  version: 2.1.0
   description: |
     REST API til bookinger, nøgletal og barsalg (feature 001-booking-kpi-bar).
     Alle nøgletal beregnes ud fra databasen ved hvert kald. Beløb er i DKK.
     Frontend og Tableau bruger kun dette API. Tableau Desktop henter nøgletallene som JSON
-    med REST API Connector (research R7). Alle nøgletalssvar er flade: et objekt (JSONPath `$`)
+    med REST API Connector (research R7). Alle nøgletalssvar er flade: et objekt (JSONPath $)
     eller et array af objekter (JSONPath `$[*]`) uden nestede objekter.
 servers:
   - url: http://localhost:3000
@@ -143,6 +143,24 @@ paths:
       summary: Indtjening pr. sæson (FR-017)
       responses:
         '200': { $ref: '#/components/responses/RevenueGroups' }
+
+  /api/kpi/revenue/by-room-type-season:
+    get:
+      tags: [Nøgletal]
+      summary: Indtjening pr. værelsestype pr. sæson (FR-017)
+      description: |
+        Én række pr. kombination af værelsestype og sæson: 8 × 3 = 24 rækker, også kombinationer
+        uden bookinger (revenue 0, booking_count 0). Sorteret efter værelsestype (som i room_type)
+        og sæson (low, mid, high). Summen af `revenue` er lig den samlede indtjening.
+        Til Tableau: JSONPath `$[*]`, så `season` kan bruges som filter.
+      responses:
+        '200':
+          description: 24 rækker
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RevenueRoomTypeSeason' }
 
   /api/kpi/occupancy:
     get:
@@ -370,6 +388,15 @@ components:
           description: Land, værelsestype eller sæson
         revenue: { type: integer }
         booking_count: { type: integer }
+
+    RevenueRoomTypeSeason:
+      type: object
+      required: [room_type, season, revenue, booking_count]
+      properties:
+        room_type: { $ref: '#/components/schemas/RoomTypeName' }
+        season: { $ref: '#/components/schemas/Season' }
+        revenue: { type: integer, example: 0 }
+        booking_count: { type: integer, example: 0 }
 
     Occupancy:
       type: object

@@ -94,6 +94,9 @@ udregnet manuelt fra datafilerne og derefter oprette én ny booking og opdatere 
    administratoren opdaterer siden, **Then** indgår den nye booking i alle relevante nøgletal.
 6. **Given** nøgletallene er tilgængelige, **When** de hentes ind i et Tableau-dashboard, **Then**
    viser dashboardet de samme tal som overblikket.
+7. **Given** startdataene er indlæst, **When** indtjeningen pr. værelsestype pr. sæson vises,
+   **Then** er der 24 rækker (8 værelsestyper × 3 sæsoner, også med indtjening 0), og summen er
+   lig årets samlede indtjening (11.234.034 ved startdata).
 
 ---
 
@@ -198,6 +201,10 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **FR-016**: Systemet SKAL vise årets samlede indtjening fra bookinger; alle registrerede data,
   både historiske og nye, ligger inden for det samme år og tæller med.
 - **FR-017**: Systemet SKAL vise indtjeningen fordelt på gæsteland, på værelsestype og på sæson.
+  Indtjeningen SKAL også kunne vises pr. værelsestype pr. sæson (casen: "pr værelsestype
+  (pr sæson)"): én række for hver kombination af de 8 værelsestyper og 3 sæsoner (24 rækker),
+  også kombinationer uden bookinger (indtjening 0), så der kan filtreres på sæson i oversigten
+  og i Tableau-dashboardet.
 - **FR-018**: Systemet SKAL vise belægningsgraden for en valgt nat som antal bookede værelser den nat
   divideret med 214, kun ud fra bookinger med ankomstdato.
 - **FR-019**: Systemet SKAL vise gruppens nøgletal: den kaffe og den cocktail, der er solgt flest

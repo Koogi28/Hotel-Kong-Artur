@@ -145,9 +145,11 @@ summerer til totalen, belægning 0 → 0.5 % efter ny booking, Espresso 14656 / 
 
 ### Tests for User Story 2
 
-- [ ] T027 [P] [US2] Skriv `backend/tests/unit/kpiCalculations.test.js`:
+- [X] T027 [P] [US2] Skriv `backend/tests/unit/kpiCalculations.test.js`:
   - `totalRevenue` (inkl. tom liste → 0)
   - `revenueBy(rows, key)`: sorteret faldende, og summen er lig totalen
+  - *(tilføjet 30/10)* Konstanten `SEASONS = ['low', 'mid', 'high']` i `kpiCalculations.js` (eksporteres, så testen kan bruge den)
+  - *(tilføjet 30/10)* `revenueByRoomTypeSeason(rows, roomTypeNames)`: altid 8 × 3 = 24 rækker `{room_type, season, revenue, booking_count}`, også 0 for kombinationer uden bookinger. Sorteret efter værelsestype (rækkefølgen i `roomTypeNames`) og sæson (low, mid, high), og summen er lig totalen
   - `occupancyForDate(stays, date)`: ankomst 6/12 + 3 nætter tæller 6., 7. og 8./12., men ikke 9./12. Månedsskifte 30/11 + 3. `booked_rooms / 214 × 100` afrundet til 1 decimal, 1 værelse → 0.5
   - `occupancyPerNight(stays)`: alle nætter fra tidligste til seneste, tom → `[]`
   - `topDrinks(rows)`: fladt array `[{category, drink_id, name, units_sold}]`, én pr. kategori og alle ved uafgjort
@@ -155,19 +157,20 @@ summerer til totalen, belægning 0 → 0.5 % efter ny booking, Espresso 14656 / 
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Opret `backend/src/services/kpiCalculations.js` med de rene funktioner fra T027 og konstanten `CAPACITY = 214` (princip VII). Datoaritmetik i UTC (research R8), så T027 bliver grøn
+- [X] T029 [US2] Opret `backend/src/services/kpiCalculations.js` med de rene funktioner fra T027 og konstanten `CAPACITY = 214` (princip VII). Datoaritmetik i UTC (research R8), så T027 bliver grøn
 - ~~T030~~ **Udgået (29/10)**: `csv.js` er ikke nødvendig, fordi CSV-eksport er fravalgt (research R7)
-- [ ] T031 [US2] Udvid `backend/src/repositories/bookingRepository.js` med `findRevenueRows()` (`country, room_type`-navn, `season, total_price` for alle bookinger) og `findDatedStays()` (`arrival_date, nights` hvor `arrival_date IS NOT NULL`). Ingen `SUM` eller `GROUP BY` her, da nøgletal beregnes i services (princip V)
-- [ ] T032 [US2] Opret `backend/src/services/kpiService.js`:
+- [X] T031 [US2] Udvid `backend/src/repositories/bookingRepository.js` med `findRevenueRows()` (`country, room_type`-navn, `season, total_price` for alle bookinger) og `findDatedStays()` (`arrival_date, nights` hvor `arrival_date IS NOT NULL`). Ingen `SUM` eller `GROUP BY` her, da nøgletal beregnes i services (princip V)
+- [X] T032 [US2] Opret `backend/src/services/kpiService.js`:
   - `getTotal()` → `{total_revenue, booking_count}`
   - `getRevenueByCountry()`, `getRevenueByRoomType()`, `getRevenueBySeason()` → `[{key, revenue, booking_count}]`
+  - *(tilføjet 30/10)* `getRevenueByRoomTypeSeason()`: `bookingRepository.findRevenueRows` + navnene fra `roomTypeRepository.findAll` → `revenueByRoomTypeSeason`. Returnerer 24 rækker `[{room_type, season, revenue, booking_count}]`
   - `getOccupancy(date)`: ugyldig/manglende dato → `ValidationError(['date'])`. Returnerer `{date, booked_rooms, capacity, occupancy_percent}`
   - `getOccupancyPerNight()` → `[{date, booked_rooms, capacity, occupancy_percent}]` for hver nat fra den tidligste til den seneste dækkede nat, `[]` uden bookinger med ankomstdato
   - `getTopDrinks()`: `drinkRepository.findAllWithRegisteredUnits` → `withUnitsSold` → `topDrinks`, så historiske + nye salg tæller med. Returnerer et fladt array `[{category, drink_id, name, units_sold}]`
-- [ ] T033 [US2] Opret `backend/src/controllers/kpiController.js` og routes: `GET /api/kpi/revenue/total`, `/api/kpi/revenue/by-country`, `/api/kpi/revenue/by-room-type`, `/api/kpi/revenue/by-season`, `/api/kpi/occupancy?date=` og `/api/kpi/top-drinks` efter kontrakten
-- [ ] T034 [US2] *(omskrevet 29/10, før: CSV-eksport)* Tilføj route `GET /api/kpi/occupancy/nights` i `backend/src/controllers/kpiController.js` og `backend/src/routes.js`, der kalder `kpiService.getOccupancyPerNight()` og svarer med et fladt array efter kontrakten. Tjek i Swagger UI, at alle `/api/kpi/*`-svar er flade (research R7)
-- [ ] T035 [US2] **(uge 2)** Opret `backend/public/overview.html` og `backend/public/js/overview.js`: samlet indtjening, tre fordelingstabeller, datovælger til belægning (vis %) og mest solgte kaffe/cocktail. Kun `fetch` mod `/api/kpi/*`. Link fra `backend/public/index.html`
-- [ ] T036 [US2] Validér US2 med [quickstart.md](quickstart.md) trin 5 inkl. "Live" (opret booking → tal ændres ved næste kald, også i `occupancy/nights`)
+- [X] T033 [US2] Opret `backend/src/controllers/kpiController.js` og routes: `GET /api/kpi/revenue/total`, `/api/kpi/revenue/by-country`, `/api/kpi/revenue/by-room-type`, `/api/kpi/revenue/by-season`, `/api/kpi/revenue/by-room-type-season` *(tilføjet 30/10, kontrakt 2.1.0)*, `/api/kpi/occupancy?date=` og `/api/kpi/top-drinks` efter kontrakten
+- [X] T034 [US2] *(omskrevet 29/10, før: CSV-eksport)* Tilføj route `GET /api/kpi/occupancy/nights` i `backend/src/controllers/kpiController.js` og `backend/src/routes.js`, der kalder `kpiService.getOccupancyPerNight()` og svarer med et fladt array efter kontrakten. Tjek i Swagger UI, at alle `/api/kpi/*`-svar er flade (research R7)
+- [ ] T035 [US2] **(uge 2)** Opret `backend/public/overview.html` og `backend/public/js/overview.js`: samlet indtjening, tre fordelingstabeller, datovælger til belægning (vis %) og mest solgte kaffe/cocktail. *(tilføjet 30/10)* Tabel over indtjening pr. værelsestype pr. sæson fra `by-room-type-season` med en sæson-dropdown (alle/low/mid/high), der kun filtrerer de hentede rækker i browseren. Ingen beregning i frontend. Kun `fetch` mod `/api/kpi/*`. Link fra `backend/public/index.html`
+- [X] T036 [US2] Validér US2 med [quickstart.md](quickstart.md) trin 5 (inkl. `by-room-type-season`: 24 rækker, Σ 11234034 – genåbnet 30/10) inkl. "Live" (opret booking → tal ændres ved næste kald, også i `occupancy/nights`)
 
 **Checkpoint**: US1 og US2 virker hver for sig.
 
@@ -211,7 +214,7 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - [ ] T045 [P] Opret `README.md` i roden: formål, `cp .env.example .env`, `docker compose up --build`, `docker compose down -v` første gang, URL'er (`/`, `/api-docs`), `npm test`, dev-container (`docker compose --profile dev up -d app`) og Tableau-flowet. Opdatér `db-init/README.md` med, hvordan `02-seed.sql` genskabes
 - [ ] T046 [P] Kontrollér, at hver route i `backend/src/routes.js` findes i `specs/001-booking-kpi-bar/contracts/openapi.yaml` med samme metode, sti, statuskoder og svarfelter, og omvendt (princip IV). Ret forskelle i samme commit
 - [ ] T047 Konstitutionstjek ([quickstart.md](quickstart.md) trin 8): SQL kun i `backend/src/repositories/`, ingen beregninger i `controllers/`, ingen hemmeligheder i trackede filer, kun de fire afhængigheder i `backend/package.json`
-- [ ] T048 Byg Tableau Desktop-dashboardet med REST API Connector mod KPI-endpoints (JSONPath `$` / `$[*]`, se [quickstart.md](quickstart.md) trin 7) med omsætning pr. land, værelsestype og sæson, belægning pr. nat, topdrinks, omsætning pr. drink og kategorifordeling. Tjek SC-007 mod JSON-tallene i Swagger UI
+- [ ] T048 Byg Tableau Desktop-dashboardet med REST API Connector mod KPI-endpoints (JSONPath `$` / `$[*]`, se [quickstart.md](quickstart.md) trin 7) med omsætning pr. land, værelsestype og sæson, omsætning pr. værelsestype pr. sæson (datakilde `kpi/revenue/by-room-type-season`, JSONPath `$[*]`, `season` som filter), belægning pr. nat, topdrinks, omsætning pr. drink og kategorifordeling. Tjek SC-007 mod JSON-tallene i Swagger UI
 - [ ] T049 Kør hele [quickstart.md](quickstart.md) fra en tom volumen (`docker compose down -v`) og ret eventuelle afvigelser. Når frontenden findes (uge 2), mål også tidsmålene i browseren: en ny booking oprettes på under 2 minutter (SC-001), og et barsalg registreres på under 15 sekunder (SC-003)
 
 ---
