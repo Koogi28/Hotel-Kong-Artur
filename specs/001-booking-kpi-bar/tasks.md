@@ -186,7 +186,7 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 
 ### Tests for User Story 3
 
-- [ ] T037 [P] [US3] Udvid `backend/tests/unit/barCalculations.test.js` med tests af:
+- [X] T037 [P] [US3] Udvid `backend/tests/unit/barCalculations.test.js` med tests af:
   - `revenueByDrink(rows)`: alle drinks med også 0 salg, med felterne `historical_units`, `registered_units` og `units_sold`. Omsætning = enheder × pris regnet i øre, fx `69.10 × 2 = 138.20`
   - `barTotal(rows)` → `{units_sold, revenue}`
   - `categorySplit(rows)`: `[{category, units_sold, revenue, percent}]`. Cocktail afrundes til 2 decimaler, Coffee = 100 − Cocktail, summen præcis 100, uden salg begge 0
@@ -194,16 +194,16 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Udvid `backend/src/services/barCalculations.js` med `revenueByDrink`, `barTotal`, `categorySplit` og `validateSaleInput` fra T037. Beløb summeres i øre og returneres i kroner med 2 decimaler, så T037 bliver grøn
-- [ ] T039 [P] [US3] Opret `backend/src/repositories/barSaleRepository.js` med `create({drink_id, quantity})` (`sold_at` sættes af DB-default) og `findById(id)` (`id, drink_id, quantity, sold_at`)
-- [ ] T040 [US3] Opret `backend/src/services/barService.js`:
+- [X] T038 [US3] Udvid `backend/src/services/barCalculations.js` med `revenueByDrink`, `barTotal`, `categorySplit` og `validateSaleInput` fra T037. Beløb summeres i øre og returneres i kroner med 2 decimaler, så T037 bliver grøn
+- [X] T039 [P] [US3] Opret `backend/src/repositories/barSaleRepository.js` med `create({drink_id, quantity})` (`sold_at` sættes af DB-default) og `findById(id)` (`id, drink_id, quantity, sold_at`)
+- [X] T040 [US3] Opret `backend/src/services/barService.js`:
   - `listDrinks()`
   - `registerSale(body)`: `validateSaleInput` og `drinkRepository.findById`. Ukendt drink → `ValidationError(['drink_id'])`. Returnerer det gemte salg
   - `getTotal()`, `getRevenueByDrink()`, `getCategorySplit()`: alle via `findAllWithRegisteredUnits` → `withUnitsSold` → beregning
-- [ ] T041 [US3] Opret `backend/src/controllers/barController.js` og routes: `GET /api/bar/drinks`, `POST /api/bar/sales` (201), `GET /api/bar/kpi/total`, `/api/bar/kpi/revenue-by-drink` og `/api/bar/kpi/category-split` efter kontrakten. Svar er flade (R7)
+- [X] T041 [US3] Opret `backend/src/controllers/barController.js` og routes: `GET /api/bar/drinks`, `POST /api/bar/sales` (201), `GET /api/bar/kpi/total`, `/api/bar/kpi/revenue-by-drink` og `/api/bar/kpi/category-split` efter kontrakten. Svar er flade (R7)
 - ~~T042~~ **Udgået (29/10)**: Bar-CSV'erne er fravalgt. Felterne fra `revenue-by-drink.csv` og `bar-category-split.csv` ligger nu i JSON-svarene (T037/T038/T041), og `kpi-totals.csv` dækkes af `kpi/revenue/total` + `bar/kpi/total` (research R7)
 - [ ] T043 [US3] **(uge 2)** Opret `backend/public/bar.html` og `backend/public/js/bar.js`: drikkevarer grupperet i Kaffe/Cocktails som store knapper, antal (standard 1), "Registrér" (SC-003: under 15 sek.), visning af total, omsætning pr. drink og procentfordeling. Kun `fetch` mod `/api/bar/*`. Link fra `backend/public/index.html`
-- [ ] T044 [US3] Validér US3 med [quickstart.md](quickstart.md) trin 6 og trin 7 (Tableau Desktop via REST API Connector: alle KPI-endpoints giver samme tal som i Swagger UI, og nye tal vises efter tilføjet data → *Data → Refresh*)
+- [X] T044 [US3] Validér US3 med [quickstart.md](quickstart.md) trin 6 og trin 7 (Tableau Desktop via REST API Connector: alle KPI-endpoints giver samme tal som i Swagger UI, og nye tal vises efter tilføjet data → *Data → Refresh*)
 
 **Checkpoint**: Alle tre user stories virker.
 
