@@ -212,8 +212,8 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T045 [P] Opret `README.md` i roden: formål, `cp .env.example .env`, `docker compose up --build`, `docker compose down -v` første gang, URL'er (`/`, `/api-docs`), `npm test`, dev-container (`docker compose --profile dev up -d app`) og Tableau-flowet. Opdatér `db-init/README.md` med, hvordan `02-seed.sql` genskabes
-- [ ] T046 [P] Kontrollér, at hver route i `backend/src/routes.js` findes i `specs/001-booking-kpi-bar/contracts/openapi.yaml` med samme metode, sti, statuskoder og svarfelter, og omvendt (princip IV). Ret forskelle i samme commit
-- [ ] T047 Konstitutionstjek ([quickstart.md](quickstart.md) trin 8): SQL kun i `backend/src/repositories/`, ingen beregninger i `controllers/`, ingen hemmeligheder i trackede filer, kun de fire afhængigheder i `backend/package.json`
+- [X] T046 [P] Kontrollér, at hver route i `backend/src/routes.js` findes i `specs/001-booking-kpi-bar/contracts/openapi.yaml` med samme metode, sti, statuskoder og svarfelter, og omvendt (princip IV). Ret forskelle i samme commit
+- [X] T047 Konstitutionstjek ([quickstart.md](quickstart.md) trin 8): SQL kun i `backend/src/repositories/`, ingen beregninger i `controllers/`, ingen hemmeligheder i trackede filer, kun de fire afhængigheder i `backend/package.json`
 - [ ] T048 Byg Tableau Desktop-dashboardet med REST API Connector mod KPI-endpoints (JSONPath `$` / `$[*]`, se [quickstart.md](quickstart.md) trin 7) med omsætning pr. land, værelsestype og sæson, omsætning pr. værelsestype pr. sæson (datakilde `kpi/revenue/by-room-type-season`, JSONPath `$[*]`, `season` som filter), belægning pr. nat, topdrinks, omsætning pr. drink og kategorifordeling. Tjek SC-007 mod JSON-tallene i Swagger UI
 - [ ] T049 Kør hele [quickstart.md](quickstart.md) fra en tom volumen (`docker compose down -v`) og ret eventuelle afvigelser. Når frontenden findes (uge 2), mål også tidsmålene i browseren: en ny booking oprettes på under 2 minutter (SC-001), og et barsalg registreres på under 15 sekunder (SC-003)
 
@@ -303,3 +303,11 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 
 - [X] T050 Kør quickstart trin 4 scenarie 1 (POST → 201, `high`, 3600) og 8 (PUT/DELETE `/api/bookings/1` → 409) via "Try it out" i Swagger UI på `/api-docs`, og gem screenshots, så T026's "via curl og Swagger UI" er opfyldt per FR-015 (partial)
 - [X] T051 Opdatér teksten i T001 eller plan.md med test-scriptet `"test": "node --test tests/unit/*.test.js"` og begrundelsen (Node 22+ accepterer ikke en mappe som argument til `node --test`) per T001 / Constitution X (contradicts)
+
+## Phase 8: Convergence
+
+- [ ] T052 Opret `CONTRIBUTE.md` i repo-roden med opsætning (`.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`), branch- og commit-regler, review via pull request før merge til `main`, Spec Kit-workflowet (specify → clarify → plan → tasks → analyze → implement → converge) og hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan Lu) per plan: Afleveringsmateriale #2 (missing)
+- [ ] T053 Tilføj et Mermaid-arkitekturdiagram i `README.md` (supplerer T045): browser og Tableau Desktop som klienter, backend med controllers → services → repositories, MySQL med volume `mysql_data`, Docker-netværket og portene 3000 (vært) og 3306 (kun internt) per plan: Afleveringsmateriale #1 (partial)
+- [X] T054 Opret `specs/001-booking-kpi-bar/converge.md` med afsnittet "Converge #1 (30/10)": implementeret pr. user story og FR, åbne tasks, fund fra T046/T047/`/speckit-analyze` og bevidst accepterede afvigelser (U2, G1, T050 uden screenshots) per plan: Afleveringsmateriale #3 (missing)
+- [ ] T055 Tilføj afsnittene "Converge #2" og "Sidste Converge-tjek" i `specs/001-booking-kpi-bar/converge.md`, når de tjek er kørt per plan: Afleveringsmateriale #3 (missing)
+- [X] T056 Beskriv i `contracts/openapi.yaml` (parameteren `search` på `GET /api/bookings`), at en søgetekst over 100 tegn afkortes til 100 tegn, så kontrakten matcher `bookingService.list` per FR-010 / Constitution IV (partial)

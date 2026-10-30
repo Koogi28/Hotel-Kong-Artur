@@ -70,7 +70,7 @@ afprøve de samme handlinger i Swagger UI.
 
 Som hoteladministrator vil jeg se belægningsgrad og omsætning, så jeg kan optimere prissætning og
 markedsføring. Overblikket viser årets samlede indtjening, indtjening fordelt på gæsteland,
-værelsestype og sæson, belægningsgraden og gruppens eget nøgletal: den mest solgte drink målt i
+værelsestype og sæson og pr. værelsestype pr. sæson, belægningsgraden og gruppens eget nøgletal: den mest solgte drink målt i
 antal solgte enheder for henholdsvis kaffe og cocktails.
 
 **Why this priority**: Overblikket er hotellets beslutningsgrundlag, men det bygger på data fra
@@ -94,8 +94,8 @@ udregnet manuelt fra datafilerne og derefter oprette én ny booking og opdatere 
    administratoren opdaterer siden, **Then** indgår den nye booking i alle relevante nøgletal.
 6. **Given** nøgletallene er tilgængelige, **When** de hentes ind i et Tableau-dashboard, **Then**
    viser dashboardet de samme tal som overblikket.
-7. **Given** startdataene er indlæst, **When** indtjeningen pr. værelsestype pr. sæson vises,
-   **Then** er der 24 rækker (8 værelsestyper × 3 sæsoner, også med indtjening 0), og summen er
+7. **Given** startdataene er indlæst, **When** administratoren åbner overblikket, **Then** vises
+   indtjeningen pr. værelsestype pr. sæson med 24 rækker (8 værelsestyper × 3 sæsoner, også med indtjening 0), og summen er
    lig årets samlede indtjening (11.234.034 ved startdata).
 
 ---

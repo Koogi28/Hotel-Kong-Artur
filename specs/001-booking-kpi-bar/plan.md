@@ -188,6 +188,27 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 | `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `MYSQL_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
 | `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `MYSQL_HOST=db`, ingen `depends_on` (kan ikke pege ud af en included fil) |
 
+## Afleveringsmateriale
+
+Casens afleveringsliste kræver tre dokumenter ud over koden. De står her, så Converge kan
+tjekke dem mod repoet (princip X: spec først).
+
+1. **`README.md`** (repo-roden) med et arkitekturdiagram over hele systemet, der kan vises på
+   GitHub (Mermaid). Diagrammet viser:
+   - browseren (frontend i `backend/public/`) og Tableau Desktop (REST API Connector) som klienter
+   - backenden med de tre lag: controllers → services → repositories (princip II)
+   - MySQL med navngivet volume `mysql_data`
+   - Docker-netværket og portene: `backend` på `3000` (udstillet på værten), `db` på `3306`
+     (kun internt i Compose-netværket)
+2. **`CONTRIBUTE.md`** (repo-roden):
+   - opsætning: `.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`
+   - branch- og commit-regler (én branch pr. dag/feature, fx `dag5-noegletal`)
+   - review via pull request, før der merges til `main` (princip XI)
+   - Spec Kit-workflowet: specify → clarify → plan → tasks → analyze → implement → converge
+   - hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan Lu)
+3. **`specs/001-booking-kpi-bar/converge.md`** med resultatet af hvert Converge-tjek: hvad er
+   implementeret, og hvad mangler. Afsnit pr. tjek (Converge #1, #2 og det sidste tjek).
+
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |

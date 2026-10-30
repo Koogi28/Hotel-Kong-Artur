@@ -41,7 +41,7 @@ paths:
         - name: search
           in: query
           required: false
-          description: Del af fornavn, efternavn eller fulde navn. Søgningen er ufølsom over for store/små bogstaver og accenter.
+          description: Del af fornavn, efternavn eller fulde navn. Søgningen er ufølsom over for store/små bogstaver og accenter. Mellemrum før og efter fjernes, og en længere søgetekst afkortes til de første 100 tegn (ingen 400-fejl).
           schema: { type: string, maxLength: 100 }
       responses:
         '200':
