@@ -301,5 +301,5 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 
 ## Phase 7: Convergence
 
-- [ ] T050 Kør quickstart trin 4 scenarie 1 (POST → 201, `high`, 3600) og 8 (PUT/DELETE `/api/bookings/1` → 409) via "Try it out" i Swagger UI på `/api-docs`, og gem screenshots, så T026's "via curl og Swagger UI" er opfyldt per FR-015 (partial)
+- [X] T050 Kør quickstart trin 4 scenarie 1 (POST → 201, `high`, 3600) og 8 (PUT/DELETE `/api/bookings/1` → 409) via "Try it out" i Swagger UI på `/api-docs`, og gem screenshots, så T026's "via curl og Swagger UI" er opfyldt per FR-015 (partial)
 - [X] T051 Opdatér teksten i T001 eller plan.md med test-scriptet `"test": "node --test tests/unit/*.test.js"` og begrundelsen (Node 22+ accepterer ikke en mappe som argument til `node --test`) per T001 / Constitution X (contradicts)
