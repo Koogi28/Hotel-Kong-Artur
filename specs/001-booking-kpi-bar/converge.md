@@ -61,8 +61,9 @@ Frontend og Tableau-dashboard mangler.
 - T047: SQL kun i `repositories/`, ingen beregning i `controllers/`, `.env` ikke i Git,
   kun de fire afhængigheder, data overlever `docker compose restart`.
 - Swagger "Try it out" for booking og bar (T026, T044, T050).
-- Tableau: kun `/api/bookings` er testet (29/10). KPI-endpoints testes mandag ved
-  T048-forberedelsen.
+- Tableau: `/api/bookings` testet 29/10. KPI-endpoints testet manuelt i Tableau Desktop 30/10
+  (REST API Connector, `by-room-type-season` med sæsonfilter og `category-split`), og tallene
+  stemmer med Swagger UI. Ingen screenshots (gruppens beslutning). Dashboardet bygges i T048.
 
 ### 2. Mangler
 

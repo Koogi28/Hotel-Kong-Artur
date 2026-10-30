@@ -35,8 +35,9 @@ Regler for alle tre: kun `fetch` mod API'et, ingen frameworks, ingen nye afhæng
 (princip I) og ingen beregning af sæson, pris eller nøgletal i browseren (princip II). Sæson og
 pris vises fra API'ets svar.
 
-**Mandag – Tableau-forbindelse** til alle KPI-endpoints (quickstart trin 7). Indtil videre er kun
-`/api/bookings` testet i Tableau (29/10).
+**Mandag – Tableau-forbindelse** til alle KPI-endpoints (quickstart trin 7). Testet indtil
+videre: `/api/bookings` (29/10) samt `by-room-type-season` med sæsonfilter og `category-split`
+(30/10, tallene stemmer med Swagger UI).
 
 **Tirsdag**: T048 dashboard og T055 Converge #2. **Onsdag**: T045 + T053 README, T052,
 T049 og det sidste Converge-tjek (T055).
