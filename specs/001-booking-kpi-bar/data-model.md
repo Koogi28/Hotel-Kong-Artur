@@ -115,6 +115,7 @@ Ingen medarbejderkolonne (FR-023). Seed: 0 rækker. Historisk salg ligger kun so
 |----------|------------------------------|--------------------------|
 | Samlet indtjening | Σ `booking.total_price` | alle bookinger |
 | Indtjening pr. land / værelsestype / sæson | Σ `total_price` grupperet. Hver fordeling summerer til totalen | alle bookinger |
+| Indtjening pr. værelsestype × sæson | Σ `total_price` pr. kombination. Alle 24 kombinationer kommer med, også med 0. Summerer til totalen | alle bookinger + alle værelsestyper |
 | Belægning for nat D | antal bookinger med `arrival_date ≤ D < arrival_date + nights` ÷ 214 × 100 | bookinger med `arrival_date` |
 | Enheder pr. drink | `historical_units_sold` + Σ `bar_sale.quantity` | drinks + summer af salg pr. drink |
 | Omsætning pr. drink | enheder × `price` (regnes i øre) | som ovenfor |

@@ -169,6 +169,7 @@ bookinger kom med efter *Data → Refresh* (1000 → 1002) og forsvandt igen eft
 |----------|----------|------------------------|
 | `kpi/revenue/total` | `$` | `total_revenue`, `booking_count` |
 | `kpi/revenue/by-country`, `by-room-type`, `by-season` | `$[*]` | gruppe: `key`, `revenue`, `booking_count` |
+| `kpi/revenue/by-room-type-season` | `$[*]` | kombination: `room_type`, `season`, `revenue`, `booking_count` (24 rækker) |
 | `kpi/occupancy/nights` | `$[*]` | nat: `date`, `booked_rooms`, `capacity`, `occupancy_percent` |
 | `kpi/top-drinks` | `$[*]` | topdrink: `category`, `drink_id`, `name`, `units_sold` (flere ved uafgjort) |
 | `bar/kpi/total` | `$` | `units_sold`, `revenue` |
@@ -180,6 +181,12 @@ og dækker samme interval som `occupancy.csv`: hver nat fra den tidligste til de
 der er dækket af en booking med ankomstdato. `kpi/top-drinks` er gjort flad (før
 `{coffee: [...], cocktail: [...]}`), og `revenue-by-drink`/`category-split` har fået de felter,
 som kun CSV'erne havde.
+
+*(Tilføjet 30/10, kontrakt 2.1.0)* `kpi/revenue/by-room-type-season` er tilføjet, fordi casen
+kræver indtjening "pr værelsestype (pr sæson)", og et sæsonfilter i Tableau kræver et
+`season`-felt på hver række. `by-room-type` har kun `key`, så Tableau kan ikke filtrere den på
+sæson. Alle 24 kombinationer kommer med (også 0), så en værelsestype ikke forsvinder fra
+grafen, når der filtreres på en sæson uden bookinger af den.
 
 **Begrundelse**:
 - *Nøgletal i backenden, ikke i Tableau*: Tableau får færdigberegnede nøgletal og viser dem.

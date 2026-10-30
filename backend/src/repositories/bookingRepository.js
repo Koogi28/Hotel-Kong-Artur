@@ -71,4 +71,24 @@ async function remove(id) {
   await pool.query('DELETE FROM booking WHERE id = ?', [id]);
 }
 
-module.exports = { findAll, findById, create, update, remove };
+// Råe rækker til omsætningsnøgletal. Ingen SUM/GROUP BY her – det sker i services (princip V).
+async function findRevenueRows() {
+  const [rows] = await pool.query(
+    `SELECT booking.country, room_type.name AS room_type, booking.season, booking.total_price
+       FROM booking
+       JOIN room_type ON room_type.id = booking.room_type_id`,
+  );
+  return rows;
+}
+
+// Ophold til belægning. Historiske bookinger har ingen ankomstdato og tæller derfor ikke.
+async function findDatedStays() {
+  const [rows] = await pool.query(
+    'SELECT arrival_date, nights FROM booking WHERE arrival_date IS NOT NULL',
+  );
+  return rows;
+}
+
+module.exports = {
+  findAll, findById, create, update, remove, findRevenueRows, findDatedStays,
+};
