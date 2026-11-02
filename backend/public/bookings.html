@@ -48,7 +48,32 @@
           </div>
           <div class="field">
             <label for="country">Land</label>
-            <input id="country" name="country" type="text" autocomplete="off" maxlength="100">
+            <!-- FR-033: de 20 lande fra datafilen + Danmark, i datafilens stavemåde, så nye
+                 bookinger tæller med i indtjening pr. land -->
+            <select id="country" name="country">
+              <option value="">Vælg land</option>
+              <option>Australia</option>
+              <option>Brazil</option>
+              <option>Canada</option>
+              <option>China</option>
+              <option>Denmark</option>
+              <option>Egypt</option>
+              <option>France</option>
+              <option>Germany</option>
+              <option>India</option>
+              <option>Italy</option>
+              <option>Japan</option>
+              <option>Mexico</option>
+              <option>Nigeria</option>
+              <option>Pakistan</option>
+              <option>Russia</option>
+              <option>South Korea</option>
+              <option>Spain</option>
+              <option>Sweden</option>
+              <option>United Kingdom</option>
+              <option>United States</option>
+              <option>Vietnam</option>
+            </select>
           </div>
           <div class="field">
             <label for="room_type">Værelsestype</label>

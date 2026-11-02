@@ -93,6 +93,7 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | 02/11 | spec.md: FR-028–FR-030, SC-008, SC-009, US2 scenarie 8, US3 scenarie 7 og Clarifications 2026-11-02 | Samme. FR-028 er allerede opfyldt af de 11 KPI-endpoints. FR-029 dækkes af T035 og T043 |
 | 02/11 | research R11 (PostgreSQL 16 + `pg`), plan.md, data-model.md og quickstart.md opdateret. R4 og R8 markeret som erstattet | PostgreSQL ligner MySQL mest og holder Docker-designet og fire biblioteker. MariaDB og SQLite fravalgt (R11) |
 | 02/11 | Styleguide (`styleguide/`) koblet på: spec FR-031, FR-032, SC-010, research R12 (farver og skrifter målt på skærmbillederne) og afsnittet "Frontend-design" i plan.md | Gruppen har lavet en styleguide, så frontenden skal ligne hotellets hjemmeside. Uden krav i spec og plan ville `/speckit-tasks` og Converge ikke kende den (princip X) |
+| 02/11 | FR-033 (land som dropdown med 21 lande), FR-034 (se og slette registrerede barsalg), US3 scenarie 8, to edge cases. Kontrakt 2.1.0 → 2.2.0: `GET /api/bar/sales` og `DELETE /api/bar/sales/{id}`. Tasks T073–T075 | Gruppens ønsker efter T043: fritekst gav stavevarianter, der splitter indtjening pr. land, og en fejlregistrering i baren kunne ikke rettes. Danmark tilføjet, fordi hotellet ligger i København |
 
 ### 4. Fund vi bevidst ikke retter
 

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hotel Kong Arthur API
-  version: 2.1.0
+  version: 2.2.0
   description: |
     REST API til bookinger, nøgletal og barsalg (feature 001-booking-kpi-bar).
     Alle nøgletal beregnes ud fra databasen ved hvert kald. Beløb er i DKK.
@@ -222,6 +222,18 @@ paths:
                 items: { $ref: '#/components/schemas/Drink' }
 
   /api/bar/sales:
+    get:
+      tags: [Bar]
+      summary: List registrerede barsalg, nyeste først (FR-034)
+      description: Kun salg registreret via API'et. Historiske solgte enheder fra datafilen er ikke salg og vises ikke her.
+      responses:
+        '200':
+          description: Registrerede salg med drikkevarens navn og kategori
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BarSaleListItem' }
     post:
       tags: [Bar]
       summary: Registrér ét salg (tidspunkt sættes automatisk)
@@ -237,6 +249,19 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/BarSale' }
         '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/bar/sales/{id}:
+    parameters:
+      - $ref: '#/components/parameters/BarSaleId'
+    delete:
+      tags: [Bar]
+      summary: Slet et registreret barsalg, fx en fejlregistrering (FR-034)
+      description: Barens nøgletal beregnes bagefter uden salget. Historiske solgte enheder kan ikke slettes, fordi de ikke er salg.
+      responses:
+        '204':
+          description: Slettet
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/bar/kpi/total:
     get:
@@ -280,6 +305,12 @@ paths:
 components:
   parameters:
     BookingId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+
+    BarSaleId:
       name: id
       in: path
       required: true
@@ -453,6 +484,20 @@ components:
           type: string
           description: Lokal tid (Europe/Copenhagen), 'YYYY-MM-DD HH:MM:SS'
           example: '2026-10-28 14:03:12'
+
+    BarSaleListItem:
+      type: object
+      required: [id, drink_id, name, category, quantity, sold_at]
+      properties:
+        id: { type: integer }
+        drink_id: { type: integer }
+        name: { type: string, example: Espresso }
+        category: { type: string, enum: [Coffee, Cocktail] }
+        quantity: { type: integer }
+        sold_at:
+          type: string
+          description: Lokal tid (Europe/Copenhagen), 'YYYY-MM-DD HH:MM:SS'
+          example: '2026-11-02 14:03:12'
 
     BarTotal:
       type: object

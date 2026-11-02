@@ -79,7 +79,7 @@ form.addEventListener('submit', async (event) => {
     showAlert(message, 'success', `${sale.quantity} × ${selectedDrink.name} registreret kl. ${time}.`);
     quantityInput.value = '1';
     selectDrink(null);
-    await loadKpis(); // Tallene hentes igen fra API'et
+    await Promise.all([loadSales(), loadKpis()]); // Tallene hentes igen fra API'et
   } catch (error) {
     if (error.status === 400 && error.fields.includes('drink_id')) {
       showAlert(message, 'error', 'Vælg en drikkevare fra menuen.');
@@ -96,6 +96,56 @@ form.addEventListener('submit', async (event) => {
   } finally {
     registerButton.disabled = false;
   }
+});
+
+// ---------- Registrerede salg (FR-034) ----------
+
+const salesRows = byId('sales-rows');
+const salesStatus = byId('sales-status');
+let sales = [];
+
+async function loadSales() {
+  try {
+    sales = await apiGet('/bar/sales');
+    renderSales();
+  } catch (error) {
+    salesStatus.textContent = `Salgene kunne ikke hentes: ${error.message}`;
+  }
+}
+
+function renderSales() {
+  byId('sales-table').hidden = sales.length === 0;
+  salesStatus.textContent = sales.length === 0
+    ? 'Ingen registrerede salg endnu. Historiske salg fra datafilen kan ikke slettes.'
+    : `${formatNumber(sales.length)} registrerede salg, nyeste først.`;
+  salesRows.innerHTML = sales.map((sale) => `<tr>
+      <td>${escapeHtml(sale.sold_at)}</td>
+      <td>${escapeHtml(sale.name)}</td>
+      <td>${escapeHtml(CATEGORY_LABELS[sale.category] || sale.category)}</td>
+      <td class="num">${formatNumber(sale.quantity)}</td>
+      <td><button class="button button--small button--danger" type="button" data-id="${sale.id}"
+        aria-label="Slet salg ${sale.id}: ${sale.quantity} × ${escapeHtml(sale.name)}">Slet</button></td>
+    </tr>`).join('');
+}
+
+salesRows.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-id]');
+  if (!button) return;
+  const sale = sales.find((s) => s.id === Number(button.dataset.id));
+  if (!sale) return;
+  if (!confirm(`Slet salget ${sale.quantity} × ${sale.name} (${sale.sold_at})? Det kan ikke fortrydes.`)) {
+    return;
+  }
+  button.disabled = true;
+  clearAlert(message);
+  try {
+    await apiSend('DELETE', `/bar/sales/${sale.id}`);
+    showAlert(message, 'success', `Salget ${sale.quantity} × ${sale.name} er slettet.`);
+  } catch (error) {
+    // 404: allerede slettet (fx i et andet vindue) – listen hentes igen nedenfor
+    showAlert(message, 'error', error.message);
+  }
+  await Promise.all([loadSales(), loadKpis()]);
 });
 
 // ---------- Nøgletal (FR-024–FR-026) ----------
@@ -145,4 +195,5 @@ async function loadKpis() {
 }
 
 loadMenu();
+loadSales();
 loadKpis();

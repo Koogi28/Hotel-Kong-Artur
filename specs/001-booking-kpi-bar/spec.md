@@ -38,6 +38,12 @@ opdigtes."
 - Q: Hvordan skal frontenden se ud? → A: Som en del af Hotel Kong Arthur. Gruppen har lavet en
   styleguide med skærmbilleder af hotellets hjemmeside (`styleguide/`). Siderne følger den
   (FR-031, FR-032, SC-010), men de er arbejdsværktøjer for personalet, så funktion går forud.
+- Q: Skal land skrives i fritekst på bookingsiden? → A: Nej. Land vælges i en dropdown med
+  prædefinerede lande: de 20 lande fra datafilen plus Danmark, i datafilens stavemåde, så de
+  passer til indtjening pr. land (FR-033).
+- Q: Skal registrerede barsalg kunne slettes? → A: Ja. Nytilføjede (registrerede) salg af kaffe
+  og drinks skal kunne slettes fra barens side, fx ved en fejlregistrering. Historiske solgte
+  enheder fra datafilen kan ikke slettes (FR-003, FR-034). Menuen selv er fast og ændres ikke.
 - Q: Skal arbejdet fra uge 1 kunne vises, selvom databasen skiftes? → A: Ja. Det er gemt i Git
   som tagget `uge1-mysql` på `main`, før arbejdet med tillægsopgaven begyndte.
 
@@ -145,6 +151,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 7. **Given** der er registreret salg, **When** Helene åbner barens side i browseren, **Then**
    vises barens nøgletal fra scenarie 2–4, hentet fra API'et, med de samme tal som Swagger UI og
    Tableau-dashboardet viser.
+8. **Given** Helene har registreret et salg ved en fejl, **When** hun sletter det fra listen over
+   registrerede salg og bekræfter, **Then** forsvinder salget, og barens nøgletal er som før
+   salget. Historiske solgte enheder fra datafilen vises ikke i listen og kan ikke slettes.
 
 ---
 
@@ -158,6 +167,10 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - Hvis der ikke er registreret barsalg eller bookinger i den valgte periode, vises 0 og ikke en fejl.
 - Hvis to drikkevarer har lige mange solgte enheder, vises begge som mest solgt.
 - Ukendt værelsestype eller drikkevare afvises med en forståelig fejlbesked.
+- En booking med et land uden for dropdown-listen (fx oprettet via Swagger UI før FR-033) kan
+  stadig rettes; landet vises som ekstra valg i dropdownen for netop den booking.
+- Sletning af et barsalg, der allerede er slettet (fx i et andet vindue), afvises med 404 og en
+  forståelig fejlbesked.
 
 ## Requirements *(mandatory)*
 
@@ -263,6 +276,16 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **FR-032**: Frontenden SKAL virke på computer, tablet og mobil uden vandret scroll, og al tekst
   SKAL have tilstrækkelig kontrast (WCAG AA). Formularer SKAL vise tydelig fokus-, fejl- og
   succestilstand.
+
+**Ændringer fra gruppen (2026-11-02)**
+
+- **FR-033**: Land SKAL vælges i en dropdown på bookingsiden med disse 21 lande: Australia, Brazil, Canada, China, Denmark, Egypt, France, Germany, India, Italy, Japan, Mexico, Nigeria, Pakistan, Russia, South Korea, Spain, Sweden, United Kingdom, United States og Vietnam.
+  Værdierne er de samme som i datafilen, så nye bookinger tæller med i indtjening pr. land.
+  API'et accepterer fortsat land som tekst (FR-004), så eksisterende data ikke bliver ugyldige.
+- **FR-034**: Helene SKAL kunne se de registrerede barsalg (nyeste først) og slette et
+  registreret salg efter bekræftelse. Kun registrerede salg (`bar_sale`) kan slettes; historiske
+  solgte enheder fra datafilen kan ikke (FR-003). Barens nøgletal SKAL bagefter beregnes uden
+  det slettede salg (FR-020).
 
 ### Key Entities *(include if feature involves data)*
 

@@ -25,7 +25,9 @@ router.get('/api/kpi/occupancy/nights', kpiController.occupancyNights);
 router.get('/api/kpi/top-drinks', kpiController.topDrinks);
 
 router.get('/api/bar/drinks', barController.listDrinks);
+router.get('/api/bar/sales', barController.listSales);
 router.post('/api/bar/sales', barController.createSale);
+router.delete('/api/bar/sales/:id', barController.deleteSale);
 router.get('/api/bar/kpi/total', barController.total);
 router.get('/api/bar/kpi/revenue-by-drink', barController.revenueByDrink);
 router.get('/api/bar/kpi/category-split', barController.categorySplit);

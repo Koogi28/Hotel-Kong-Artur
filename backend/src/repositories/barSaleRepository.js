@@ -21,4 +21,23 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-module.exports = { create, findById };
+// Alle registrerede salg med drikkevarens navn og kategori, nyeste først (FR-034).
+// Historiske solgte enheder ligger i drink.historical_units_sold og er ikke salg (FR-003).
+async function findAll() {
+  const { rows } = await pool.query(
+    `SELECT bar_sale.id, bar_sale.drink_id, drink.name, drink.category, bar_sale.quantity,
+            bar_sale.sold_at
+       FROM bar_sale
+       JOIN drink ON drink.id = bar_sale.drink_id
+      ORDER BY bar_sale.id DESC`,
+  );
+  return rows;
+}
+
+// Sletter ét registreret salg. Returnerer true, hvis salget fandtes.
+async function remove(id) {
+  const { rowCount } = await pool.query('DELETE FROM bar_sale WHERE id = $1', [id]);
+  return rowCount === 1;
+}
+
+module.exports = { create, findById, findAll, remove };

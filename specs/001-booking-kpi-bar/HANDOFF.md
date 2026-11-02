@@ -55,8 +55,8 @@ T049 og det sidste Converge-tjek (T055).
   `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` (quickstart trin 2).
 - Backenden kører i Docker. Efter kodeændringer, også i `backend/public/`:
   `docker compose up -d --build backend` og Ctrl + F5 i browseren (filerne er bagt ind i imaget).
-- Startdata: `docker compose down -v && docker compose up -d`. Barsalg kan ikke slettes via
-  API'et, så det er eneste vej tilbage efter testsalg. `-v` sletter også oprettede bookinger.
+- Startdata: `docker compose down -v && docker compose up -d`. Enkelte registrerede barsalg
+  kan slettes på barens side eller med `DELETE /api/bar/sales/{id}` (FR-034). `-v` sletter også oprettede bookinger.
 - Lokalt findes ingen `node_modules`. Unit-tests kører alligevel (`cd backend && npm test`).
   Kode, der kræver `express`/`yaml`, køres i containeren:
   `MSYS_NO_PATHCONV=1 docker compose exec -T -w /app backend node -` (Git Bash på Windows

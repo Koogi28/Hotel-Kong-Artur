@@ -18,6 +18,23 @@ async function createSale(req, res, next) {
   }
 }
 
+async function listSales(req, res, next) {
+  try {
+    res.json(await barService.listSales());
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteSale(req, res, next) {
+  try {
+    await barService.deleteSale(req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function total(req, res, next) {
   try {
     res.json(await barService.getTotal());
@@ -45,6 +62,8 @@ async function categorySplit(req, res, next) {
 module.exports = {
   listDrinks,
   createSale,
+  listSales,
+  deleteSale,
   total,
   revenueByDrink,
   categorySplit,

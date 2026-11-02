@@ -423,3 +423,18 @@ i `styleguide/screenshots/`, før du går i gang (styleguide regel 1–2).
   - Kontrasten følger research R12 (stikprøve med udviklerværktøjets kontrastmåler på knapper, labels og fejlstrimlen)
   - Gennemgå siderne mod styleguidens afsnit 11 (regel 1–10) og skærmbillederne. Skriv afvigelser og begrundelser i `specs/001-booking-kpi-bar/converge.md`
 - [ ] T072 Kør `/speckit-analyze` og `/speckit-converge`, og opdatér `specs/001-booking-kpi-bar/HANDOFF.md` (status og næste skridt) og `specs/001-booking-kpi-bar/converge.md` "Converge #2" med resultatet af T066, T070 og T071 (afslutter den del af T055, der gælder Converge #2)
+
+---
+
+## Phase 12: Ændringer fra gruppen (02/11, FR-033, FR-034)
+
+**Purpose**: To ønsker efter T043: land som dropdown på bookingsiden, og registrerede barsalg
+skal kunne slettes. Kontrakten er opdateret til 2.2.0 i samme commit som koden (princip IV).
+
+- [X] T073 [US1] Land som dropdown i `backend/public/bookings.html` og `backend/public/js/bookings.js` (FR-033): `<select name="country">` med "Vælg land" og de 21 lande i alfabetisk rækkefølge (Australia, Brazil, Canada, China, Denmark, Egypt, France, Germany, India, Italy, Japan, Mexico, Nigeria, Pakistan, Russia, South Korea, Spain, Sweden, United Kingdom, United States, Vietnam), værdien = datafilens stavemåde. Ved "Ret" på en booking med et land uden for listen tilføjes landet som ekstra valg (edge case), og det fjernes igen, når formularen nulstilles. API'et ændres ikke (land er stadig tekst, FR-004)
+- [X] T074 [US3] Backend for registrerede barsalg (FR-034, kontrakt 2.2.0):
+  - `backend/src/repositories/barSaleRepository.js`: `findAll()` (`bar_sale` JOIN `drink`: `id, drink_id, name, category, quantity, sold_at`, `ORDER BY bar_sale.id DESC`) og `remove(id)` (returnerer, om en række blev slettet, via `rowCount`)
+  - `backend/src/services/barService.js`: `listSales()` og `deleteSale(id)`: id skal være et positivt heltal ellers `ValidationError(['id'])`, ukendt id → `NotFoundError('Barsalg {id} findes ikke')`
+  - `backend/src/controllers/barController.js` og `backend/src/routes.js`: `GET /api/bar/sales` → 200 array og `DELETE /api/bar/sales/:id` → 204 uden body
+  - Opdatér [quickstart.md](quickstart.md) trin 6 med de to nye kald
+- [X] T075 [US3] "Registrerede salg" på `backend/public/bar.html` og `backend/public/js/bar.js` (FR-034, US3 scenarie 8): tabel med tidspunkt, drikkevare, kategori, antal og en `.button--danger`-knap "Slet" pr. salg (nyeste først, fra `GET /api/bar/sales`). Sletning kræver `confirm()`, kalder `DELETE /api/bar/sales/{id}`, viser `.alert--success` og henter salgslisten og barens nøgletal igen fra API'et. Uden salg: "Ingen registrerede salg endnu. Historiske salg fra datafilen kan ikke slettes." Listen opdateres også efter et nyt salg

@@ -3,12 +3,13 @@
 const drinkRepository = require('../repositories/drinkRepository');
 const barSaleRepository = require('../repositories/barSaleRepository');
 const barCalculations = require('./barCalculations');
-const { ValidationError } = require('./errors');
+const { ValidationError, NotFoundError } = require('./errors');
 
 // Forklaring pr. felt til fejlbeskeden, ligesom i bookingService (FR-005).
 const FIELD_ERRORS = {
   drink_id: 'drink_id skal være id på en drikkevare fra menuen',
   quantity: 'quantity skal være et helt tal mellem 1 og 1000',
+  id: 'id skal være et positivt helt tal',
 };
 
 function validationError(fields) {
@@ -36,6 +37,22 @@ async function registerSale(body) {
   return barSaleRepository.findById(id);
 }
 
+// FR-034: registrerede salg, nyeste først. Historiske enheder er ikke salg og kommer ikke med.
+async function listSales() {
+  return barSaleRepository.findAll();
+}
+
+// FR-034: slet ét registreret salg. id fra URL'en er tekst; kun positive hele tal er gyldige
+// (samme regel som bookinger). Nøgletallene beregnes bagefter uden salget (princip V).
+async function deleteSale(id) {
+  if (!/^[1-9]\d*$/.test(String(id))) {
+    throw validationError(['id']);
+  }
+  if (!(await barSaleRepository.remove(Number(id)))) {
+    throw new NotFoundError(`Barsalg ${id} findes ikke`);
+  }
+}
+
 // Alle drinks med units_sold = historiske + registrerede enheder (research R9).
 async function drinksWithUnitsSold() {
   return barCalculations.withUnitsSold(await drinkRepository.findAllWithRegisteredUnits());
@@ -59,6 +76,8 @@ async function getCategorySplit() {
 module.exports = {
   listDrinks,
   registerSale,
+  listSales,
+  deleteSale,
   getTotal,
   getRevenueByDrink,
   getCategorySplit,

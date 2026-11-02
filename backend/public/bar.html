@@ -55,6 +55,29 @@
       </form>
     </section>
 
+    <!-- FR-034, US3 scenarie 8: registrerede salg kan slettes (fx en fejlregistrering) -->
+    <section class="section" aria-labelledby="sales-title">
+      <h2 id="sales-title">Registrerede salg</h2>
+      <p class="muted">Salg registreret her kan slettes, fx ved en fejl. Historiske salg fra datafilen
+        er ikke enkelte salg og kan ikke slettes.</p>
+      <p id="sales-status" class="muted" aria-live="polite">Henter salg ...</p>
+      <div id="sales-table" class="table-wrap" hidden>
+        <table>
+          <caption class="visually-hidden">Registrerede salg, nyeste først</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tidspunkt</th>
+              <th scope="col">Drikkevare</th>
+              <th scope="col">Kategori</th>
+              <th scope="col" class="num">Antal</th>
+              <th scope="col"><span class="visually-hidden">Handlinger</span></th>
+            </tr>
+          </thead>
+          <tbody id="sales-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- FR-024–FR-026: barens nøgletal, beregnet af API'et -->
     <section class="section" aria-labelledby="kpi-title">
       <div class="button-row section">

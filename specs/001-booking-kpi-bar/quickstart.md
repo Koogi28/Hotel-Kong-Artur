@@ -119,6 +119,9 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 | Derefter `bar/kpi/revenue-by-drink` | Espresso `units_sold: 14658` |
 | `POST $API/bar/sales` med `quantity: 0` eller `-1` | `400`, `fields: ["quantity"]` |
 | `POST $API/bar/sales` med ukendt `drink_id` | `400`, `fields: ["drink_id"]` |
+| `GET $API/bar/sales` | Det registrerede salg øverst med `name: "Espresso"`, `quantity: 2` og `sold_at` (FR-034) |
+| `DELETE $API/bar/sales/<id fra salget>` | `204`. Derefter `bar/kpi/total` → `units_sold: 179958` igen, og `GET $API/bar/sales` → `[]` |
+| `DELETE` samme id igen / `DELETE $API/bar/sales/abc` | `404` / `400` med `fields: ["id"]` |
 
 ## 7. Tableau Desktop (FR-021, FR-027, SC-007)
 

@@ -112,8 +112,25 @@ function readForm() {
   return body;
 }
 
+// Edge case (FR-033): en booking med et land uden for listen (fx oprettet via Swagger UI) skal
+// stadig kunne rettes. Landet tilføjes som ekstra valg og fjernes igen ved nulstilling.
+function ensureCountryOption(country) {
+  removeExtraCountries();
+  const select = form.elements.namedItem('country');
+  if (country && ![...select.options].some((option) => option.value === country)) {
+    const option = new Option(country, country);
+    option.dataset.extra = 'true';
+    select.add(option);
+  }
+}
+
+function removeExtraCountries() {
+  form.querySelectorAll('#country option[data-extra]').forEach((option) => option.remove());
+}
+
 function startEdit(booking) {
   editingId = booking.id;
+  ensureCountryOption(booking.country);
   FIELDS.forEach((name) => {
     form.elements.namedItem(name).value = booking[name] ?? '';
   });
@@ -129,6 +146,7 @@ function startEdit(booking) {
 function resetForm() {
   editingId = null;
   form.reset();
+  removeExtraCountries();
   clearFieldErrors(form);
   formTitle.textContent = 'Ny booking';
   submitButton.textContent = 'Opret booking';
