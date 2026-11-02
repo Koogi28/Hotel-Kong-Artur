@@ -51,6 +51,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* hidden-attributten skal altid skjule, også elementer med display i deres egen klasse (.button) */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -291,9 +296,10 @@ main {
   gap: var(--space-3);
 }
 
+/* 300px: 3 kolonner på computer, 2 på tablet, 1 på mobil */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--space-3);
 }
 
@@ -411,6 +417,9 @@ main {
 
 /* ---------- Tabeller ---------- */
 .table-wrap {
+  /* relative: skjulte elementer (.visually-hidden) i tabellen holdes inde i scroll-boksen,
+     ellers kan de gøre hele siden bredere end skærmen på mobil */
+  position: relative;
   width: 100%;
   overflow-x: auto;
   background: var(--color-surface);

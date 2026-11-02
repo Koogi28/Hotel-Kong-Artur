@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookinger – Hotel Kong Arthur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__small">Hotel</span>
+        <span class="brand__name">Kong Arthur</span>
+      </a>
+      <nav class="nav" aria-label="Hovedmenu">
+        <a class="nav__link nav__link--active" href="bookings.html" aria-current="page">Bookinger</a>
+        <a class="nav__link" href="overview.html">Overblik</a>
+        <a class="nav__link" href="bar.html">Bar</a>
+        <a class="nav__link" href="/api-docs">Swagger UI</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Bookinger</h1>
+    <p class="lead">Opret, find, ret og afbestil bookinger. Sæson og pris udregnes af systemet ud fra
+      ankomstdato, værelsestype og antal nætter.</p>
+
+    <div id="message" class="alert" aria-live="polite"></div>
+
+    <!-- Opret og ret bruger samme formular (US1, FR-004, FR-011) -->
+    <section class="card section" aria-labelledby="form-title">
+      <h2 id="form-title">Ny booking</h2>
+      <!-- novalidate: API'et validerer (FR-005), og fejlene vises under felterne -->
+      <form id="booking-form" class="form" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="first_name">Fornavn</label>
+            <input id="first_name" name="first_name" type="text" autocomplete="off" maxlength="100">
+          </div>
+          <div class="field">
+            <label for="last_name">Efternavn</label>
+            <input id="last_name" name="last_name" type="text" autocomplete="off" maxlength="100">
+          </div>
+          <div class="field">
+            <label for="country">Land</label>
+            <input id="country" name="country" type="text" autocomplete="off" maxlength="100">
+          </div>
+          <div class="field">
+            <label for="room_type">Værelsestype</label>
+            <!-- De 8 typer fra datafilen med præcis samme navne (FR-008) -->
+            <select id="room_type" name="room_type">
+              <option value="">Vælg værelsestype</option>
+              <option>Standard Single</option>
+              <option>Grand Lit</option>
+              <option>Standard Double</option>
+              <option>Superior Double</option>
+              <option>Junior Suite</option>
+              <option>Spa Executive</option>
+              <option>Suite</option>
+              <option>LOFT Suite</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="arrival_date">Ankomstdato</label>
+            <input id="arrival_date" name="arrival_date" type="date">
+          </div>
+          <div class="field">
+            <label for="nights">Antal nætter</label>
+            <input id="nights" name="nights" type="number" min="1" max="365" step="1" inputmode="numeric">
+          </div>
+        </div>
+        <div class="button-row">
+          <button id="submit-button" class="button button--primary" type="submit">Opret booking</button>
+          <button id="cancel-button" class="button button--secondary" type="button" hidden>Annullér</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="section" aria-labelledby="list-title">
+      <h2 id="list-title">Alle bookinger</h2>
+      <form id="search-form" class="form-grid section" role="search">
+        <div class="field">
+          <label for="search">Søg på for- eller efternavn</label>
+          <input id="search" name="search" type="search" autocomplete="off" maxlength="100"
+            placeholder="Fx muller">
+        </div>
+      </form>
+
+      <p id="list-status" class="muted" aria-live="polite">Henter bookinger ...</p>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Bookinger, nyeste først</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="num">Nr.</th>
+              <th scope="col">Gæst</th>
+              <th scope="col">Land</th>
+              <th scope="col">Værelsestype</th>
+              <th scope="col">Ankomst</th>
+              <th scope="col" class="num">Nætter</th>
+              <th scope="col">Sæson</th>
+              <th scope="col" class="num">Pris</th>
+              <th scope="col"><span class="visually-hidden">Handlinger</span></th>
+            </tr>
+          </thead>
+          <tbody id="booking-rows"></tbody>
+        </table>
+      </div>
+      <p class="section"><button id="show-all" class="button button--secondary" type="button" hidden>Vis alle</button></p>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/bookings.js"></script>
+</body>
+</html>
