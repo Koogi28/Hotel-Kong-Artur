@@ -40,7 +40,7 @@ Standard Double, Superior Double, Junior Suite, Spa Executive, Suite og LOFT Sui
 | `total_price` | `INTEGER NOT NULL` (`CHECK >= 0`) | Hele DKK. Ny booking: pris pr. nat × nætter. Historisk: fra filen |
 | `is_historical` | `BOOLEAN NOT NULL DEFAULT FALSE` | `TRUE` kun for de 1000 seed-rækker |
 | `arrival_date` | `DATE NULL` | `NULL` for historiske, påkrævet for nye |
-| `created_at` | `TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP` | Kun teknisk sporing |
+| `created_at` | `TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)` | Kun teknisk sporing |
 
 Constraints og indeks:
 
@@ -104,7 +104,7 @@ drinks.
 | `id` | `INTEGER GENERATED ALWAYS AS IDENTITY` PK | |
 | `drink_id` | `INTEGER NOT NULL` FK → `drink.id` | Ukendt drink → 400 |
 | `quantity` | `SMALLINT NOT NULL` | Heltal 1–1000 (`CHECK (quantity >= 1)`). 0, negativ eller over 1000 → 400 |
-| `sold_at` | `TIMESTAMP NOT NULL DEFAULT LOCALTIMESTAMP` | Sættes automatisk (FR-022) |
+| `sold_at` | `TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)` | Sættes automatisk (FR-022). Hele sekunder, dansk tid (research R11) |
 
 Ingen medarbejderkolonne (FR-023). Seed: 0 rækker. Historisk salg ligger kun som
 `drink.historical_units_sold` (FR-003: der opdigtes ingen tidspunkter).

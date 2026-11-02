@@ -331,7 +331,7 @@ dem, hvor de er i konflikt.
 | Boolean | `is_historical` kommer som `0/1`, og `toBooking` tjekker `=== 1` | Kommer som `true/false`. `toBooking` skal ændres | **Vigtigt**: uden ændringen bliver alle historiske bookinger `false` og kan rettes og slettes (bryder FR-003) |
 | Datoer (R8) | `dateStrings: true` | `types.setTypeParser` for `DATE` (OID 1082) og `TIMESTAMP` (OID 1114) returnerer teksten uændret | Samme regel som R8: ingen JS-`Date`, der kan flytte sig en dag |
 | Tællinger og summer | `COUNT` som tal, `SUM` som tekst | `COUNT` og `SUM` er `bigint` og kommer som tekst. Repositories caster med `::int` | Services forventer tal. Alle summer (højst ca. 13,5 mio.) kan være i `int` |
-| `sold_at` i dansk tid | `TZ=Europe/Copenhagen` på `db` | `TZ=Europe/Copenhagen` og `PGTZ=Europe/Copenhagen` på `db`, kolonnen er `TIMESTAMP` med `DEFAULT LOCALTIMESTAMP` | Kontrolleres i quickstart: et nyt salg skal have dansk tid |
+| `sold_at` i dansk tid | `TZ=Europe/Copenhagen` på `db` | Kolonnen er `TIMESTAMP(0)` med `DEFAULT LOCALTIMESTAMP(0)`. `db.js` sætter `options: '-c timezone=Europe/Copenhagen'` på forbindelsen. `db` får `TZ` (serverens standard) og `PGTZ` (kun `psql` i containeren) | `LOCALTIMESTAMP` følger *forbindelsens* tidszone, så det er backendens forbindelse, der afgør det. `(0)` giver hele sekunder som i kontrakten (`'YYYY-MM-DD HH:MM:SS'`), ellers kommer der mikrosekunder med. Kontrolleres i T066 |
 | Fejlsøgning | `docker compose exec db mysql ...` | `docker compose exec db psql -U "$POSTGRES_USER" "$POSTGRES_DB"` | |
 
 **Kontrol (SC-009)**: Efter skiftet køres quickstart trin 3–6 fra tom volumen. Tallene skal være

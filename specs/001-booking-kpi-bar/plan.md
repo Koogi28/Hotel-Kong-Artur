@@ -152,7 +152,7 @@ backend/
 ├── src/
 │   ├── server.js             # starter app på PORT (3000)
 │   ├── app.js                # express, json, static, /api-docs, routes, fejl-middleware
-│   ├── db.js                 # pg Pool fra env. DATE/TIMESTAMP som tekst (research R11)
+│   ├── db.js                 # pg Pool fra env, timezone Europe/Copenhagen. DATE/TIMESTAMP som tekst (research R11)
 │   ├── routes.js             # URL → controller-funktion
 │   ├── controllers/
 │   │   ├── bookingController.js
@@ -211,7 +211,7 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 
 | Service | Fil | Nøglepunkter |
 |---------|-----|--------------|
-| `db` | `compose.yaml` | `postgres:16-alpine`, `env_file: .env`, `TZ` og `PGTZ=Europe/Copenhagen`, healthcheck `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"`, volume `pg_data:/var/lib/postgresql/data`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten (research R11) |
+| `db` | `compose.yaml` | `postgres:16-alpine`, `env_file: .env`, `TZ` og `PGTZ=Europe/Copenhagen` (backendens tidszone sættes i `db.js`), healthcheck `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"`, volume `pg_data:/var/lib/postgresql/data`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten (research R11) |
 | `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `DB_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
 | `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `DB_HOST=db`, `DB_PORT=5432`, ingen `depends_on` (kan ikke pege ud af en included fil) |
 

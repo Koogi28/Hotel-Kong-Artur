@@ -18,6 +18,11 @@ nøgletal. Unit-tests (`node:test`, uden database) er derfor med for de rene fun
 **Organization**: Setup (Docker-skelet + seed, kan laves i dag) → Foundational → US1 → US2 →
 US3 → Polish. Frontend-tasks (`backend/public/`) er markeret **(uge 2)**.
 
+**Tillægsopgave uge 2 (02/11)**: Phase 9 (PostgreSQL, T057–T066) → Phase 10 (fælles frontend efter
+styleguiden, T067–T069) → T025, T035, T043 → Phase 11 (verificering, T070–T072). Færdige tasks
+fra uge 1, der nævner MySQL (fx T003, T008–T011), beskriver MySQL-versionen i tagget
+`uge1-mysql`. De bliver ikke ændret, men afløst af Phase 9.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Kan laves parallelt (andre filer, ingen afhængighed af ufærdige tasks)
@@ -32,7 +37,10 @@ US3 → Polish. Frontend-tasks (`backend/public/`) er markeret **(uge 2)**.
   `*Calculations.js`. `*Service.js` henter rækker fra repositories og kalder dem.
 - Nøgletalssvar er flade (et objekt eller et array af objekter uden nestede felter), så
   Tableau kan læse dem med JSONPath `$` eller `$[*]` (research R7).
-- `repositories/`: al SQL (`mysql2/promise`, parametriserede `?`-forespørgsler, ingen ORM).
+- `repositories/`: al SQL (`pg`, parametriserede `$1, $2, ...`-forespørgsler, ingen ORM).
+  *(rettet 02/11: før `mysql2/promise` og `?`, research R11)*
+- `public/`: kun `fetch` mod API'et, ingen beregning af nøgletal, sæson eller pris (FR-029).
+  Al styling i `public/css/style.css` med tokens fra research R12 (FR-031).
 - Fejl kastes som `ValidationError(fields)` → 400, `NotFoundError` → 404 eller
   `ConflictError` → 409 fra `services/errors.js`. Én fejl-middleware oversætter dem.
 
@@ -128,7 +136,7 @@ PUT/DELETE → 409.
   - `PUT /api/bookings/:id` → 200 + booking
   - `DELETE /api/bookings/:id` → 204 uden body
   - Svarformat som kontraktens `Booking`. Controlleren kalder kun `bookingService`
-- [ ] T025 [US1] **(uge 2)** Opret `backend/public/bookings.html`, `backend/public/js/bookings.js` og `backend/public/css/style.css`: formular (fornavn, efternavn, land, værelsestype som dropdown med de 8 typer, ankomstdato, nætter), liste med søgefelt, ret- og slet-knapper (skjult for historiske) og visning af `error` og `fields` fra 400/409. Kun `fetch` mod `/api/bookings` (FR-014). Link fra `backend/public/index.html`
+- [ ] T025 [US1] **(uge 2, omskrevet 02/11)** Kræver T067–T069. Opret `backend/public/bookings.html` og `backend/public/js/bookings.js` med fælles header, `css/style.css` og `js/api.js` (ikke en egen CSS-fil). Formular (fornavn, efternavn, land, værelsestype som dropdown med de 8 typer, ankomstdato, nætter), liste med søgefelt, ret- og slet-knapper (skjult for historiske) og visning af `error` og `fields` fra 400/409. 400: strimmel under hvert felt i `fields` (`.field-error`, som "Nødvendig information" på hotellets bookingside). 409 og 500: `.alert--error`. Oprettet, rettet og slettet: `.alert--success`. Slet-knappen er `.button--danger` og kræver `confirm()`. Sæson og samlet pris vises fra API'ets svar og udregnes ikke i browseren. Listen er en tabel i `.table-wrap`. Kun `fetch` mod `/api/bookings` (FR-014, FR-029). Følg `styleguide/style.md` og research R12 (FR-031, FR-032)
 - [X] T026 [US1] Validér US1 med [quickstart.md](quickstart.md) trin 3 (`npm test` grøn) og trin 4 (alle rækker i tabellen) via curl og Swagger UI (FR-015)
 
 **Checkpoint**: US1 virker alene. Det er MVP.
@@ -169,7 +177,7 @@ summerer til totalen, belægning 0 → 0.5 % efter ny booking, Espresso 14656 / 
   - `getTopDrinks()`: `drinkRepository.findAllWithRegisteredUnits` → `withUnitsSold` → `topDrinks`, så historiske + nye salg tæller med. Returnerer et fladt array `[{category, drink_id, name, units_sold}]`
 - [X] T033 [US2] Opret `backend/src/controllers/kpiController.js` og routes: `GET /api/kpi/revenue/total`, `/api/kpi/revenue/by-country`, `/api/kpi/revenue/by-room-type`, `/api/kpi/revenue/by-season`, `/api/kpi/revenue/by-room-type-season` *(tilføjet 30/10, kontrakt 2.1.0)*, `/api/kpi/occupancy?date=` og `/api/kpi/top-drinks` efter kontrakten
 - [X] T034 [US2] *(omskrevet 29/10, før: CSV-eksport)* Tilføj route `GET /api/kpi/occupancy/nights` i `backend/src/controllers/kpiController.js` og `backend/src/routes.js`, der kalder `kpiService.getOccupancyPerNight()` og svarer med et fladt array efter kontrakten. Tjek i Swagger UI, at alle `/api/kpi/*`-svar er flade (research R7)
-- [ ] T035 [US2] **(uge 2)** Opret `backend/public/overview.html` og `backend/public/js/overview.js`: samlet indtjening, tre fordelingstabeller, datovælger til belægning (vis %) og mest solgte kaffe/cocktail. *(tilføjet 30/10)* Tabel over indtjening pr. værelsestype pr. sæson fra `by-room-type-season` med en sæson-dropdown (alle/low/mid/high), der kun filtrerer de hentede rækker i browseren. Ingen beregning i frontend. Kun `fetch` mod `/api/kpi/*`. Link fra `backend/public/index.html`
+- [ ] T035 [US2] **(uge 2, omskrevet 02/11)** Kræver T067–T069. Opret `backend/public/overview.html` og `backend/public/js/overview.js` med fælles header, `css/style.css` og `js/api.js`. Samlet indtjening og antal bookinger som `.kpi`-kort, tre fordelingstabeller, datovælger til belægning (vis %) og mest solgte kaffe/cocktail. *(tilføjet 30/10)* Tabel over indtjening pr. værelsestype pr. sæson fra `by-room-type-season` med en sæson-dropdown (alle/low/mid/high), der kun filtrerer de hentede rækker i browseren. *(tilføjet 02/11, SC-008)* Tabel over belægning pr. nat fra `/api/kpi/occupancy/nights` (dato, bookede værelser, %), da den også er i Tableau-dashboardet (T048). Uden data vises "Ingen bookinger med ankomstdato endnu". Ingen beregning i frontend: procenter, summer og sortering kommer fra API'et. Kun `fetch` mod `/api/kpi/*` (FR-028, FR-029). Følg `styleguide/style.md` og research R12 (FR-031, FR-032)
 - [X] T036 [US2] Validér US2 med [quickstart.md](quickstart.md) trin 5 (inkl. `by-room-type-season`: 24 rækker, Σ 11234034 – genåbnet 30/10) inkl. "Live" (opret booking → tal ændres ved næste kald, også i `occupancy/nights`)
 
 **Checkpoint**: US1 og US2 virker hver for sig.
@@ -202,7 +210,7 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
   - `getTotal()`, `getRevenueByDrink()`, `getCategorySplit()`: alle via `findAllWithRegisteredUnits` → `withUnitsSold` → beregning
 - [X] T041 [US3] Opret `backend/src/controllers/barController.js` og routes: `GET /api/bar/drinks`, `POST /api/bar/sales` (201), `GET /api/bar/kpi/total`, `/api/bar/kpi/revenue-by-drink` og `/api/bar/kpi/category-split` efter kontrakten. Svar er flade (R7)
 - ~~T042~~ **Udgået (29/10)**: Bar-CSV'erne er fravalgt. Felterne fra `revenue-by-drink.csv` og `bar-category-split.csv` ligger nu i JSON-svarene (T037/T038/T041), og `kpi-totals.csv` dækkes af `kpi/revenue/total` + `bar/kpi/total` (research R7)
-- [ ] T043 [US3] **(uge 2)** Opret `backend/public/bar.html` og `backend/public/js/bar.js`: drikkevarer grupperet i Kaffe/Cocktails som store knapper, antal (standard 1), "Registrér" (SC-003: under 15 sek.), visning af total, omsætning pr. drink og procentfordeling. Kun `fetch` mod `/api/bar/*`. Link fra `backend/public/index.html`
+- [ ] T043 [US3] **(uge 2, omskrevet 02/11)** Kræver T067–T069. Opret `backend/public/bar.html` og `backend/public/js/bar.js` med fælles header, `css/style.css` og `js/api.js`. Drikkevarer grupperet i Kaffe/Cocktails som store knapper, antal (standard 1), "Registrér" (SC-003: under 15 sek.), visning af total, omsætning pr. drink og procentfordeling. Knapperne er mindst 48 px høje, så de er nemme at ramme på en tablet. Efter et salg vises `.alert--success` ("2 × Espresso registreret"), og nøgletallene hentes igen fra API'et (browseren lægger ikke selv tallene sammen). Antal 0 eller ukendt drink → fejl fra 400 vises som i T025. Kun `fetch` mod `/api/bar/*` (FR-028, FR-029). Følg `styleguide/style.md` og research R12 (FR-031, FR-032)
 - [X] T044 [US3] Validér US3 med [quickstart.md](quickstart.md) trin 6 og trin 7 (Tableau Desktop via REST API Connector: alle KPI-endpoints giver samme tal som i Swagger UI, og nye tal vises efter tilføjet data → *Data → Refresh*)
 
 **Checkpoint**: Alle tre user stories virker.
@@ -235,6 +243,13 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - **US2 (T027–T036)**: kræver Foundational. Bruger `bookingRepository` fra T022, så lav US1 først eller koordinér filen
 - **US3 (T037–T044)**: kræver Foundational
 - **Polish (T045–T049)**: kræver de ønskede user stories
+- **Phase 9 PostgreSQL (T057–T066)**: kræver, at uge 1 er gemt (tag `uge1-mysql`). Blokerer al videre test mod databasen, frontend-tasks og T048/T049
+  - T059 kræver T058. T063 og T064 kræver T059
+  - T061 kræver T060 (skemaet skal findes, før seed kan testes)
+  - T066 kræver alle andre tasks i Phase 9
+- **Phase 10 fælles frontend (T067–T069)**: kræver T066 (frontenden testes mod PostgreSQL). T069 kræver T067. Blokerer T025, T035 og T043
+- **T025, T035, T043**: kræver T067–T069. Kan derefter laves parallelt (forskellige filer)
+- **Phase 11 verificering (T070–T072)**: T070 kræver T035, T043 og T048. T071 kræver T025, T035 og T043. T072 kræver T070 og T071
 
 ### User Story Dependencies
 
@@ -254,6 +269,9 @@ kaffe/cocktail-fordeling. Tableau får de samme tal.
 - **US2**: T027 kan skrives, mens T031 laves (T028 og T030 er udgået)
 - **US3**: T037 og T039 parallelt
 - **Efter Foundational**: US1, US2 og US3 kan fordeles på tre personer (se afhængigheder ovenfor)
+- **Phase 9**: T057, T060, T062 og T065 parallelt med T058 → T059. T063 og T064 parallelt efter T059
+- **Phase 10**: T068 parallelt med T067. T069 efter T067
+- **Uge 2-frontend**: T025, T035 og T043 parallelt efter Phase 10 (tre personer, tre sider)
 
 ## Parallel Example: Setup (i dag)
 
@@ -262,6 +280,19 @@ Person A: T001 → T003 → T004 → T005 → T006 → T007   (backend-skelet, h
 Person B: T002 → T008 → T009 → T010                 (.env.example + compose + healthchecks)
 Person C: T011, T012 → T013                         (schema + seed)
 Alle:     T014                                       (docker compose up + quickstart trin 1–2)
+```
+
+## Parallel Example: Tillægsopgave uge 2
+
+```text
+Person A: T058 → T059 → T063                       (pg, db.js, bookingRepository)
+Person B: T057, T062, T060 → T061                  (.env.example, compose, schema, seed)
+Person C: T065, derefter T064 (efter T059)         (docs, øvrige repositories)
+Alle:     T066                                     (SC-009: samme tal som uge1-mysql)
+Person A: T067 → T069 → T025                       (style.css, index.html, bookinger)
+Person B: T068 → T035                              (api.js, overblik)
+Person C: T043 (efter T067–T069)                   (bar)
+Alle:     T070 → T071 → T072
 ```
 
 ## Parallel Example: User Story 1
@@ -288,7 +319,8 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 2. US1 → bookinger (MVP)
 3. US2 → nøgletal (JSON, også til Tableau)
 4. US3 → barsalg + barens nøgletal (JSON, også til Tableau)
-5. Uge 2: frontend-tasks T025, T035 og T043
+5. Uge 2 (tillægsopgave): Phase 9 PostgreSQL → **STOP: samme tal som `uge1-mysql`** (T066) →
+   Phase 10 fælles frontend → T025, T035, T043 → Phase 11 verificering
 6. Polish
 
 ## Notes
@@ -307,7 +339,86 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 ## Phase 8: Convergence
 
 - [ ] T052 Opret `CONTRIBUTE.md` i repo-roden med opsætning (`.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`), branch- og commit-regler, review via pull request før merge til `main`, Spec Kit-workflowet (specify → clarify → plan → tasks → analyze → implement → converge) og hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan Lu) per plan: Afleveringsmateriale #2 (missing)
-- [ ] T053 Tilføj et Mermaid-arkitekturdiagram i `README.md` (supplerer T045): browser og Tableau Desktop som klienter, backend med controllers → services → repositories, MySQL med volume `mysql_data`, Docker-netværket og portene 3000 (vært) og 3306 (kun internt) per plan: Afleveringsmateriale #1 (partial)
+- [ ] T053 Tilføj et Mermaid-arkitekturdiagram i `README.md` (supplerer T045): browser og Tableau Desktop som klienter, backend med controllers → services → repositories, PostgreSQL med volume `pg_data`, Docker-netværket og portene 3000 (vært) og 5432 (kun internt) *(rettet 02/11: før MySQL/3306, research R11)* per plan: Afleveringsmateriale #1 (partial)
 - [X] T054 Opret `specs/001-booking-kpi-bar/converge.md` med afsnittet "Converge #1 (30/10)": implementeret pr. user story og FR, åbne tasks, fund fra T046/T047/`/speckit-analyze` og bevidst accepterede afvigelser (U2, G1, T050 uden screenshots) per plan: Afleveringsmateriale #3 (missing)
 - [ ] T055 Tilføj afsnittene "Converge #2" og "Sidste Converge-tjek" i `specs/001-booking-kpi-bar/converge.md`, når de tjek er kørt per plan: Afleveringsmateriale #3 (missing)
 - [X] T056 Beskriv i `contracts/openapi.yaml` (parameteren `search` på `GET /api/bookings`), at en søgetekst over 100 tegn afkortes til 100 tegn, så kontrakten matcher `bookingService.list` per FR-010 / Constitution IV (partial)
+
+---
+
+## Phase 9: Databaseskift MySQL → PostgreSQL (tillægsopgave uge 2, FR-030, SC-009)
+
+**Purpose**: Hotellet vil ikke have MySQL. Kun datalaget, `db-init/`, seed-scriptet og Docker
+ændres (research R11, plan "Tillægsopgave uge 2"). Forretningslaget, controllers, kontrakten og
+de 55 unit-tests ændres **ikke**. MySQL-versionen ligger i tagget `uge1-mysql`.
+
+**Independent Test**: Efter `docker compose down -v && docker compose up --build` giver quickstart
+trin 2–6 præcis de samme tal som `uge1-mysql` (T066).
+
+- [ ] T057 [P] Omskriv `.env.example`: erstat `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER` og `MYSQL_PASSWORD` med `POSTGRES_DB=project_db`, `POSTGRES_USER=team_user` og `POSTGRES_PASSWORD=change-me`. Behold `PORT=3000` og advarslen om de gamle passwords. Kommentaren skal sige "PostgreSQL (bruges af db-containeren og backend)". Opdatér også din egen `.env` på samme måde (`.env` committes ikke, princip XII)
+- [ ] T058 Udskift `mysql2` med `pg` i `backend/package.json` (`"pg": "^8.13.0"`), og opdatér `backend/package-lock.json` med `npm uninstall mysql2 && npm install pg@^8.13.0` i `backend/`. Uden Node lokalt køres det i en container: `MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd -W)/backend:/app" -w /app node:20-alpine sh -c "npm uninstall mysql2 && npm install pg@^8.13.0"`. Bagefter skal der stadig være præcis fire afhængigheder: `express`, `pg`, `swagger-ui-express` og `yaml` (princip I)
+- [ ] T059 Omskriv `backend/src/db.js`: `const { Pool, types } = require('pg')`. Poolen oprettes med `host: process.env.DB_HOST || 'localhost'`, `port: Number(process.env.DB_PORT || 5432)`, `user: process.env.POSTGRES_USER`, `password: process.env.POSTGRES_PASSWORD`, `database: process.env.POSTGRES_DB` og `max: 10` og `options: '-c timezone=Europe/Copenhagen'` (forbindelsens tidszone styrer `LOCALTIMESTAMP`, så `sold_at` bliver dansk tid uanset containerens opsætning, research R11). Tilføj `types.setTypeParser(1082, (value) => value)` (DATE) og `types.setTypeParser(1114, (value) => value)` (TIMESTAMP), så datoer returneres som tekst og ikke som JS-`Date` (research R8 + R11). Kommentaren øverst skal nævne PostgreSQL. Eksportér poolen
+- [ ] T060 [P] Omskriv `db-init/01-schema.sql` til PostgreSQL efter [data-model.md](data-model.md) og research R11. Øverst: kommentar (PostgreSQL, køres kun ved tom volumen, ingen gemte nøgletal) og `CREATE EXTENSION IF NOT EXISTS unaccent;`. Ingen `SET NAMES`, `ENGINE`, `CHARSET`, `COLLATE`, `UNSIGNED`, `AUTO_INCREMENT` eller `ENUM`. Alle constraints navngives som i MySQL-versionen (`uq_room_type_name`, `chk_room_type_prices`, `fk_booking_room_type`, `chk_booking_nights`, `chk_booking_arrival`, `uq_drink_name`, `fk_bar_sale_drink`, `chk_bar_sale_quantity`, indeksene `idx_booking_*`). De nye CHECKs, der erstatter `UNSIGNED` og `ENUM`, får navne efter samme mønster, fx `chk_booking_season` og `chk_drink_price`. Tabeller:
+  - `room_type(id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name VARCHAR(50) NOT NULL UNIQUE, price_low INTEGER NOT NULL, price_mid INTEGER NOT NULL, price_high INTEGER NOT NULL)` med `CHECK (price_low >= 0)` og `CHECK (price_low <= price_mid AND price_mid <= price_high)`
+  - `booking(id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, first_name VARCHAR(100) NOT NULL, last_name VARCHAR(100) NOT NULL, country VARCHAR(100) NOT NULL, room_type_id INTEGER NOT NULL REFERENCES room_type (id), nights SMALLINT NOT NULL, season TEXT NOT NULL, total_price INTEGER NOT NULL, is_historical BOOLEAN NOT NULL DEFAULT FALSE, arrival_date DATE NULL, created_at TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0))` med `CHECK (nights >= 1)`, `CHECK (season IN ('low','mid','high'))`, `CHECK (total_price >= 0)`, `CHECK ((is_historical = TRUE AND arrival_date IS NULL) OR (is_historical = FALSE AND arrival_date IS NOT NULL))` og `CREATE INDEX` på `last_name`, `first_name` og `arrival_date`
+  - `drink(id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, category TEXT NOT NULL, price NUMERIC(8,2) NOT NULL, historical_units_sold INTEGER NOT NULL DEFAULT 0)` med `CHECK (category IN ('Coffee','Cocktail'))`, `CHECK (price >= 0)` og `CHECK (historical_units_sold >= 0)`
+  - `bar_sale(id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, drink_id INTEGER NOT NULL REFERENCES drink (id), quantity SMALLINT NOT NULL, sold_at TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0))` med `CHECK (quantity >= 1)`. `(0)` = hele sekunder, så `sold_at` svarer til kontraktens format `'YYYY-MM-DD HH:MM:SS'` (uden `(0)` kommer der mikrosekunder med)
+- [ ] T061 Ret `scripts/generate-seed.js` til PostgreSQL (research R11): erstat `SET NAMES utf8mb4;` med `SET client_encoding = 'UTF8';`, lad escape-funktionen kun fordoble `'` (fjern fordoblingen af `\`), og skriv "PostgreSQL" i kommentaren øverst. `START TRANSACTION;` og `COMMIT;` beholdes. Kør `node scripts/generate-seed.js`, og commit `db-init/02-seed.sql`. Kontrollér med `git diff db-init/02-seed.sql`, at kun kommentaren og `SET`-linjen er ændret (de 1030 INSERT-rækker er de samme), og at der stadig er 54 × `Müller` og `91.40` for Cosmopolitan
+- [ ] T062 [P] Omskriv service `db` i `compose.yaml` (research R11, plan "Docker-design"): `image: postgres:16-alpine`, `restart: unless-stopped`, `env_file: .env`, `environment: TZ: Europe/Copenhagen, PGTZ: Europe/Copenhagen` (`TZ` bliver serverens standardtidszone ved første opstart, `PGTZ` gælder kun `psql` i containeren; backendens tidszone sættes i `db.js`, T059), volumes `pg_data:/var/lib/postgresql/data` og `./db-init:/docker-entrypoint-initdb.d:ro`, **ingen** `ports`. Healthcheck `["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]` med `interval: 5s`, `timeout: 5s`, `retries: 20`, `start_period: 30s`. Kommentarerne skal forklare TCP-reglen (init-serveren lytter kun på socket, så `db` først bliver healthy efter seed). `backend` får `environment: DB_HOST: db` i stedet for `MYSQL_HOST`. Top-level `volumes: pg_data:` i stedet for `mysql_data:`. I `docker/docker-compose.yml` får `app` `DB_HOST: db` og `DB_PORT: "5432"` i stedet for `MYSQL_HOST`/`MYSQL_PORT`
+- [ ] T063 Omskriv `backend/src/repositories/bookingRepository.js` til `pg` (research R11):
+  - `const { rows } = await pool.query(...)` i stedet for `const [rows]`, og `$1, $2, ...` i stedet for `?`. Kommentaren øverst nævner `$n`-pladsholdere
+  - `toBooking(row)`: `is_historical: row.is_historical === true` (pg giver `true/false`, ikke `0/1`). **Uden denne rettelse kan historiske bookinger rettes og slettes (FR-003)**
+  - `findAll(search)`: `WHERE unaccent(booking.first_name) ILIKE unaccent($1) OR unaccent(booking.last_name) ILIKE unaccent($1) OR unaccent(booking.first_name || ' ' || booking.last_name) ILIKE unaccent($1)` med én parameter `%search%`. Kommentaren nævner `unaccent` i stedet for kollationen
+  - `create(...)`: `INSERT ... RETURNING id`, og returnér `rows[0].id`
+  - `update` og `remove`: `$n`-pladsholdere, ellers uændrede
+  - `findRevenueRows()` og `findDatedStays()`: kun `{ rows }`, ingen beregning (princip V)
+- [ ] T064 [P] Omskriv de øvrige repositories til `pg` med `{ rows }` og `$n`:
+  - `backend/src/repositories/drinkRepository.js`: `findAll`, `findById` og `findAllWithRegisteredUnits` med `COALESCE(SUM(bar_sale.quantity), 0)::int AS registered_units` (`SUM` giver ellers `bigint` som tekst). `GROUP BY drink.id` er nok, fordi `id` er primærnøglen
+  - `backend/src/repositories/barSaleRepository.js`: `create` med `INSERT ... RETURNING id`, `findById` uændret ud over `$1`
+  - `backend/src/repositories/roomTypeRepository.js` og `backend/src/repositories/healthRepository.js`: `{ rows }` og `$1`
+- [ ] T065 [P] Opdatér dokumenter om databasen: `db-init/README.md` (PostgreSQL-imagets `/docker-entrypoint-initdb.d`, kører kun ved tom volumen, `02-seed.sql` genskabes med `node scripts/generate-seed.js`) og `specs/001-booking-kpi-bar/HANDOFF.md` "Praktiske noter" (`pg_data`, `psql`-kommandoen fra quickstart trin 2, `.env` med `POSTGRES_*`, og `docker volume rm hotel-kong-artur_mysql_data` til den gamle volumen)
+- [ ] T066 Validér databaseskiftet (SC-009, FR-030): `docker compose down -v`, `docker volume rm hotel-kong-artur_mysql_data` (hvis den findes) og `docker compose up --build`. Kør [quickstart.md](quickstart.md) trin 1–6, og sammenlign med uge 1: SQL-tjekket giver 1000/1000/1000, Cocktail 20/Coffee 10, 54 Müller og `SUM(total_price)` 11234034. `GET /api/bookings?search=muller` giver 54. `PUT /api/bookings/1` → 409 (boolean-rettelsen virker). `/api/kpi/revenue/by-room-type-season` giver 24 rækker med Σ 11234034. Baren giver 179958 / 13448640.34 og 52.83 / 47.17. Et nyt salg får `sold_at` i dansk tid og formatet `YYYY-MM-DD HH:MM:SS` uden decimaler (kontrakten). `npm test` giver 55/55. `grep -rni mysql backend/src compose.yaml docker/docker-compose.yml db-init scripts .env.example` giver ingen træf. Skriv resultatet i `specs/001-booking-kpi-bar/converge.md` under "Converge #2"
+
+**Checkpoint**: Samme system og samme tal som `uge1-mysql`, nu på PostgreSQL.
+
+---
+
+## Phase 10: Fælles frontend efter styleguiden (FR-031, FR-032, research R12)
+
+**Purpose**: Ét fælles udseende, før de tre sider bygges, så T025, T035 og T043 kan laves
+parallelt uden at hver side får sin egen stil. Læs `styleguide/style.md` og se skærmbillederne
+i `styleguide/screenshots/`, før du går i gang (styleguide regel 1–2).
+
+- [ ] T067 Opret `backend/public/css/style.css` (den eneste CSS-fil, intet framework):
+  - **Tokens** i `:root`, præcis som i research R12: `--color-primary: #AA6A11`, `--color-primary-strong: #8A560E`, `--color-secondary: #003523`, `--color-background: #F4EFEB`, `--color-band: #E5D8D1`, `--color-surface: #FFFFFF`, `--color-text: #4B4845`, `--color-text-muted: #6E6A67`, `--color-border: #D2CDCA`, `--color-input-border: #CED4DA`, `--color-error-bg: #DBD3C8`, `--color-warning: #7A4B0C`, `--color-error: #9B2C1F`, `--color-success: #003523`. Skrift: `--font-heading: "Times New Roman", Georgia, serif` og `--font-body: "Barlow", "Segoe UI", Arial, sans-serif`. Afstande: `--space-1` til `--space-6` (4, 8, 16, 24, 48, 96 px). `--content-width: 1290px`. HEX-værdier må kun stå i `:root`
+  - **Base**: `body` i `--font-body`, 16 px, `line-height: 1.6`, `--color-text` på `--color-background`. `h1`–`h3` i `--font-heading`, vægt 400 (`h1: clamp(2rem, 4vw, 3rem)`, `h2: 2rem`, `h3: 1.5rem`), sideoverskrift `h1` i `--color-secondary`. Links i `--color-primary-strong`. `.container` (maks. `--content-width`, centreret, 16 px sidemargin på mobil)
+  - **Header** `.site-header`: `--color-background`, 1 px kant forneden i `--color-border`, navnet centreret som `.brand` (`.brand__small` "Hotel" i kursiv `--font-heading`, `.brand__name` "KONG ARTHUR" i `--font-body` 600, store bogstaver, `letter-spacing: 0.15em`). Navigation `.nav` med `.nav__link` (versaler, `letter-spacing: 0.05em`) og `.nav__link--active` i `--color-primary` med streg under
+  - **Knapper**: `.button` (firkantet, `min-height: 48px`, `--font-body` 600, 1.1875rem, så hvid tekst på `#AA6A11` er "stor tekst" efter WCAG), `.button--primary` (`--color-primary`, hvid tekst, `:hover` `--color-primary-strong`), `.button--secondary` (gennemsigtig, 1 px kant i `--color-text`), `.button--danger` (`--color-error`, hvid tekst), `:disabled` (opacity 0.5, `cursor: not-allowed`) og `:focus-visible` (2 px kontur i `--color-secondary`, offset 2 px) på alt interaktivt
+  - **Formularer**: `.field` (label over feltet), `input`/`select` hvide, 1 px `--color-input-border`, `min-height: 48px`, firkantede. `.field--invalid input` får kant i `--color-warning`. `.field-error` er strimlen under feltet (`--color-error-bg`, tekst i `--color-warning`, 0.875rem)
+  - **Beskeder**: `.alert` med `.alert--success` (venstre kant og tekst i `--color-success`), `.alert--error` (venstre kant og tekst i `--color-error`) og `.alert--info` (`--color-text-muted`, til "Henter ...")
+  - **Nøgletal og kort**: `.card` (`--color-surface`, 1 px `--color-border`, `padding: var(--space-4)`, ingen skygge), `.kpi` med `.kpi__value` (`--font-heading`, 2.5rem, `--color-primary-strong`) og `.kpi__label` (`--color-text-muted`), `.kpi-grid` (CSS grid, `repeat(auto-fit, minmax(220px, 1fr))`), `.band` (sektion i `--color-band`)
+  - **Tabeller**: `.table-wrap` (`overflow-x: auto`), `table` på `--color-surface`, `th` i versaler og `--color-text-muted`, rækker adskilt af 1 px `--color-border`, `.num` højrestillet med `font-variant-numeric: tabular-nums`
+  - **Responsivt**: under 768 px én kolonne, navigationen brydes på flere linjer, ingen vandret scroll på `body` (FR-032, SC-010)
+  - Ingen `border-radius` og ingen `box-shadow` nogen steder (skærmbillederne har ingen)
+- [ ] T068 [P] Opret `backend/public/js/api.js` (fælles for alle sider, ingen beregning af nøgletal, sæson eller pris, FR-029):
+  - `async function apiGet(path)` og `async function apiSend(method, path, body)`: `fetch` med JSON. Ved 204 returneres `null`. Ved fejlstatus kastes `ApiError` med `status`, `message` (`error` fra svaret) og `fields` (array, tomt hvis det mangler). Netværksfejl → `ApiError` med status 0 og beskeden "API'et svarer ikke"
+  - `showAlert(element, type, text)` (type `success`/`error`/`info`, sætter `.alert--{type}` og `role="status"` eller `role="alert"`) og `clearAlert(element)`
+  - `markFieldErrors(form, fields)`: tilføj `.field--invalid` og en `.field-error` med "Ugyldig eller mangler" under hvert felt med samme `name`. `clearFieldErrors(form)`
+  - Kun visningsformat, ingen beregning: `formatDkk(value)` med `Intl.NumberFormat('da-DK', { style: 'currency', currency: 'DKK' })`, `formatNumber(value)` og `formatPercent(value)` (tallet fra API'et + " %")
+  - Filen indlæses med `<script src="js/api.js"></script>` før sidens egen fil (ingen moduler og intet build-step, princip I)
+- [ ] T069 Omskriv `backend/public/index.html` til forsiden og skabelonen for de andre sider: `<html lang="da">`, `<meta name="viewport" content="width=device-width, initial-scale=1">`, Google Fonts-`<link>` til Barlow (400, 500, 600) med `display=swap`, `css/style.css`, `.site-header` med `.brand` og `.nav` (Bookinger → `bookings.html`, Overblik → `overview.html`, Bar → `bar.html`, Swagger UI → `/api-docs`), en `h1` ("Hotel Kong Arthur – personalets værktøjer") og tre `.card` med links og en linje om hver side. Ingen fotos og intet logo (research R12). T025, T035 og T043 kopierer `<head>` og `.site-header` herfra og sætter `.nav__link--active` på deres egen side
+
+**Checkpoint**: Fælles stil, header og `api.js` findes. T025, T035 og T043 kan laves parallelt.
+
+---
+
+## Phase 11: Verificering af tillægsopgaven (SC-008, SC-009, SC-010)
+
+- [ ] T070 Kontrollér SC-008 og FR-028: lav en tabel i `specs/001-booking-kpi-bar/converge.md` under "Converge #2" med én række pr. nøgletal i Tableau-dashboardet (T048) → endpoint → element i frontenden (`overview.html` eller `bar.html`) → værdi med startdata. Alle 11 KPI-endpoints (`/api/kpi/revenue/total`, `by-country`, `by-room-type`, `by-season`, `by-room-type-season`, `/api/kpi/occupancy`, `/api/kpi/occupancy/nights`, `/api/kpi/top-drinks`, `/api/bar/kpi/total`, `revenue-by-drink`, `category-split`) skal have en række, og værdien skal være den samme i Swagger UI, frontenden og Tableau
+- [ ] T071 Kontrollér SC-010, FR-031 og FR-032 på alle fire sider i `backend/public/` (`index.html`, `bookings.html`, `overview.html`, `bar.html`):
+  - `grep -nE "#[0-9A-Fa-f]{3,6}" backend/public/css/style.css` finder kun linjer i `:root`, og `grep -rn 'style="' backend/public` finder intet
+  - Ved 375 px bredde i browserens udviklerværktøj er der ingen vandret scroll (tabeller scroller i deres egen boks)
+  - Med Tab-tasten kan man nå alle knapper og felter, og fokus er synligt
+  - Kontrasten følger research R12 (stikprøve med udviklerværktøjets kontrastmåler på knapper, labels og fejlstrimlen)
+  - Gennemgå siderne mod styleguidens afsnit 11 (regel 1–10) og skærmbillederne. Skriv afvigelser og begrundelser i `specs/001-booking-kpi-bar/converge.md`
+- [ ] T072 Kør `/speckit-analyze` og `/speckit-converge`, og opdatér `specs/001-booking-kpi-bar/HANDOFF.md` (status og næste skridt) og `specs/001-booking-kpi-bar/converge.md` "Converge #2" med resultatet af T066, T070 og T071 (afslutter den del af T055, der gælder Converge #2)
