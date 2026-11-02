@@ -3,10 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hotel Kong Arthur</title>
+  <title>Hotel Kong Arthur – personalets værktøjer</title>
+  <!-- Barlow som på hotellets hjemmeside (research R12). Uden net bruges systemskrift. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Hotel Kong Arthur</h1>
-  <p>Frontend kommer i uge 2. API'et kan afprøves i <a href="/api-docs">Swagger UI</a>.</p>
+  <!-- Skabelon (T069): bookings.html, overview.html og bar.html kopierer <head> og header
+       og sætter nav__link--active + aria-current="page" på deres eget link. -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__small">Hotel</span>
+        <span class="brand__name">Kong Arthur</span>
+      </a>
+      <nav class="nav" aria-label="Hovedmenu">
+        <a class="nav__link" href="bookings.html">Bookinger</a>
+        <a class="nav__link" href="overview.html">Overblik</a>
+        <a class="nav__link" href="bar.html">Bar</a>
+        <a class="nav__link" href="/api-docs">Swagger UI</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Hotel Kong Arthur – personalets værktøjer</h1>
+    <p class="lead">
+      Bookinger, nøgletal og barsalg for hotellets 214 værelser og lobbybaren. Alle tal hentes
+      direkte fra hotellets REST API.
+    </p>
+
+    <section class="card-grid" aria-label="Værktøjer">
+      <article class="card">
+        <h2>Bookinger</h2>
+        <p class="muted">Til receptionen</p>
+        <p>Opret, find, ret og afbestil bookinger. Sæson og pris udregnes automatisk ud fra
+          ankomstdato, værelsestype og antal nætter.</p>
+        <a class="button button--primary" href="bookings.html">Gå til bookinger</a>
+      </article>
+
+      <article class="card">
+        <h2>Overblik</h2>
+        <p class="muted">Til hoteladministrationen</p>
+        <p>Indtjening fordelt på land, værelsestype og sæson, belægning pr. nat og de mest
+          solgte drinks. Samme tal som i Tableau-dashboardet.</p>
+        <a class="button button--primary" href="overview.html">Gå til overblikket</a>
+      </article>
+
+      <article class="card">
+        <h2>Bar</h2>
+        <p class="muted">Til lobbybaren</p>
+        <p>Registrér salg af kaffe og cocktails, og følg omsætningen pr. drikkevare og
+          fordelingen mellem kaffe og cocktails.</p>
+        <a class="button button--primary" href="bar.html">Gå til baren</a>
+      </article>
+    </section>
+  </main>
 </body>
 </html>
