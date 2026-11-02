@@ -372,7 +372,7 @@ trin 2–6 præcis de samme tal som `uge1-mysql` (T066).
   - `create(...)`: `INSERT ... RETURNING id`, og returnér `rows[0].id`
   - `update` og `remove`: `$n`-pladsholdere, ellers uændrede
   - `findRevenueRows()` og `findDatedStays()`: kun `{ rows }`, ingen beregning (princip V)
-- [ ] T064 [P] Omskriv de øvrige repositories til `pg` med `{ rows }` og `$n`:
+- [X] T064 [P] Omskriv de øvrige repositories til `pg` med `{ rows }` og `$n`:
   - `backend/src/repositories/drinkRepository.js`: `findAll`, `findById` og `findAllWithRegisteredUnits` med `COALESCE(SUM(bar_sale.quantity), 0)::int AS registered_units` (`SUM` giver ellers `bigint` som tekst). `GROUP BY drink.id` er nok, fordi `id` er primærnøglen
   - `backend/src/repositories/barSaleRepository.js`: `create` med `INSERT ... RETURNING id`, `findById` uændret ud over `$1`
   - `backend/src/repositories/roomTypeRepository.js` og `backend/src/repositories/healthRepository.js`: `{ rows }` og `$1`

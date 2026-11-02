@@ -16,8 +16,8 @@ function validationError(fields) {
   return new ValidationError(`Ugyldige felter: ${reasons}`, fields);
 }
 
-// Menuen sorteret efter kategori og navn. `price` kommer som DECIMAL-streng ("91.40")
-// fra MySQL, men kontrakten siger number.
+// Menuen sorteret efter kategori og navn. `price` kommer som NUMERIC-streng ("91.40")
+// fra databasen, men kontrakten siger number.
 async function listDrinks() {
   const rows = await drinkRepository.findAll();
   return rows.map((row) => ({ ...row, price: Number(row.price) }));
