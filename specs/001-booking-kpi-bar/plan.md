@@ -128,7 +128,7 @@ compose.yaml                  # db + backend, include: docker/docker-compose.yml
 .env.example                  # pladsholdere. .env er i .gitignore
 docker/
 ├── docker-compose.yml        # kun dev-containeren app, profiles: [dev]
-└── Dockerfile                # dev-container (uændret)
+└── Dockerfile                # dev-container. Uge 2: postgresql-client i stedet for default-mysql-client (konstitution V)
 db-init/
 ├── README.md
 ├── 01-schema.sql             # room_type, booking, drink, bar_sale
