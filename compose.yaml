@@ -8,21 +8,25 @@ include:
 
 services:
   db:
-    image: mysql:8.0
+    # PostgreSQL 16 (konstitution V, research R11)
+    image: postgres:16-alpine
     restart: unless-stopped
     env_file: .env
     environment:
+      # TZ bliver serverens standardtidszone ved første opstart. PGTZ gælder kun psql i containeren.
+      # Backendens tidszone sættes på forbindelsen i backend/src/db.js.
       TZ: Europe/Copenhagen
+      PGTZ: Europe/Copenhagen
     volumes:
-      - mysql_data:/var/lib/mysql
+      - pg_data:/var/lib/postgresql/data
       # Kører kun, når volumen er tom (første opstart)
       - ./db-init:/docker-entrypoint-initdb.d:ro
     # Ingen ports: databasen er kun tilgængelig for backend (princip IV, research R5)
     healthcheck:
-      # Ping via TCP (127.0.0.1), så db ikke bliver "healthy" mens init-scripts kører (research R4).
-      # Med login, fordi ping uden login giver "Access denied" og exit 1 i nyere MySQL 8.0.
+      # Tjek via TCP (127.0.0.1): imagets midlertidige init-server lytter kun på socket, mens
+      # db-init/*.sql kører. Så db bliver først "healthy", når seed er færdig (research R4 og R11).
       # $$ betyder, at compose ikke selv udfylder variablerne; det gør containerens shell.
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -35,7 +39,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      MYSQL_HOST: db
+      DB_HOST: db
     ports:
       - "3000:3000"
     depends_on:
@@ -48,4 +52,4 @@ services:
       retries: 5
 
 volumes:
-  mysql_data:
+  pg_data:
