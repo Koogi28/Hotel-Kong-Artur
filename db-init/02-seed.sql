@@ -1,4 +1,4 @@
--- GENERERET af scripts/generate-seed.js. Ret ikke i hånden; kør scriptet igen.
+-- GENERERET af scripts/generate-seed.js til PostgreSQL. Ret ikke i hånden; kør scriptet igen.
 -- Kilde: https://github.com/ITAKEA/hoteldata
 --   international_names_with_rooms_1000.csv (1000 bookinger) og drinks_menu_with_sales.xlsx (30 drikkevarer,
 --   gemt som scripts/source/drinks_menu_with_sales.csv).
@@ -6,7 +6,7 @@
 --   som i kildens egen xlsx-udgave (research R2). Ingen andre værdier er ændret.
 -- Historiske bookinger har ingen ankomstdato (FR-002, FR-003).
 
-SET NAMES utf8mb4;
+SET client_encoding = 'UTF8';
 
 START TRANSACTION;
 

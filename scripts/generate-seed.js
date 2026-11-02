@@ -50,9 +50,10 @@ function readCsv(fileName, expectedHeader) {
   });
 }
 
-// SQL-streng med escaping af \ og '
+// SQL-streng til PostgreSQL: kun ' fordobles. PostgreSQL bruger standard-SQL, hvor \ ikke er
+// et escape-tegn (research R11). Kildedata har hverken \ eller '.
 function sqlString(value) {
-  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`;
+  return `'${value.replace(/'/g, "''")}'`;
 }
 
 function isWholeNumber(value) {
@@ -108,7 +109,7 @@ if (drinkRows.length !== 30) fail(`forventede 30 drikkevarer, fandt ${drinkRows.
 // --- Skriv SQL ---
 const roomTypeRows = ROOM_TYPES.map((r) => `(${sqlString(r.name)}, ${r.low}, ${r.mid}, ${r.high})`);
 
-const sql = `-- GENERERET af scripts/generate-seed.js. Ret ikke i hånden; kør scriptet igen.
+const sql = `-- GENERERET af scripts/generate-seed.js til PostgreSQL. Ret ikke i hånden; kør scriptet igen.
 -- Kilde: https://github.com/ITAKEA/hoteldata
 --   ${BOOKINGS_FILE} (1000 bookinger) og drinks_menu_with_sales.xlsx (30 drikkevarer,
 --   gemt som scripts/source/${DRINKS_FILE}).
@@ -116,7 +117,7 @@ const sql = `-- GENERERET af scripts/generate-seed.js. Ret ikke i hånden; kør 
 --   som i kildens egen xlsx-udgave (research R2). Ingen andre værdier er ændret.
 -- Historiske bookinger har ingen ankomstdato (FR-002, FR-003).
 
-SET NAMES utf8mb4;
+SET client_encoding = 'UTF8';
 
 START TRANSACTION;
 
