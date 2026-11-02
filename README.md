@@ -142,7 +142,8 @@ compose.yaml        db + backend
 ## Udvikling og dokumentation
 
 Projektet er lavet med [Spec Kit](https://github.com/github/spec-kit): spec → plan → tasks → kode.
-Reglerne står i [konstitutionen](.specify/memory/constitution.md).
+Reglerne står i [konstitutionen](.specify/memory/constitution.md). Branches, commits, review og
+Spec Kit-arbejdsgangen er beskrevet i [CONTRIBUTE.md](CONTRIBUTE.md).
 
 - [Specifikation](specs/001-booking-kpi-bar/spec.md): user stories, krav og succeskriterier
 - [Plan](specs/001-booking-kpi-bar/plan.md) og [research](specs/001-booking-kpi-bar/research.md): tekniske valg og begrundelser

@@ -338,7 +338,7 @@ Task: "T022 Opret backend/src/repositories/bookingRepository.js"
 
 ## Phase 8: Convergence
 
-- [ ] T052 Opret `CONTRIBUTE.md` i repo-roden med opsætning (`.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`), branch- og commit-regler, review via pull request før merge til `main`, Spec Kit-workflowet (specify → clarify → plan → tasks → analyze → implement → converge) og hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan Lu) per plan: Afleveringsmateriale #2 (missing)
+- [X] T052 Opret `CONTRIBUTE.md` i repo-roden med opsætning (`.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`), branch- og commit-regler, review via pull request før merge til `main`, Spec Kit-workflowet (specify → clarify → plan → tasks → analyze → implement → converge) og hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan L.) per plan: Afleveringsmateriale #2 (missing)
 - [X] T053 Tilføj et Mermaid-arkitekturdiagram i `README.md` (supplerer T045): browser og Tableau Desktop som klienter, backend med controllers → services → repositories, PostgreSQL med volume `pg_data`, Docker-netværket og portene 3000 (vært) og 5432 (kun internt) *(rettet 02/11: før MySQL/3306, research R11)* per plan: Afleveringsmateriale #1 (partial)
 - [X] T054 Opret `specs/001-booking-kpi-bar/converge.md` med afsnittet "Converge #1 (30/10)": implementeret pr. user story og FR, åbne tasks, fund fra T046/T047/`/speckit-analyze` og bevidst accepterede afvigelser (U2, G1, T050 uden screenshots) per plan: Afleveringsmateriale #3 (missing)
 - [ ] T055 Tilføj afsnittene "Converge #2" og "Sidste Converge-tjek" i `specs/001-booking-kpi-bar/converge.md`, når de tjek er kørt per plan: Afleveringsmateriale #3 (missing)

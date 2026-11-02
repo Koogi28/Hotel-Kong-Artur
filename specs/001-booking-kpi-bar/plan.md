@@ -247,7 +247,7 @@ tjekke dem mod repoet (princip X: spec først).
    - branch- og commit-regler (én branch pr. dag/feature, fx `dag5-noegletal`)
    - review via pull request, før der merges til `main` (princip XI)
    - Spec Kit-workflowet: specify → clarify → plan → tasks → analyze → implement → converge
-   - hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan Lu)
+   - hvem der står bag git-navnene "K" og "K-Workstation" (Pin Yuan L.)
 3. **`specs/001-booking-kpi-bar/converge.md`** med resultatet af hvert Converge-tjek: hvad er
    implementeret, og hvad mangler. Afsnit pr. tjek (Converge #1, #2 og det sidste tjek).
 
