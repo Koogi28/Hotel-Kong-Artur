@@ -114,7 +114,35 @@ T056: kontrakten beskriver nu, at `search` over 100 tegn afkortes.
 
 ## Converge #2
 
-*Kommer tirsdag efter frontend (T025, T035, T043) og Tableau-dashboardet (T048).*
+*Det samlede tjek kommer efter frontend (T025, T035, T043), Tableau-dashboardet (T048) og T070–T072.
+Her står delresultaterne, efterhånden som de er kørt.*
+
+### T066: databaseskift MySQL → PostgreSQL verificeret (02/11)
+
+**Kørt**: `docker compose down -v && docker compose up -d --build` fra tom volumen, derefter
+quickstart trin 1–6 og 8 mod den kørende stack (T057–T065 færdige). Ingen gammel
+`hotel-kong-artur_mysql_data`-volumen fandtes.
+
+**Resultat: samme tal som `uge1-mysql` (SC-009) og ingen MySQL tilbage (FR-030).**
+
+| Tjek | Resultat |
+|------|----------|
+| Trin 1: kun `db` + `backend`, `backend` venter på healthy `db`, `/api/health` | ✅ `{"status":"ok"}`, `/api-docs` → 200 |
+| Trin 2: SQL-tjek i `psql` | ✅ 1000/1000/1000, Cocktail 20/Coffee 10, 54 Müller, Σ 11234034, bar 13448640.34, 8 værelsestyper |
+| Trin 3: `npm test` i containeren (Node 20) | ✅ 55/55 |
+| Trin 4: bookinger | ✅ POST → 201 `high` 3600 + `Location`. `search=muller` → 54. PUT 30/11 → `low` 2700. 400 med `fields` (dato/nætter, 6 felter, ukendt type). **PUT/DELETE historisk → 409** (boolean-rettelsen i T063 virker). 404. DELETE → 204 |
+| Trin 5: nøgletal | ✅ Total 11234034/1000. 20/8/3/24 rækker med Σ 11234034. Belægning 0 → 0.5 % efter ny booking, 0 på afrejsedagen, `occupancy/nights` 3 nætter. Espresso 14656 / Whiskey Sour 3824 |
+| Trin 6: bar | ✅ 179958 / 13448640.34, 52.83 / 47.17. +2 Espresso → 179960 og +138.20, Espresso 14658. `sold_at` `2026-11-02 13:35:55` (dansk tid, hele sekunder som kontrakten). quantity 0/-1 og ukendt drink → 400 |
+| Trin 8: genstart | ✅ Testsalget tæller stadig efter `docker compose restart` (named volume `pg_data`) |
+| Trin 8: SQL kun i `repositories/`, fire afhængigheder | ✅ `express, pg, swagger-ui-express, yaml` |
+| `grep -rni mysql backend/src backend/tests compose.yaml docker db-init scripts .env.example .dockerignore .gitignore` | ✅ 0 træf |
+
+**Bemærkninger**:
+
+- `sold_at` lå 2 sekunder foran værtens ur. Det er urforskel mellem Docker-VM'en og Windows,
+  ikke en tidszonefejl.
+- Under udviklingen viste en test, at et salg fra en forbindelse i UTC fik en time forkert
+  tidspunkt. Derfor sætter `db.js` forbindelsens tidszone (research R11, review-rettelse).
 
 ---
 
