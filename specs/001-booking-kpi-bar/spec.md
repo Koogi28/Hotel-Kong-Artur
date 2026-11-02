@@ -35,6 +35,9 @@ opdigtes."
 - Q: Må vi fortsætte med MySQL? → A: Nej. Hotellet vil ikke have MySQL. Databasen skiftes til en
   anden type efter gruppens valg (FR-030). Startdata og alle nøgletal skal være de samme efter
   skiftet (SC-009).
+- Q: Hvordan skal frontenden se ud? → A: Som en del af Hotel Kong Arthur. Gruppen har lavet en
+  styleguide med skærmbilleder af hotellets hjemmeside (`styleguide/`). Siderne følger den
+  (FR-031, FR-032, SC-010), men de er arbejdsværktøjer for personalet, så funktion går forud.
 - Q: Skal arbejdet fra uge 1 kunne vises, selvom databasen skiftes? → A: Ja. Det er gemt i Git
   som tagget `uge1-mysql` på `main`, før arbejdet med tillægsopgaven begyndte.
 
@@ -251,6 +254,16 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **FR-030**: Systemets data SKAL ligge i en anden databasetype end MySQL. Startdata (FR-001–
   FR-003) og alle funktioner skal virke som før skiftet.
 
+**Visuel identitet (styleguide, 2026-11-02)**
+
+- **FR-031**: Alle sider i frontend-prototypen SKAL følge hotellets styleguide
+  (`styleguide/style.md`) og ligne Hotel Kong Arthurs eksisterende hjemmeside i farver,
+  typografi, luft og komponenter (knapper, formularer, tabeller), så siderne opleves som en del
+  af hotellet og ikke som et generisk dashboard. Funktion går forud for lighed.
+- **FR-032**: Frontenden SKAL virke på computer, tablet og mobil uden vandret scroll, og al tekst
+  SKAL have tilstrækkelig kontrast (WCAG AA). Formularer SKAL vise tydelig fokus-, fejl- og
+  succestilstand.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Booking**: Én gæsts ophold på ét værelse. Har fornavn, efternavn, land, værelsestype, antal
@@ -284,6 +297,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **SC-009**: Efter databaseskiftet giver startdataene præcis de samme tal som før skiftet
   (fx samlet indtjening 11.234.034 for 1000 bookinger, og 179.958 solgte enheder for
   13.448.640,34 DKK i baren).
+- **SC-010**: Alle sider bruger kun farverne og skrifterne fra styleguidens tokens (research R12),
+  har normal tekst med mindst 4,5:1 kontrast og kan bruges i en 375 px bred browser uden vandret
+  scroll.
 
 ## Assumptions
 

@@ -27,7 +27,10 @@ henter færdigberegnede nøgletal som JSON direkte fra de samme endpoints med RE
    (`db.js`, `repositories/`), `db-init/`, `scripts/generate-seed.js`, `compose.yaml` og
    `.env.example` ændres. Forretningslaget, controllers, kontrakten og unit-testene er uændrede.
    MySQL-versionen er gemt i Git-tagget `uge1-mysql`.
-3. **Rækkefølge**: databaseskiftet laves før frontenden, så frontenden testes mod den endelige
+3. **Frontend-design**: alle sider følger gruppens styleguide (`styleguide/style.md`) med
+   farver og skrifter aflæst af skærmbillederne af hotellets hjemmeside (research R12, FR-031,
+   FR-032). Én fælles `css/style.css` med design-tokens. Intet CSS-framework.
+4. **Rækkefølge**: databaseskiftet laves før frontenden, så frontenden testes mod den endelige
    database, og tallene kontrolleres mod MySQL-versionen (SC-009).
 
 ## Technical Context
@@ -98,6 +101,8 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 for principperne. Ingen nye afhængigheder er kommet til under design.
 **Gate-resultat (2026-11-02, konstitution 5.0.0)**: PASS. `pg` erstatter `mysql2` (stadig fire
 biblioteker). Ingen nye endpoints, så kontrakten ændres ikke. Afvigelserne fra III er uændrede.
+Styleguiden (research R12) tilføjer ingen afhængigheder: ren CSS med variabler, systemskrift til
+overskrifter og Barlow via ét `<link>` til Google Fonts med fald-tilbage til systemskrift.
 
 ## Project Structure
 
@@ -137,7 +142,13 @@ backend/
 ├── Dockerfile                # node:20-alpine, build-context = repo-roden
 ├── package.json              # scripts: start, test
 ├── package-lock.json
-├── public/                   # uge 2: index.html, bookings, overview (nøgletal), bar (HTML/CSS/JS, kun fetch)
+├── public/                   # uge 2: HTML/CSS/JS, kun fetch, ingen beregning (FR-029)
+│   ├── index.html            # forside med links til de tre sider
+│   ├── bookings.html         # US1 (T025)
+│   ├── overview.html         # US2 nøgletal (T035)
+│   ├── bar.html              # US3 barsalg og barens nøgletal (T043)
+│   ├── css/style.css         # ÉN fælles fil: tokens i :root, header, knapper, felter, kort, tabeller (research R12)
+│   └── js/                   # én fil pr. side + api.js (fælles fetch og fejlvisning)
 ├── src/
 │   ├── server.js             # starter app på PORT (3000)
 │   ├── app.js                # express, json, static, /api-docs, routes, fejl-middleware
@@ -203,6 +214,20 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 | `db` | `compose.yaml` | `postgres:16-alpine`, `env_file: .env`, `TZ` og `PGTZ=Europe/Copenhagen`, healthcheck `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"`, volume `pg_data:/var/lib/postgresql/data`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten (research R11) |
 | `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `DB_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
 | `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `DB_HOST=db`, `DB_PORT=5432`, ingen `depends_on` (kan ikke pege ud af en included fil) |
+
+### Frontend-design (research R12, styleguide)
+
+Kilde: `styleguide/style.md` og `styleguide/screenshots/`. Prioritet som i styleguiden:
+funktionelle krav → hotellets identitet → skærmbillederne → konsistens → generelle konventioner.
+
+| Emne | Beslutning |
+|------|------------|
+| Tokens | CSS-variabler i `:root` i `css/style.css`: `--color-primary #AA6A11`, `--color-primary-strong #8A560E`, `--color-secondary #003523`, `--color-background #F4EFEB`, `--color-band #E5D8D1`, `--color-surface #FFFFFF`, `--color-text #4B4845`, `--color-text-muted #6E6A67`, `--color-border #D2CDCA`, `--color-input-border #CED4DA`, `--color-error-bg #DBD3C8`, `--color-warning #7A4B0C`, `--color-error #9B2C1F` + skrift- og afstandsvariabler. Ingen farver uden for tokens |
+| Skrifter | Overskrifter: `"Times New Roman", Georgia, serif`, vægt 400. Resten: Barlow 400/500/600 |
+| Fælles opbygning | Samme header og navigation på alle sider (Bookinger, Overblik, Bar), indhold maks. 1290 px, firkantede hjørner, ingen skygger |
+| Fejl og feedback | 400: strimmel under feltet (som bookingsiden). 409/500/API nede: boks i `--color-error`. Succes i `--color-secondary`. Indlæsning vises som tekst ("Henter ...") |
+| Tilgængelighed | Kontrast ≥ 4,5:1 for normal tekst, `:focus-visible` på alt interaktivt, labels på alle felter, en kolonne under 768 px (SC-010) |
+| Adskillelse | CSS kun i `style.css`, ingen `style="..."` i HTML. JS sætter klasser, ikke farver (styleguide regel 9) |
 
 ## Afleveringsmateriale
 

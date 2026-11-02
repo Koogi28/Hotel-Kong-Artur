@@ -338,3 +338,99 @@ dem, hvor de er i konflikt.
 præcis de samme som med MySQL: 1000 bookinger, 30 drinks, samlet indtjening 11.234.034,
 54 Müller ved søgning på "muller", baren 179.958 enheder og 13.448.640,34 DKK, kaffe/cocktail
 52,83 / 47,17. De 55 unit-tests ændres ikke, da forretningslaget ikke kender databasen (R10).
+
+## R12. Frontend-design efter hotellets styleguide (2026-11-02)
+
+Kilde: [`styleguide/style.md`](../../styleguide/style.md) og skærmbillederne i
+`styleguide/screenshots/` (forside, booking og værelsesoversigt), uploadet af gruppen 02/11.
+Styleguiden kræver, at farver og typografi aflæses af skærmbillederne, før frontenden laves.
+Farverne nedenfor er målt pixel for pixel på skærmbillederne (baggrunde og knapper) eller som
+den mørkeste pixel i tekst (overskrifter og brødtekst).
+
+**Beslutning – farver** (CSS-variabler i `:root` i `backend/public/css/style.css`):
+
+| Token | HEX | Målt i | Bruges til |
+|-------|-----|--------|------------|
+| `--color-primary` | `#AA6A11` | "Find dit ophold", "Tjek tilgængelighed", aktivt trin, "Læs mere" | Primære knapper, aktiv navigation, store tal |
+| `--color-primary-strong` | `#8A560E` | Afledt (mørkere `#AA6A11`) | Små links og hover. Se kontrast nedenfor |
+| `--color-secondary` | `#003523` | Overskriften "Find ro på vores hyggelige værelser" | Sideoverskrifter, positiv feedback |
+| `--color-background` | `#F4EFEB` | Sidens og headerens baggrund | Sidebaggrund |
+| `--color-band` | `#E5D8D1` | Morgenmads- og intro-båndet | Fremhævede sektioner, fx nøgletal-båndet |
+| `--color-surface` | `#FFFFFF` | Gæstekortet og felterne på bookingsiden | Kort, formularer og tabeller |
+| `--color-text` | `#4B4845` | Brødtekst og grå overskrifter | Al almindelig tekst |
+| `--color-text-muted` | `#6E6A67` | Afledt (mørkere end målt `#83807E`) | Hjælpetekst og labels |
+| `--color-border` | `#D2CDCA` | Skillelinjer på forsiden | Skillelinjer og tabelrækker |
+| `--color-input-border` | `#CED4DA` | Felternes kant på bookingsiden | Inputfelter |
+| `--color-error-bg` | `#DBD3C8` | Strimlen "Nødvendig information" | Baggrund under ugyldigt felt |
+| `--color-success` | `#003523` | = sekundær | "Booking oprettet", "Salg registreret" |
+| `--color-warning` | `#7A4B0C` | Afledt (mørkere `#AA6A11`) | Fejltekst i strimlen under et ugyldigt felt (400), som på bookingsiden |
+| `--color-error` | `#9B2C1F` | **Ny farve** | Slet-knap og alvorlige fejl (409, 500, API nede) |
+
+**Kontrast (WCAG AA, 4,5:1 for normal tekst; beregnet med WCAG-formlen)**: Hvid på `#AA6A11`
+giver 4,39:1, `#AA6A11` på `#F4EFEB` 3,85:1 og `#83807E` på `#F4EFEB` 3,44:1. Derfor afledes
+`--color-primary-strong` (5,38:1 på baggrunden, 6,14:1 med hvid tekst), `--color-text-muted`
+(4,69:1 på baggrunden, 5,36:1 på hvid) og `--color-warning` (4,99:1 på `#DBD3C8`; `#8A560E`
+ville kun give 4,14:1). Øvrige: tekst 7,96:1, sekundær 11,99:1, fejl 6,63:1 (hvid på fejl
+7,57:1), tekst på båndet 6,52:1. Knapper med
+`#AA6A11` bruger fed tekst på mindst 18,66 px (stor tekst, kravet er 3:1) eller
+`--color-primary-strong`. Styleguiden prioriterer brugbarhed over lighed (regel 6).
+
+**Begrundelse for den ene nye farve**: Skærmbillederne viser ingen rød. Bookingsiden viser fejl i
+ravfarve, og den bruges også til primære knapper. En slet-knap og en "API'et svarer ikke"-besked
+må ikke kunne forveksles med den primære handling. Én dæmpet murstensrød er det mindste, der
+løser det (styleguide regel 4: ny farve med begrundelse).
+
+**Beslutning – typografi**:
+
+| Rolle | Skrift | Målt i skærmbillederne |
+|-------|--------|------------------------|
+| Overskrifter | `"Times New Roman", Georgia, serif` (systemskrifter, intet download) | Klassisk serif i "Velkommen til Hotel Kong Arthur", "Alle værelser" og "Hvornår kan vi se frem til ..." |
+| Brødtekst, labels, knapper, tal | `"Barlow", "Segoe UI", Arial, sans-serif`, vægt 400/500/600 | Smal grotesk i menu, brødtekst, knapper og felter |
+| Små versaler | Barlow 500, `text-transform: uppercase`, `letter-spacing: 0.05em` | "SE ALLE", "FIND DIN RESERVATION" |
+
+Størrelser: brødtekst 16 px / linjehøjde 1.6, h1 `clamp(2rem, 4vw, 3rem)`, h2 2rem, h3 1.5rem.
+Overskrifter har normal vægt (400). Barlow hentes med ét `<link>` fra Google Fonts. Uden net
+falder siden tilbage til systemskrifter og virker stadig. Det er en CSS-ressource og ikke en
+npm-afhængighed, så princip I holder.
+
+**Beslutning – layout og komponenter** (aflæst af skærmbillederne):
+
+- **Header** (alle sider): lys baggrund, 1 px kant forneden i `--color-border`, hotellets navn
+  centreret som tekst ("Hotel" i kursiv serif over "KONG ARTHUR" i Barlow med store bogstaver og
+  spatiering), navigation til Bookinger, Overblik og Bar. Den aktive side er fremhævet i
+  `--color-primary`.
+- **Indhold**: maks. bredde 1290 px centreret (som forsiden), luftige sektioner (64–96 px
+  mellemrum), skillelinjer i stedet for skygger.
+- **Hjørner og skygger**: ingen afrundede hjørner og ingen skygger. Siden bruger firkantede
+  knapper, felter og kort.
+- **Knapper**: primær = massiv `--color-primary` med hvid tekst, firkantet, højde ca. 48 px.
+  Sekundær = gennemsigtig med 1 px kant. Tydelig `:hover` (`--color-primary-strong`),
+  `:focus-visible` (2 px kontur) og `:disabled`.
+- **Formularer**: hvide felter, 1 px `--color-input-border`, højde 48 px, label over feltet.
+  Ugyldigt felt får en strimmel under sig i `--color-error-bg` med teksten i
+  `--color-warning`, som "Nødvendig information" på bookingsiden.
+- **Kort og nøgletal**: hvid flade på baggrunden (som gæstekortet), tal i serif og
+  `--color-primary`, forklaring i Barlow og `--color-text-muted`.
+- **Tabeller**: Barlow, tal højrestillet, tynde skillelinjer i `--color-border`, ingen zebra
+  med kraftige farver.
+- **Responsivt**: en kolonne under 768 px, ingen vandret scroll (tabeller får
+  `overflow-x: auto` i deres egen boks).
+
+**Beslutning – billeder og logo**:
+
+- Skærmbillederne er **referencer**, ikke indhold. Vi bruger ikke hotellets fotos eller logo på
+  siderne, da vi ikke har dem som filer med lov til brug, og styleguiden forbyder at tegne et nyt
+  logo. Navnet skrives som tekst med sidens egne skrifttyper.
+- Siderne er arbejdsværktøjer for receptionist, administrator og bartender, ikke en side for
+  gæster. Styleguiden siger, at funktion går før lighed (prioritet 1). Derfor ingen store
+  billeder, men hotellets farver, skrifter, luft og ro, så det ikke ligner et generisk
+  SaaS-dashboard.
+
+**Alternativer**:
+
+- *CSS-framework (Bootstrap/Tailwind)*: afvist pga. princip I. Det giver desuden netop det
+  generiske udseende, som styleguiden fraråder.
+- *Hente Barlow som filer i `public/fonts/`*: virker uden net, men giver flere filer i repoet.
+  Kan laves senere, hvis demoen skal køre offline.
+- *Kun de målte farver uden afledte varianter*: afvist, fordi små tekster og knapper så ikke
+  overholder kontrastkravet (styleguide afsnit 9: "Accessible contrast").
