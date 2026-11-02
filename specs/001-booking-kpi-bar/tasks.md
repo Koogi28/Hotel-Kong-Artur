@@ -401,7 +401,7 @@ i `styleguide/screenshots/`, før du går i gang (styleguide regel 1–2).
   - **Tabeller**: `.table-wrap` (`overflow-x: auto`), `table` på `--color-surface`, `th` i versaler og `--color-text-muted`, rækker adskilt af 1 px `--color-border`, `.num` højrestillet med `font-variant-numeric: tabular-nums`
   - **Responsivt**: under 768 px én kolonne, navigationen brydes på flere linjer, ingen vandret scroll på `body` (FR-032, SC-010)
   - Ingen `border-radius` og ingen `box-shadow` nogen steder (skærmbillederne har ingen)
-- [ ] T068 [P] Opret `backend/public/js/api.js` (fælles for alle sider, ingen beregning af nøgletal, sæson eller pris, FR-029):
+- [X] T068 [P] Opret `backend/public/js/api.js` (fælles for alle sider, ingen beregning af nøgletal, sæson eller pris, FR-029):
   - `async function apiGet(path)` og `async function apiSend(method, path, body)`: `fetch` med JSON. Ved 204 returneres `null`. Ved fejlstatus kastes `ApiError` med `status`, `message` (`error` fra svaret) og `fields` (array, tomt hvis det mangler). Netværksfejl → `ApiError` med status 0 og beskeden "API'et svarer ikke"
   - `showAlert(element, type, text)` (type `success`/`error`/`info`, sætter `.alert--{type}` og `role="status"` eller `role="alert"`) og `clearAlert(element)`
   - `markFieldErrors(form, fields)`: tilføj `.field--invalid` og en `.field-error` med "Ugyldig eller mangler" under hvert felt med samme `name`. `clearFieldErrors(form)`
