@@ -347,6 +347,76 @@ main {
   font-weight: 500;
 }
 
+/* Label til et felt uden <input>, fx "Valgt drikkevare" */
+.field__label {
+  font-weight: 500;
+}
+
+.heading-inline {
+  margin: 0;
+}
+
+/* ---------- Barens drikkevareknapper (T043, SC-003) ---------- */
+.drink-groups {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.drink-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.drink-group legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+}
+
+.drink-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--space-2);
+}
+
+/* Store knapper, nemme at ramme på en tablet i baren */
+.drink-button {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 64px;
+  text-align: left;
+  background: var(--color-surface);
+  border-color: var(--color-input-border);
+}
+
+.drink-button__price {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* Valgt drikkevare: hotellets mørkegrønne farve (11,99:1 med hvid tekst) */
+.drink-button[aria-pressed="true"],
+.drink-button[aria-pressed="true"]:hover {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-surface);
+}
+
+.drink-button[aria-pressed="true"] .drink-button__price {
+  color: var(--color-surface);
+}
+
+.selected-drink {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  margin: 0;
+  font-weight: 600;
+}
+
 /* ---------- Beskeder ---------- */
 .alert {
   margin: 0 0 var(--space-3);
@@ -408,7 +478,9 @@ main {
 
 .kpi__value {
   font-family: var(--font-heading);
-  font-size: 2.5rem;
+  /* Følger skærmbredden, så lange beløb (fx 13.448.778,54 kr.) bliver i kortet */
+  font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+  overflow-wrap: anywhere;
   line-height: 1.1;
   color: var(--color-primary-strong);
 }
@@ -491,5 +563,15 @@ tbody tr:last-child td {
 
   .kpi__value {
     font-size: 2rem;
+  }
+
+  /* To drikkevarer pr. række, så baren ikke skal scrolle forbi 30 lange knapper */
+  .drink-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .drink-button {
+    padding: var(--space-2) var(--space-3);
+    font-size: 1rem;
   }
 }

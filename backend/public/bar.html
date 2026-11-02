@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bar – Hotel Kong Arthur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__small">Hotel</span>
+        <span class="brand__name">Kong Arthur</span>
+      </a>
+      <nav class="nav" aria-label="Hovedmenu">
+        <a class="nav__link" href="bookings.html">Bookinger</a>
+        <a class="nav__link" href="overview.html">Overblik</a>
+        <a class="nav__link nav__link--active" href="bar.html" aria-current="page">Bar</a>
+        <a class="nav__link" href="/api-docs">Swagger UI</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Lobbybaren</h1>
+    <p class="lead">Registrér salg af kaffe og cocktails: vælg drikkevare, angiv antal og tryk
+      "Registrér salg". Tidspunktet sættes automatisk.</p>
+
+    <div id="message" class="alert" aria-live="polite"></div>
+
+    <!-- US3, FR-022, SC-003 -->
+    <section class="card section" aria-labelledby="sale-title">
+      <h2 id="sale-title">Nyt salg</h2>
+      <form id="sale-form" class="form" novalidate>
+        <div id="drink-groups" class="drink-groups">
+          <p class="muted">Henter menuen ...</p>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="quantity">Antal</label>
+            <input id="quantity" name="quantity" type="number" min="1" max="1000" step="1" value="1" inputmode="numeric">
+          </div>
+          <div class="field">
+            <span class="field__label">Valgt drikkevare</span>
+            <p id="selected" class="selected-drink" aria-live="polite">Ingen valgt</p>
+          </div>
+        </div>
+        <div class="button-row">
+          <button id="register" class="button button--primary" type="submit">Registrér salg</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- FR-024–FR-026: barens nøgletal, beregnet af API'et -->
+    <section class="section" aria-labelledby="kpi-title">
+      <div class="button-row section">
+        <h2 id="kpi-title" class="heading-inline">Barens nøgletal</h2>
+        <span id="updated" class="muted" aria-live="polite"></span>
+      </div>
+      <div class="kpi-grid section">
+        <div class="card kpi"><span class="kpi__label">Solgte enheder i år</span><span id="total-units" class="kpi__value">–</span></div>
+        <div class="card kpi"><span class="kpi__label">Omsætning i år</span><span id="total-revenue" class="kpi__value">–</span></div>
+        <div class="card kpi"><span id="split-coffee-label" class="kpi__label">Kaffe</span><span id="split-coffee" class="kpi__value">–</span></div>
+        <div class="card kpi"><span id="split-cocktail-label" class="kpi__label">Cocktails</span><span id="split-cocktail" class="kpi__value">–</span></div>
+      </div>
+
+      <h3>Omsætning pr. drikkevare</h3>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Omsætning pr. drikkevare (alle 30)</caption>
+          <thead>
+            <tr>
+              <th scope="col">Drikkevare</th>
+              <th scope="col">Kategori</th>
+              <th scope="col" class="num">Pris</th>
+              <th scope="col" class="num">Solgte enheder</th>
+              <th scope="col" class="num">Omsætning</th>
+            </tr>
+          </thead>
+          <tbody id="drink-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/bar.js"></script>
+</body>
+</html>
