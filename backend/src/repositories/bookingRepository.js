@@ -1,4 +1,4 @@
-// Datalag: bookinger. Al SQL for bookinger står her, altid med ?-pladsholdere,
+// Datalag: bookinger. Al SQL for bookinger står her, altid med $1, $2, ...-pladsholdere,
 // så brugerinput aldrig sættes direkte ind i SQL (beskytter mod SQL-injection).
 const pool = require('../db');
 
@@ -10,56 +10,59 @@ const SELECT_BOOKING = `
     FROM booking
     JOIN room_type ON room_type.id = booking.room_type_id`;
 
-// MySQL gemmer BOOLEAN som 0/1. API'et skal svare med true/false.
+// PostgreSQL giver BOOLEAN som true/false. Sammenligningen med true sikrer, at API'et altid
+// svarer med en rigtig boolean, og at historiske bookinger bliver låst (FR-003, research R11).
 function toBooking(row) {
-  return { ...row, is_historical: row.is_historical === 1 };
+  return { ...row, is_historical: row.is_historical === true };
 }
 
 // Uden search: alle bookinger, nyeste først. Med search: matcher for-, efter- og fulde navn.
-// Kollationen utf8mb4_0900_ai_ci gør, at "muller" også finder "Müller" (research R9).
+// unaccent + ILIKE gør søgningen accent- og versalufølsom, så "muller" også finder "Müller"
+// (research R9 og R11).
 async function findAll(search) {
   if (!search) {
-    const [rows] = await pool.query(`${SELECT_BOOKING} ORDER BY booking.id DESC`);
+    const { rows } = await pool.query(`${SELECT_BOOKING} ORDER BY booking.id DESC`);
     return rows.map(toBooking);
   }
   const pattern = `%${search}%`;
-  const [rows] = await pool.query(
+  const { rows } = await pool.query(
     `${SELECT_BOOKING}
-      WHERE booking.first_name LIKE ?
-         OR booking.last_name LIKE ?
-         OR CONCAT(booking.first_name, ' ', booking.last_name) LIKE ?
+      WHERE unaccent(booking.first_name) ILIKE unaccent($1)
+         OR unaccent(booking.last_name) ILIKE unaccent($1)
+         OR unaccent(booking.first_name || ' ' || booking.last_name) ILIKE unaccent($1)
       ORDER BY booking.id DESC`,
-    [pattern, pattern, pattern],
+    [pattern],
   );
   return rows.map(toBooking);
 }
 
 async function findById(id) {
-  const [rows] = await pool.query(`${SELECT_BOOKING} WHERE booking.id = ?`, [id]);
+  const { rows } = await pool.query(`${SELECT_BOOKING} WHERE booking.id = $1`, [id]);
   return rows[0] ? toBooking(rows[0]) : null;
 }
 
 // Nye bookinger er aldrig historiske. Returnerer det nye id.
 async function create(booking) {
-  const [result] = await pool.query(
+  const { rows } = await pool.query(
     `INSERT INTO booking
        (first_name, last_name, country, room_type_id, nights, season, total_price,
         arrival_date, is_historical)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE)`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
+     RETURNING id`,
     [
       booking.first_name, booking.last_name, booking.country, booking.room_type_id,
       booking.nights, booking.season, booking.total_price, booking.arrival_date,
     ],
   );
-  return result.insertId;
+  return rows[0].id;
 }
 
 async function update(id, booking) {
   await pool.query(
     `UPDATE booking
-        SET first_name = ?, last_name = ?, country = ?, room_type_id = ?, nights = ?,
-            season = ?, total_price = ?, arrival_date = ?
-      WHERE id = ?`,
+        SET first_name = $1, last_name = $2, country = $3, room_type_id = $4, nights = $5,
+            season = $6, total_price = $7, arrival_date = $8
+      WHERE id = $9`,
     [
       booking.first_name, booking.last_name, booking.country, booking.room_type_id,
       booking.nights, booking.season, booking.total_price, booking.arrival_date, id,
@@ -68,12 +71,12 @@ async function update(id, booking) {
 }
 
 async function remove(id) {
-  await pool.query('DELETE FROM booking WHERE id = ?', [id]);
+  await pool.query('DELETE FROM booking WHERE id = $1', [id]);
 }
 
 // Råe rækker til omsætningsnøgletal. Ingen SUM/GROUP BY her – det sker i services (princip V).
 async function findRevenueRows() {
-  const [rows] = await pool.query(
+  const { rows } = await pool.query(
     `SELECT booking.country, room_type.name AS room_type, booking.season, booking.total_price
        FROM booking
        JOIN room_type ON room_type.id = booking.room_type_id`,
@@ -83,7 +86,7 @@ async function findRevenueRows() {
 
 // Ophold til belægning. Historiske bookinger har ingen ankomstdato og tæller derfor ikke.
 async function findDatedStays() {
-  const [rows] = await pool.query(
+  const { rows } = await pool.query(
     'SELECT arrival_date, nights FROM booking WHERE arrival_date IS NOT NULL',
   );
   return rows;
