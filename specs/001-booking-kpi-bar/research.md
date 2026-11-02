@@ -78,7 +78,7 @@ xlsx-bibliotek (fx `exceljs`). Det er afvist pga. princip I.
 
 Seed-filen starter med `SET NAMES utf8mb4;`, så "ü" gemmes korrekt uanset klientens standard.
 
-## R4. MySQL-healthcheck og init-rækkefølge
+## R4. MySQL-healthcheck og init-rækkefølge (erstattet af R11)
 
 **Beslutning**:
 `healthcheck: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]`
@@ -246,7 +246,7 @@ Kilder: [WDC deprecated in 2023.1 (Tableau KB)](https://kb.tableau.com/articles/
 [Connectors built with the WDC 3.0 SDK (Tableau Help)](https://help.tableau.com/current/pro/desktop/en-us/examples_wdc_connector_sdk.htm),
 [tableau/wdc3 (GitHub)](https://github.com/tableau/wdc3).
 
-## R8. Datoer, tid og penge i Node/mysql2
+## R8. Datoer, tid og penge i Node/mysql2 (databasedelen erstattet af R11)
 
 **Beslutning**:
 - mysql2-poolen oprettes med `dateStrings: true`, så `DATE` returneres som `"2026-12-06"` og
@@ -290,3 +290,51 @@ belægning over et månedsskifte, uafgjort top-drink og 100 %-summen.
 **Begrundelse**: Det kræver hverken mocks, database eller ekstra bibliotek (princip I, XII).
 **Alternativer**: Integrationstests mod en test-MySQL. De er udskudt. Quickstart dækker
 end-to-end manuelt.
+
+## R11. Skift fra MySQL til PostgreSQL (tillægsopgave uge 2, 2026-11-02)
+
+Hotellet vil ikke have MySQL (spec FR-030, konstitution 5.0.0). R4, R8 og søgningen i R9
+beskriver MySQL-versionen, som er gemt i Git-tagget `uge1-mysql`. Denne beslutning erstatter
+dem, hvor de er i konflikt.
+
+**Beslutning**: PostgreSQL 16 (`postgres:16-alpine`) med driveren `pg` i stedet for `mysql2`.
+
+**Begrundelse**:
+- Samme opbygning som før: egen `db`-container med named volume, healthcheck og
+  `/docker-entrypoint-initdb.d`. Compose-design, 3 lag og Tableau via API'et ændres ikke.
+- Stadig fire runtime-biblioteker (`pg` erstatter `mysql2`), så princip I holder.
+- Det er den mest udbredte open source-database ud over MySQL, og SQL'en minder meget om den,
+  vi har. Kun datalaget, skemaet og seed-scriptet skal ændres.
+
+**Alternativer**:
+- *MariaDB*: næsten ingen kodeændringer, men en fork af MySQL. Afvist, fordi hotellet kan opfatte
+  det som MySQL.
+- *SQLite*: ingen database-container, kun en fil. Afvist, fordi det ændrer arkitekturen mere
+  (ingen `db`-service, ingen healthcheck) og passer dårligere til et adskilt datalag i Docker.
+
+**Hvad ændres** (MySQL → PostgreSQL):
+
+| Emne | MySQL (uge 1) | PostgreSQL | Hvorfor |
+|------|---------------|------------|---------|
+| Image og volume | `mysql:8.0`, `mysql_data:/var/lib/mysql` | `postgres:16-alpine`, `pg_data:/var/lib/postgresql/data` | Fast major-version, lille image |
+| Miljøvariabler | `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_HOST` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (imaget), `DB_HOST=db` (backend) | Imagets egne navne. Ingen root-bruger: `POSTGRES_USER` er ejer af databasen |
+| Healthcheck | `mysqladmin ping -h 127.0.0.1` med login | `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"` | Samme TCP-regel som R4: imagets midlertidige init-server lytter kun på socket, så TCP lykkes først efter seed. `pg_isready` kræver intet password |
+| Id'er | `INT UNSIGNED AUTO_INCREMENT` | `INTEGER GENERATED ALWAYS AS IDENTITY` | SQL-standard. Seed indsætter ingen id'er, så sekvensen passer |
+| `UNSIGNED` | `INT/SMALLINT UNSIGNED` | `INTEGER/SMALLINT` + `CHECK (... >= 0)` | PostgreSQL har ikke `UNSIGNED` |
+| Sæson og kategori | `ENUM(...)` | `TEXT` + `CHECK (season IN ('low','mid','high'))` | Simplere end `CREATE TYPE`, og værdierne er de samme i API'et |
+| Pris | `DECIMAL(8,2)` | `NUMERIC(8,2)` | `pg` returnerer `NUMERIC` som tekst ligesom mysql2. Omregning til øre i R8 er uændret |
+| Tegnsæt | `SET NAMES utf8mb4`, `utf8mb4_0900_ai_ci` | Databasen er UTF-8 som standard. Seed starter med `SET client_encoding = 'UTF8';` | "Müller" gemmes korrekt |
+| Søgning (R9) | `LIKE` + accent-ufølsom kollation | `unaccent(...) ILIKE unaccent($1)` med `CREATE EXTENSION IF NOT EXISTS unaccent;` i skemaet | "muller" skal stadig finde 54 Müller (FR-010). `unaccent` følger med det officielle image, og init kører som ejeren |
+| Tekst i seed (R3) | `generate-seed.js` fordobler `\` og `'` | Kun `'` fordobles | PostgreSQL bruger standard-SQL, hvor `\` ikke er escape-tegn. Kildedata har hverken `\` eller `'`, så de 1030 rækker bliver de samme |
+| Pladsholdere | `?` | `$1, $2, ...` | Stadig parametre, aldrig brugerinput i SQL |
+| Svar fra driveren | `const [rows] = await pool.query(...)`, `result.insertId`, `affectedRows` | `const { rows } = await pool.query(...)`, `INSERT ... RETURNING id`, `rowCount` | `pg`s API |
+| Boolean | `is_historical` kommer som `0/1`, og `toBooking` tjekker `=== 1` | Kommer som `true/false`. `toBooking` skal ændres | **Vigtigt**: uden ændringen bliver alle historiske bookinger `false` og kan rettes og slettes (bryder FR-003) |
+| Datoer (R8) | `dateStrings: true` | `types.setTypeParser` for `DATE` (OID 1082) og `TIMESTAMP` (OID 1114) returnerer teksten uændret | Samme regel som R8: ingen JS-`Date`, der kan flytte sig en dag |
+| Tællinger og summer | `COUNT` som tal, `SUM` som tekst | `COUNT` og `SUM` er `bigint` og kommer som tekst. Repositories caster med `::int` | Services forventer tal. Alle summer (højst ca. 13,5 mio.) kan være i `int` |
+| `sold_at` i dansk tid | `TZ=Europe/Copenhagen` på `db` | `TZ=Europe/Copenhagen` og `PGTZ=Europe/Copenhagen` på `db`, kolonnen er `TIMESTAMP` med `DEFAULT LOCALTIMESTAMP` | Kontrolleres i quickstart: et nyt salg skal have dansk tid |
+| Fejlsøgning | `docker compose exec db mysql ...` | `docker compose exec db psql -U "$POSTGRES_USER" "$POSTGRES_DB"` | |
+
+**Kontrol (SC-009)**: Efter skiftet køres quickstart trin 3–6 fra tom volumen. Tallene skal være
+præcis de samme som med MySQL: 1000 bookinger, 30 drinks, samlet indtjening 11.234.034,
+54 Müller ved søgning på "muller", baren 179.958 enheder og 13.448.640,34 DKK, kaffe/cocktail
+52,83 / 47,17. De 55 unit-tests ændres ikke, da forretningslaget ikke kender databasen (R10).

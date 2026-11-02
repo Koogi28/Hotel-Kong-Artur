@@ -27,6 +27,17 @@ opdigtes."
 - Q: Skal en ny booking have en afrejsedato? → A: Nej. En ny booking har ankomstdato og antal
   nætter; afrejsedato fjernes (konstitution v4.0.0, princip VI).
 
+### Session 2026-11-02 (tillægsopgave uge 2)
+
+- Q: Skal nøgletallene kun ses i Tableau? → A: Nej. Hotellet vil læse dataanalyserne direkte i
+  API'et. Alle beregninger, der vises i Tableau, SKAL kunne hentes fra REST API'et og vises i
+  frontend-prototypen, læst fra API'et (FR-028, FR-029).
+- Q: Må vi fortsætte med MySQL? → A: Nej. Hotellet vil ikke have MySQL. Databasen skiftes til en
+  anden type efter gruppens valg (FR-030). Startdata og alle nøgletal skal være de samme efter
+  skiftet (SC-009).
+- Q: Skal arbejdet fra uge 1 kunne vises, selvom databasen skiftes? → A: Ja. Det er gemt i Git
+  som tagget `uge1-mysql` på `main`, før arbejdet med tillægsopgaven begyndte.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Oprettelse og styring af bookinger (Priority: P1)
@@ -97,6 +108,9 @@ udregnet manuelt fra datafilerne og derefter oprette én ny booking og opdatere 
 7. **Given** startdataene er indlæst, **When** administratoren åbner overblikket, **Then** vises
    indtjeningen pr. værelsestype pr. sæson med 24 rækker (8 værelsestyper × 3 sæsoner, også med indtjening 0), og summen er
    lig årets samlede indtjening (11.234.034 ved startdata).
+8. **Given** startdataene er indlæst, **When** administratoren åbner overblikket i browseren,
+   **Then** vises alle nøgletal fra scenarie 1–4 og 7, hentet fra API'et, med de samme tal som
+   Swagger UI og Tableau-dashboardet viser.
 
 ---
 
@@ -125,6 +139,9 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
    **Then** viser dashboardet de samme tal som barens oversigt.
 6. **Given** Helene angiver antal 0 eller et negativt antal, **When** hun forsøger at registrere,
    **Then** afvises salget med en forståelig fejlbesked.
+7. **Given** der er registreret salg, **When** Helene åbner barens side i browseren, **Then**
+   vises barens nøgletal fra scenarie 2–4, hentet fra API'et, med de samme tal som Swagger UI og
+   Tableau-dashboardet viser.
 
 ---
 
@@ -224,6 +241,16 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **FR-026**: Systemet SKAL vise den procentvise fordeling af omsætningen mellem kaffe og cocktails.
 - **FR-027**: Barens nøgletal SKAL kunne hentes ind i og vises i et Tableau-dashboard.
 
+**Nøgletal i API og frontend og databaseskift (tillægsopgave uge 2)**
+
+- **FR-028**: Hver beregning, der vises i Tableau-dashboardet (FR-016–FR-019, FR-024–FR-026),
+  SKAL kunne hentes direkte fra et endpoint i REST API'et og være dokumenteret i Swagger UI.
+- **FR-029**: Frontend-prototypen SKAL vise de samme beregninger (overblikket for FR-016–FR-019,
+  barens side for FR-024–FR-026) og SKAL hente dem fra REST API'et. Browseren MÅ IKKE selv
+  beregne nøgletal, sæson eller pris.
+- **FR-030**: Systemets data SKAL ligge i en anden databasetype end MySQL. Startdata (FR-001–
+  FR-003) og alle funktioner skal virke som før skiftet.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Booking**: Én gæsts ophold på ét værelse. Har fornavn, efternavn, land, værelsestype, antal
@@ -252,6 +279,11 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **SC-006**: Efter indlæsning findes præcis 1000 historiske bookinger og 30 drikkevarer, og alle
   værdier er identiske med datafilerne.
 - **SC-007**: Tableau-dashboardet viser de samme tal som systemets egne oversigter.
+- **SC-008**: 100 % af nøgletallene i Tableau-dashboardet kan også findes i frontend-prototypen og
+  i et API-svar, med samme værdi.
+- **SC-009**: Efter databaseskiftet giver startdataene præcis de samme tal som før skiftet
+  (fx samlet indtjening 11.234.034 for 1000 bookinger, og 179.958 solgte enheder for
+  13.448.640,34 DKK i baren).
 
 ## Assumptions
 

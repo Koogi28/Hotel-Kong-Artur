@@ -18,7 +18,7 @@ Backenden har præcis tre lag:
 
 1. **Præsentationslag**: REST-controllere.
 2. **Forretningslag**: beregninger, validering og regler som udregning af sæson og pris.
-3. **Datalag**: adgang til MySQL.
+3. **Datalag**: adgang til PostgreSQL.
 
 - Et lag MÅ KUN kalde laget lige under sig.
 - Controllere MÅ IKKE indeholde SQL eller beregninger.
@@ -41,11 +41,14 @@ HTTP og uden database.
 - API'et SKAL være beskrevet i en OpenAPI-specifikation og kunne afprøves i Swagger UI.
 - Frontend og Tableau SKAL hente data via det samme API; der findes ikke separate
   "genveje" til databasen.
+- Alle nøgletal, der vises i Tableau, SKAL også kunne hentes fra et endpoint i REST API'et og
+  vises i frontend-prototypen. Frontenden SKAL læse tallene fra API'et og MÅ IKKE selv beregne
+  dem (se II).
 - Når et endpoint ændres, SKAL specifikationen opdateres i samme commit.
 
 ### V. Databasen er sandheden (live data)
 
-- Alle data SKAL ligge i MySQL-databasen.
+- Alle data SKAL ligge i PostgreSQL-databasen. MySQL MÅ IKKE bruges (hotellets krav, uge 2).
 - CSV- og Excel-filerne bruges KUN til at fylde databasen ved første opstart.
 - Nøgletal SKAL beregnes ud fra databasen, når de hentes, og MÅ ALDRIG gemmes som
   færdige tal.
@@ -87,7 +90,7 @@ forblive en tro kopi af kilden, så nøgletallene bygger på rigtige tal.
 - Hele systemet (database, backend og frontend) SKAL starte med én kommando:
   `docker compose up`.
 - Backenden SKAL vente på, at databasen er klar (healthcheck), før den starter.
-- Data SKAL bevares, når containerne genstartes (navngivet volume til MySQL).
+- Data SKAL bevares, når containerne genstartes (navngivet volume til PostgreSQL).
 
 ### X. Spec først, så kode
 
@@ -116,6 +119,7 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ligger SQL kun i datalaget og beregninger kun i forretningslaget? (II)
 - Bruger nye endpoints rigtige metoder, statuskoder og JSON-fejl? (III)
 - Er OpenAPI-specifikationen opdateret? (IV)
+- Kan alle Tableau-nøgletal hentes fra API'et og ses i frontenden? (IV)
 - Beregnes nøgletal fra databasen ved hver forespørgsel? (V)
 - Har bookingændringer test for ankomstdato, antal nætter, sæson og pris? (VI, XII)
 - Starter systemet stadig med `docker compose up`? (IX)
@@ -142,4 +146,4 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ved hver kodegennemgang SKAL reviewer tjekke ændringen mod Kvalitetsporte.
 - Afvigelser fra et princip SKAL begrundes skriftligt i planen.
 
-**Version**: 4.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 5.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-02

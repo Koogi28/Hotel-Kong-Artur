@@ -1,6 +1,6 @@
 # Implementation Plan: Bookinger, nøgletal og barsalg
 
-**Branch**: `001-booking-kpi-bar` | **Date**: 2026-10-28 | **Spec**: [spec.md](spec.md)
+**Branch**: `001-booking-kpi-bar` | **Date**: 2026-10-28 (opdateret 2026-11-02, tillægsopgave uge 2) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-booking-kpi-bar/spec.md`
 
@@ -8,7 +8,7 @@
 
 Hotel Kong Arthur får et REST API til bookinger (opret, søg, ret, afbestil), nøgletal for
 omsætning og belægning og registrering af barsalg. Backenden er Node.js 20 + Express i tre lag
-(controllers → services → repositories) mod MySQL 8.0. Sæson, pris og alle nøgletal beregnes i
+(controllers → services → repositories) mod PostgreSQL 16. Sæson, pris og alle nøgletal beregnes i
 forretningslaget ved hvert kald. Databasen seedes én gang fra ITAKEA/hoteldata (1000 historiske
 bookinger og 30 drinks) via `db-init/*.sql`. API'et beskrives i
 [contracts/openapi.yaml](contracts/openapi.yaml) og serveres i Swagger UI. Tableau Desktop
@@ -17,16 +17,30 @@ henter færdigberegnede nøgletal som JSON direkte fra de samme endpoints med RE
 `db` og `backend`. Dev-containeren ligger bag profilen `dev`. Frontenden (ren HTML/CSS/JS i
 `backend/public`) bygges i uge 2.
 
+**Tillægsopgave uge 2** (spec FR-028–FR-030, konstitution 5.0.0):
+
+1. **Nøgletal i API'et**: alle beregninger fra Tableau findes allerede som endpoints
+   (`/api/kpi/*` og `/api/bar/kpi/*`, 11 i alt). Der kommer ingen nye beregninger. Kravet
+   opfyldes ved at vise dem i frontenden: overblikket (`overview.html`) og barens side
+   (`bar.html`) henter dem med `fetch` og beregner intet selv (FR-029).
+2. **Databaseskift**: MySQL 8.0 erstattes af PostgreSQL 16 (research R11). Kun datalaget
+   (`db.js`, `repositories/`), `db-init/`, `scripts/generate-seed.js`, `compose.yaml` og
+   `.env.example` ændres. Forretningslaget, controllers, kontrakten og unit-testene er uændrede.
+   MySQL-versionen er gemt i Git-tagget `uge1-mysql`.
+3. **Rækkefølge**: databaseskiftet laves før frontenden, så frontenden testes mod den endelige
+   database, og tallene kontrolleres mod MySQL-versionen (SC-009).
+
 ## Technical Context
 
 **Language/Version**: JavaScript (CommonJS) på Node.js 20 LTS
 
-**Primary Dependencies**: `express` (HTTP/routing), `mysql2` (MySQL-driver, `mysql2/promise`,
-rå SQL), `swagger-ui-express` (Swagger UI på `/api-docs`), `yaml` (indlæser
+**Primary Dependencies**: `express` (HTTP/routing), `pg` (PostgreSQL-driver, `Pool`, rå SQL;
+erstatter `mysql2`, research R11), `swagger-ui-express` (Swagger UI på `/api-docs`), `yaml` (indlæser
 `openapi.yaml`). Ingen dev-dependencies: tests bruger `node:test` og `node:assert`.
 
-**Storage**: MySQL 8.0 (`mysql:8.0`-image), `utf8mb4`, named volume `mysql_data`, init fra
-`db-init/01-schema.sql` + `02-seed.sql`
+**Storage**: PostgreSQL 16 (`postgres:16-alpine`-image), UTF-8, extension `unaccent`, named
+volume `pg_data`, init fra `db-init/01-schema.sql` + `02-seed.sql` (research R11). MySQL MÅ IKKE
+bruges (konstitution V)
 
 **Testing**: `node --test` (unit-tests af rene funktioner i services, uden database).
 Scriptet er `"test": "node --test tests/unit/*.test.js"` og ikke `node --test tests/unit` som i
@@ -60,12 +74,12 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 | I | Simpelt frem for smart | ✅ | 4 runtime-biblioteker, hver med begrundelse (tabel nedenfor). Ingen ORM, intet dato-/xlsx-/CSV-/test-bibliotek |
 | II | 3-lagsarkitektur | ✅ | `controllers/` → `services/` → `repositories/`. SQL kun i repositories. Controllers kun HTTP ↔ service |
 | III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 500 (uventet fejl) og 503 (health). Se Complexity Tracking |
-| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau henter JSON fra de samme endpoints (REST API Connector), ingen DB-genvej. DB-porten udstilles ikke |
-| V | Databasen er sandheden | ✅ | Seed kun ved første opstart. Ingen nøgletalskolonner. Alle KPI'er beregnes pr. kald |
+| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau henter JSON fra de samme endpoints (REST API Connector), ingen DB-genvej. DB-porten udstilles ikke. Alle Tableau-nøgletal har et endpoint og vises i `overview.html` og `bar.html` via `fetch` (FR-028, FR-029) |
+| V | Databasen er sandheden | ✅ | PostgreSQL, ikke MySQL (research R11). Seed kun ved første opstart. Ingen nøgletalskolonner. Alle KPI'er beregnes pr. kald |
 | VI | Ankomstdato + nætter | ✅ | Ny booking kræver `arrival_date` + `nights ≥ 1`. Sæson/pris kan ikke indtastes. Historiske uden datoer (DB-CHECK), PUT/DELETE → 409 |
 | VII | Kapacitet 214 | ✅ | Belægning = bookede værelser pr. nat ÷ 214, kun bookinger med dato, beregnet i `kpiCalculations.js`. Intet kapacitetstjek ved oprettelse: 214 er hotellets samlede kapacitet uden fordeling pr. værelsestype og bruges kun til belægningsgraden (research R9). Hver booking tæller som ét værelse (FR-013) |
 | VIII | Barsalg ét ad gangen | ✅ | `bar_sale(drink_id, quantity, sold_at)`, ingen medarbejderfelt, menu på 30 fra seed |
-| IX | Docker | ✅ | `docker compose up` starter `db` + `backend`. `depends_on: service_healthy` med TCP-ping. Named volume |
+| IX | Docker | ✅ | `docker compose up` starter `db` + `backend`. `depends_on: service_healthy` med `pg_isready` via TCP. Named volume `pg_data` |
 | X | Spec først | ✅ | Denne plan → `/speckit-tasks` → kode |
 | XI | Vi ejer koden | ✅ | Proces. Planen holder koden lille og uden "magi", så den kan forklares |
 | XII | Sikkerhed + tests | ✅ | `.env` (ignoreret) + `.env.example`. Gamle passwords fjernes fra compose. Unit-tests af sæson, pris og KPI'er |
@@ -75,13 +89,15 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 | Bibliotek | User story | Hvorfor det simpleste alternativ ikke er nok |
 |-----------|-----------|-----------------------------------------------|
 | `express` | US1–3 (REST API) | Routing, JSON-body og statiske filer med `node:http` alene giver meget mere egen kode |
-| `mysql2` | US1–3 (data i MySQL) | Node har ingen indbygget MySQL-klient |
+| `pg` | US1–3 (data i PostgreSQL), FR-030 | Node har ingen indbygget PostgreSQL-klient. Erstatter `mysql2`, så der stadig er fire biblioteker |
 | `swagger-ui-express` | US1-7, FR-015 | Swagger UI er et krav (princip IV). Pakken serverer den fra vores egen YAML |
 | `yaml` | FR-015 | Kontrakten er YAML, og Node kan ikke parse YAML. Alternativet (vedligeholde JSON i hånden) giver to kopier |
 
 **Gate-resultat (før Phase 0)**: PASS med begrundede afvigelser fra III.
 **Gate-resultat (efter Phase 1)**: PASS. Datamodel, kontrakt og quickstart holder sig inden
 for principperne. Ingen nye afhængigheder er kommet til under design.
+**Gate-resultat (2026-11-02, konstitution 5.0.0)**: PASS. `pg` erstatter `mysql2` (stadig fire
+biblioteker). Ingen nye endpoints, så kontrakten ændres ikke. Afvigelserne fra III er uændrede.
 
 ## Project Structure
 
@@ -121,11 +137,11 @@ backend/
 ├── Dockerfile                # node:20-alpine, build-context = repo-roden
 ├── package.json              # scripts: start, test
 ├── package-lock.json
-├── public/                   # uge 2: index.html, bookings, overblik, bar (HTML/CSS/JS)
+├── public/                   # uge 2: index.html, bookings, overview (nøgletal), bar (HTML/CSS/JS, kun fetch)
 ├── src/
 │   ├── server.js             # starter app på PORT (3000)
 │   ├── app.js                # express, json, static, /api-docs, routes, fejl-middleware
-│   ├── db.js                 # mysql2/promise pool (dateStrings: true) fra env
+│   ├── db.js                 # pg Pool fra env. DATE/TIMESTAMP som tekst (research R11)
 │   ├── routes.js             # URL → controller-funktion
 │   ├── controllers/
 │   │   ├── bookingController.js
@@ -173,7 +189,7 @@ Tableau Desktop forbinder med **REST API Connector** (Tableau Exchange, kræver 
 `http://localhost:3000/api/...` med HTTP GET. Flade arrays læses med JSONPath `$[*]`, og flade
 objekter med `$`. Connectoren laver udtræk, så nye bookinger og barsalg vises efter
 *Data → Refresh* (princip V). Alle nøgletalssvar er flade, så Tableau ikke skal folde nestede
-felter ud. Tableau forbinder ikke direkte til MySQL (princip IV), og `db` har ingen port på
+felter ud. Tableau forbinder ikke direkte til databasen (princip IV), og `db` har ingen port på
 værten.
 
 Backend-imaget bygges med repo-roden som context, så
@@ -184,9 +200,9 @@ kontrakten (stien gives via `OPENAPI_PATH`).
 
 | Service | Fil | Nøglepunkter |
 |---------|-----|--------------|
-| `db` | `compose.yaml` | `mysql:8.0`, `env_file: .env`, `TZ=Europe/Copenhagen`, healthcheck `mysqladmin ping -h 127.0.0.1` med login fra miljøet, volume `mysql_data:/var/lib/mysql`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten |
-| `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `MYSQL_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
-| `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `MYSQL_HOST=db`, ingen `depends_on` (kan ikke pege ud af en included fil) |
+| `db` | `compose.yaml` | `postgres:16-alpine`, `env_file: .env`, `TZ` og `PGTZ=Europe/Copenhagen`, healthcheck `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"`, volume `pg_data:/var/lib/postgresql/data`, `./db-init:/docker-entrypoint-initdb.d:ro`, ingen port på værten (research R11) |
+| `backend` | `compose.yaml` | build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: .env` + `DB_HOST=db`, `ports: "3000:3000"`, `depends_on: db: condition: service_healthy`, healthcheck mod `/api/health` med `node -e fetch(...)` |
+| `app` | `docker/docker-compose.yml` | `profiles: [dev]`, `env_file: ../.env`, `DB_HOST=db`, `DB_PORT=5432`, ingen `depends_on` (kan ikke pege ud af en included fil) |
 
 ## Afleveringsmateriale
 
@@ -197,8 +213,8 @@ tjekke dem mod repoet (princip X: spec først).
    GitHub (Mermaid). Diagrammet viser:
    - browseren (frontend i `backend/public/`) og Tableau Desktop (REST API Connector) som klienter
    - backenden med de tre lag: controllers → services → repositories (princip II)
-   - MySQL med navngivet volume `mysql_data`
-   - Docker-netværket og portene: `backend` på `3000` (udstillet på værten), `db` på `3306`
+   - PostgreSQL med navngivet volume `pg_data`
+   - Docker-netværket og portene: `backend` på `3000` (udstillet på værten), `db` på `5432`
      (kun internt i Compose-netværket)
 2. **`CONTRIBUTE.md`** (repo-roden):
    - opsætning: `.env` fra `.env.example`, `.specify/feature.json`, `docker compose up -d --build`
@@ -216,4 +232,4 @@ tjekke dem mod repoet (princip X: spec først).
 | III: statuskode **409** ud over 200/201/204/400/404 | PUT/DELETE på historisk booking skal afvises (FR-003). Bookingen findes og input er gyldigt, så hverken 400 eller 404 er korrekt | 400 ville sige "dit input er forkert", selvom det er ressourcen, der er låst. Receptionisten og Swagger-brugeren kunne ikke skelne fejlene |
 | III: statuskode **500** ved uventede fejl | Fejl-middlewaren skal svare på fejl, der ikke er brugerens skyld (fx kodefejl eller tabt DB-forbindelse midt i et kald). Svaret er stadig JSON: `{"error": "Intern fejl"}` | 400 eller 404 ville fejlagtigt give brugeren skylden. Express' standardsvar er HTML og bryder kravet om JSON-fejl |
 | III: statuskode **503** på `/api/health` | Docker-healthcheck og drift skal kunne se, at DB er nede | 200 med `"status":"error"` ville få Docker til at melde backend sund |
-| `scripts/generate-seed.js` (kode uden for backend) | 1030 INSERT-rækker skal laves korrekt én gang, med Müller-rettelsen (research R2, R3) | Håndskrevet SQL giver tastefejl. `LOAD DATA` kræver ekstra MySQL-opsætning og retter ikke tegnfejlen |
+| `scripts/generate-seed.js` (kode uden for backend) | 1030 INSERT-rækker skal laves korrekt én gang, med Müller-rettelsen (research R2, R3) | Håndskrevet SQL giver tastefejl. `COPY` (tidligere `LOAD DATA` i MySQL) kræver, at CSV-filerne ligger i db-containeren, og retter ikke tegnfejlen |

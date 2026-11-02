@@ -88,6 +88,10 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | 29/10 | CSV-eksport erstattet af JSON via Tableaus REST API Connector. T028, T030 og T042 udgået, T034 omskrevet til `GET /api/kpi/occupancy/nights`, `top-drinks` gjort flad | Tableau Desktop kan hente JSON direkte fra API'et, så der kun er én datakilde (research R7, princip IV) |
 | 30/10 | FR-017 udvidet med indtjening pr. værelsestype pr. sæson: `GET /api/kpi/revenue/by-room-type-season`, 24 rækker inkl. 0. Kontrakt 2.0.0 → 2.1.0. US2 fik acceptscenarie 7 | Casen kræver "pr værelsestype (pr sæson)", og et sæsonfilter i Tableau kræver et `season`-felt på hver række (research R7) |
 | 30/10 | Afsnittet "Afleveringsmateriale" tilføjet i plan.md (README med diagram, CONTRIBUTE.md, converge.md) | Casens afleveringskrav stod ingen steder i artefakterne, så Converge kunne ikke finde dem (princip X) |
+| 02/11 | Uge 1-arbejdet gemt: PR #7 merget til `main`, tagget `uge1-mysql` pushet | Tillægsopgave uge 2: arbejdet indtil nu skal være tilgængeligt ved præsentationen, før de nye løsninger udvikles |
+| 02/11 | Konstitution 4.0.0 → 5.0.0: PostgreSQL i stedet for MySQL (II, V, IX), og alle Tableau-nøgletal skal kunne hentes fra API'et og vises i frontenden (IV) | Tillægsopgave uge 2: hotellet vil ikke have MySQL og vil læse dataanalyserne direkte i API'et |
+| 02/11 | spec.md: FR-028–FR-030, SC-008, SC-009, US2 scenarie 8, US3 scenarie 7 og Clarifications 2026-11-02 | Samme. FR-028 er allerede opfyldt af de 11 KPI-endpoints. FR-029 dækkes af T035 og T043 |
+| 02/11 | research R11 (PostgreSQL 16 + `pg`), plan.md, data-model.md og quickstart.md opdateret. R4 og R8 markeret som erstattet | PostgreSQL ligner MySQL mest og holder Docker-designet og fire biblioteker. MariaDB og SQLite fravalgt (R11) |
 
 ### 4. Fund vi bevidst ikke retter
 

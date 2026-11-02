@@ -16,7 +16,7 @@ kildefilerne (se [research.md](research.md) R1).
 
 ```bash
 cp .env.example .env          # udfyld passwords (brug IKKE de gamle fra Git-historikken)
-docker compose down -v        # KUN første gang: fjerner den gamle tomme mysql_data-volumen
+docker compose down -v        # nulstiller pg_data (startdata indlæses igen). Gammel MySQL-volumen: docker volume rm hotel-kong-artur_mysql_data
 docker compose up --build
 ```
 
@@ -35,8 +35,8 @@ bliver "ü" i kommandolinje-argumenter ødelagt, så `Müller`-tjekket fejlagtig
 `-T` er nødvendig, når der sendes data ind via stdin.
 
 ```bash
-docker compose exec -T db sh -c 'mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -t' <<'SQL'
-SELECT COUNT(*), SUM(is_historical), SUM(arrival_date IS NULL) FROM booking;
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+SELECT COUNT(*), COUNT(*) FILTER (WHERE is_historical), COUNT(*) FILTER (WHERE arrival_date IS NULL) FROM booking;
 SELECT category, COUNT(*) FROM drink GROUP BY category;
 SELECT COUNT(*) FROM booking WHERE last_name = 'Müller';
 SELECT SUM(total_price) FROM booking;
@@ -114,7 +114,7 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 | `GET $API/bar/drinks` | 30 drinks |
 | `GET $API/bar/kpi/total` | `units_sold: 179958`, `revenue: 13448640.34` |
 | `GET $API/bar/kpi/category-split` | Cocktail `52.83`, Coffee `47.17` (sum 100) |
-| `POST $API/bar/sales` `{"drink_id":<Espresso>,"quantity":2}` | `201` med `sold_at` sat automatisk |
+| `POST $API/bar/sales` `{"drink_id":<Espresso>,"quantity":2}` | `201` med `sold_at` sat automatisk i dansk tid (research R11) |
 | Derefter `bar/kpi/total` | `units_sold: 179960`, `revenue` + 138.20 |
 | Derefter `bar/kpi/revenue-by-drink` | Espresso `units_sold: 14658` |
 | `POST $API/bar/sales` med `quantity: 0` eller `-1` | `400`, `fields: ["quantity"]` |
