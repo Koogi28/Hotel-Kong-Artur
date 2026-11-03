@@ -96,7 +96,7 @@ Kør på frisk startdata, dvs. før/efter oprettelse og sletning i trin 4:
 |------|-----------|
 | `GET $API/kpi/revenue/total` | `total_revenue: 11234034`, `booking_count: 1000` |
 | `GET $API/kpi/revenue/by-country` / `by-room-type` / `by-season` | 20 / 8 / 3 rækker. Σ `revenue` = 11234034 i hver |
-| `GET $API/kpi/revenue/by-room-type-season` | 24 rækker (8 × 3, også med `revenue: 0`). Σ `revenue` = 11234034 |
+| `GET $API/kpi/revenue/by-room-type-season` | 24 rækker (8 × 3). Σ `revenue` = 11234034. Med startdata har alle 24 kombinationer bookinger (mindst 30). At en kombination uden bookinger kommer med som `revenue: 0`, dækker unit-testen i `kpiCalculations.test.js` |
 | `GET $API/kpi/occupancy?date=2026-12-07` | `booked_rooms: 0`, `occupancy_percent: 0` (historiske tæller ikke) |
 | `GET $API/kpi/occupancy?date=2026-13-01` | `400` |
 | `GET $API/kpi/occupancy/nights` | `[]` (ingen bookinger med ankomstdato endnu) |

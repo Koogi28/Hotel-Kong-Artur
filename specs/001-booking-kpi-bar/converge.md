@@ -118,8 +118,11 @@ T056: kontrakten beskriver nu, at `search` over 100 tegn afkortes.
 
 ## Converge #2
 
-*Det samlede tjek kommer efter frontend (T025, T035, T043), Tableau-dashboardet (T048) og T070–T072.
-Her står delresultaterne, efterhånden som de er kørt.*
+**Kørt 02/11–03/11**: T066 (PostgreSQL), T048 + T070 (Tableau, SC-007/SC-008), T071 (styleguide,
+SC-010), T049 (hele quickstart) og T072 (`/speckit-analyze` og `/speckit-converge`).
+
+**Status**: 69/71 tasks færdige (97 %). Åbne: T049 (kun tidsmålingerne SC-001 og SC-003) og
+T055 (sidste tjek nedenfor).
 
 ### T066: databaseskift MySQL → PostgreSQL verificeret (02/11)
 
@@ -205,8 +208,66 @@ API'et: 0 nye bookinger og 0 registrerede salg.
 - Tab-tjekket kørte headless med simulerede tastetryk. Kontrasten er beregnet ud fra tokens
   efter WCAG-formlen og ikke målt med browserens kontrastmåler.
 
+### T049: hele quickstart fra tom volumen (03/11)
+
+**Kørt**: `docker compose down -v && docker compose up -d --build` (PostgreSQL), derefter trin
+1–6, 8 og 9 mod den kørende stack. Trin 4–6 med et script, der sammenligner hvert svar med
+quickstart-tabellerne. Trin 9 i headless Edge 156, hvor formularerne udfyldes og knapperne
+klikkes som af en bruger. Trin 7 (Tableau) er kørt af gruppen i T048/T070. Al testdata er
+slettet igen (1000 bookinger / 11.234.034 og 179.958 enheder / 13.448.640,34, 0 salg).
+
+| Trin | Resultat |
+|------|----------|
+| 1: start | ✅ Kun `db` + `backend`, `backend` venter på healthy `db`, `/api/health` → `{"status":"ok"}`, `/api-docs` → 200 |
+| 2: startdata og persistens | ✅ 1000/1000/1000, Cocktail 20/Coffee 10, 54 Müller, 11234034, 13448640.34, 8 værelsestyper. Efter `down` (uden `-v`) + `up`: stadig 1000 |
+| 3: unit-tests | ✅ 55/55 |
+| 4: bookinger | ✅ 10/10 scenarier (201 `high` 3600 + `Location`, søgning, PUT → `low` 2700, 400 med `fields`, 409 for historisk, 404, DELETE → 204) |
+| 5: nøgletal og live | ✅ 14/14. `by-room-type-season`: 24 rækker med Σ 11234034. Med startdata har alle 24 kombinationer bookinger (mindst 30), så quickstart-teksten om `revenue: 0` er præciseret (0-tilfældet dækkes af unit-testen) |
+| 6: barsalg | ✅ 12/12 (179958 / 13448640.34, 52.83 / 47.17, +2 Espresso → 179960 og +138.20, `sold_at` i hele sekunder, 400-fejl, liste og sletning) |
+| 7: Tableau | ✅ T048/T070 |
+| 8: konstitution | ✅ SQL kun i `repositories/`, `.env` ikke i Git, booking overlever `docker compose restart`, fire afhængigheder |
+| 9: frontend | ✅ 11/11: header og navigation, opret (`high`, 3.600 kr.), søg "muller" (54 uden knapper), fejlstrimler, ret (`low`, 2.700 kr.), afbestil, overblikket (11.234.034 kr., 3/8/20/24 rækker, topdrinks), sæsonfilter (8 rækker), belægning 0,5 %, bar (+2 Espresso, 179.960 enheder) og antal 0 → fejl |
+| SC-001 (< 2 min) og SC-003 (< 15 sek) | ⏳ Skal tages af en person i browseren |
+
 ---
 
-## Sidste Converge-tjek
+### T072: `/speckit-analyze` og `/speckit-converge` (03/11)
 
-*Kommer onsdag efter README, CONTRIBUTE.md og T049. Dette afsnit er det, der afleveres.*
+- `/speckit-analyze`: 0 CRITICAL, 0 HIGH, 1 MEDIUM, 3 LOW. Alle 34 FR og 10 SC har mindst én
+  task. MEDIUM: tidsmålingerne i T049 mangler (kræver en person). LOW: HANDOFF.md var fra 30/10
+  (opdateret), research R12 nævnte ikke feltkantens kontrast (henvisning tilføjet), og T044's
+  tekst er historisk (står).
+- `/speckit-converge`: **converged**, ingen nye tasks. 21 routes i `routes.js` = 21 operationer
+  i kontrakten 2.2.0. Ingen beregning i browseren (FR-029) eller i controllers (II), SQL kun i
+  `repositories/`, statuskoderne er de tilladte plus de begrundede 409, 500 og 503. FR-033: 21
+  lande i alfabetisk rækkefølge. FR-034 og resten er kørt adfærdsmæssigt i T049.
+- HANDOFF.md er opdateret med status og næste skridt.
+
+---
+
+## Sidste Converge-tjek (03/11)
+
+*Dette afsnit er det, der afleveres.*
+
+**Kørt med**: hele quickstart fra tom volumen (T049), Tableau mod API og frontend (T048,
+T070), styleguide-tjek i browseren (T071), `/speckit-analyze` og `/speckit-converge` (T072).
+
+**Resultat**: implementationen opfylder spec, plan og tasks. `/speckit-converge` gav
+"converged", og `/speckit-analyze` gav 0 CRITICAL og 0 HIGH. 69/71 tasks er færdige. De to
+åbne er tidsmålingerne (T049) og dette afsnit (T055), som afsluttes, når tiderne er skrevet ind.
+
+| User story / krav | Status | Bevis |
+|-------------------|--------|-------|
+| US1 bookinger (FR-001–FR-015, FR-033) | ✅ | Quickstart trin 2 og 4, trin 9 i browseren, 55 unit-tests |
+| US2 nøgletal (FR-016–FR-021) | ✅ | Trin 5 inkl. live, `overview.html`, Tableau (T070) |
+| US3 barsalg (FR-022–FR-027, FR-034) | ✅ | Trin 6, `bar.html`, Tableau (T070) |
+| Tillægsopgave: nøgletal i API og frontend (FR-028, FR-029, SC-008) | ✅ | T070: 10/10 nøgletal ens i Tableau, API og frontend |
+| Tillægsopgave: ny database (FR-030, SC-009) | ✅ | T066 og T049: PostgreSQL, samme tal som `uge1-mysql` |
+| Styleguide (FR-031, FR-032, SC-010) | ✅ | T071. Feltkanten er accepteret som afvigelse |
+| SC-001 booking < 2 min / SC-003 barsalg < 15 sek | ⏳ | Tages af en person (T049) |
+| Afleveringsmateriale (README med diagram, CONTRIBUTE.md, converge.md) | ✅ | T045, T053, T052, denne fil |
+
+**Bevidst accepteret** (se "Fund vi bevidst ikke retter" under Converge #1): intet
+overbookingtjek, statuskoderne 409/500/503, filterkombinationer i Tableau uden endpoint
+(konstitution 5.1.0), feltkantens kontrast, T050 uden screenshots og gamle passwords i
+Git-historikken.

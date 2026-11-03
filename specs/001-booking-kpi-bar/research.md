@@ -454,6 +454,9 @@ npm-afhængighed, så princip I holder.
   Sekundær = gennemsigtig med 1 px kant. Tydelig `:hover` (`--color-primary-strong`),
   `:focus-visible` (2 px kontur) og `:disabled`.
 - **Formularer**: hvide felter, 1 px `--color-input-border`, højde 48 px, label over feltet.
+  *(T071, 03/11: kanten har 1,49:1 mod hvid, under WCAG 1.4.11's 3:1. Accepteret, fordi farven
+  er hotellets egen, og SC-010 kun kræver tekstkontrast. Se converge.md, "Fund vi bevidst ikke
+  retter".)*
   Ugyldigt felt får en strimmel under sig i `--color-error-bg` med teksten i
   `--color-warning`, som "Nødvendig information" på bookingsiden.
 - **Kort og nøgletal**: hvid flade på baggrunden (som gæstekortet), tal i serif og
