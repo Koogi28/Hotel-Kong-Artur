@@ -252,7 +252,7 @@ give de samme tal (ændret 03/11, SC-008).
   - T066 kræver alle andre tasks i Phase 9
 - **Phase 10 fælles frontend (T067–T069)**: kræver T066 (frontenden testes mod PostgreSQL). T069 kræver T067. Blokerer T025, T035 og T043
 - **T025, T035, T043**: kræver T067–T069. Kan derefter laves parallelt (forskellige filer)
-- **Phase 11 verificering (T070–T072)**: T070 kræver T035, T043 og T048. T071 er udgået (03/11). T072 kræver T070
+- **Phase 11 verificering (T070–T072)**: T070 kræver T035, T043 og T048. T071 kræver T025, T035 og T043. T072 kræver T070 og T071
 
 ### User Story Dependencies
 
@@ -295,7 +295,7 @@ Alle:     T066                                     (SC-009: samme tal som uge1-m
 Person A: T067 → T069 → T025                       (style.css, index.html, bookinger)
 Person B: T068 → T035                              (api.js, overblik)
 Person C: T043 (efter T067–T069)                   (bar)
-Alle:     T070 → T072
+Alle:     T070 → T071 → T072
 ```
 
 ## Parallel Example: User Story 1
@@ -420,9 +420,13 @@ i `styleguide/screenshots/`, før du går i gang (styleguide regel 1–2).
 
 - [X] T070 *(ændret 03/11, research R7)* Kontrollér SC-007, SC-008 og FR-028: lav en tabel i `specs/001-booking-kpi-bar/converge.md` under "Converge #2" med én række pr. af casens nøgletal i Tableau-dashboardet (T048), aflæst **uden filter** (alle filtre *(All)*). Filterkombinationer på tværs af ark (fx land × sæson) har intet endpoint og sammenlignes ikke (konstitution 5.1.0). Kolonner: Tableau-beregning (fx `SUM(total_price)` pr. `country` på `/api/bookings`) → KPI-endpoint → element i frontenden (`overview.html` eller `bar.html`) → værdi med startdata i Tableau, i endpointet og i frontenden. 10 rækker: (1) årets indtjening (`/api/kpi/revenue/total`), (2) gæster pr. land (`by-country`, `booking_count`), (3) indtjening pr. land (`by-country`), (4) pr. værelsestype (`by-room-type`), (5) pr. sæson (`by-season`), (6) værelsestype pr. sæson (`RevenuePrRoomType` med kun `season` valgt ↔ `by-room-type-season` ↔ sæson-dropdownen i `overview.html`, tilføjet 03/11, analyze H1. Den eneste filtrerede række, fordi FR-017 kræver den som nøgletal), (7) barens omsætning (`/api/bar/kpi/total`), (8) omsætning pr. drink (`revenue-by-drink`), (9) kategorifordeling (`category-split`) og (10) eget nøgletal (`Sheet 13` på `revenue-by-drink` ↔ `/api/kpi/top-drinks` ↔ `overview.html`). De tre værdier skal være ens i hver række. Fordi Tableau summerer selv, er tabellen beviset for, at de to beregninger giver samme tal
   - ~~Oprindelig tekst: én række pr. endpoint for alle 11 KPI-endpoints (`/api/kpi/revenue/total`, `by-country`, `by-room-type`, `by-season`, `by-room-type-season`, `/api/kpi/occupancy`, `/api/kpi/occupancy/nights`, `/api/kpi/top-drinks`, `/api/bar/kpi/total`, `revenue-by-drink`, `category-split`), med samme værdi i Swagger UI, frontenden og Tableau~~
-- ~~T071~~ **Udgået (03/11)**: gruppen har gennemgået designet og godkendt det. Det formelle tjek af SC-010, FR-031 og FR-032 (HEX kun i `:root`, ingen `style=""`, 375 px uden vandret scroll, Tab-fokus, kontrast og styleguidens regel 1–10) køres ikke. Quickstart trin 9 (inkl. 375 px og Tab) køres stadig som en del af T049
-  - ~~Oprindelig tekst: *(udvidet 02/11, analyze U1)* Kør [quickstart.md](quickstart.md) trin 9 (frontend) i browseren. Kontrollér desuden SC-010, FR-031 og FR-032 på alle fire sider i `backend/public/` (`index.html`, `bookings.html`, `overview.html`, `bar.html`): `grep -nE "#[0-9A-Fa-f]{3,6}" backend/public/css/style.css` finder kun linjer i `:root`, og `grep -rn 'style="' backend/public` finder intet Ved 375 px bredde i browserens udviklerværktøj er der ingen vandret scroll (tabeller scroller i deres egen boks) Med Tab-tasten kan man nå alle knapper og felter, og fokus er synligt Kontrasten følger research R12 (stikprøve med udviklerværktøjets kontrastmåler på knapper, labels og fejlstrimlen) Gennemgå siderne mod styleguidens afsnit 11 (regel 1–10) og skærmbillederne. Skriv afvigelser og begrundelser i `specs/001-booking-kpi-bar/converge.md`~~
-- [ ] T072 Kør `/speckit-analyze` og `/speckit-converge`, og opdatér `specs/001-booking-kpi-bar/HANDOFF.md` (status og næste skridt) og `specs/001-booking-kpi-bar/converge.md` "Converge #2" med resultatet af T066 og T070 (afslutter den del af T055, der gælder Converge #2)
+- [X] T071 *(udvidet 02/11, analyze U1)* Kør [quickstart.md](quickstart.md) trin 9 (frontend) i browseren. Kontrollér desuden SC-010, FR-031 og FR-032 på alle fire sider i `backend/public/` (`index.html`, `bookings.html`, `overview.html`, `bar.html`): *(03/11: kortvarigt markeret som udgået og genoptaget samme dag. Resultat i converge.md, Converge #2)*
+  - `grep -nE "#[0-9A-Fa-f]{3,6}" backend/public/css/style.css` finder kun linjer i `:root`, og `grep -rn 'style="' backend/public` finder intet
+  - Ved 375 px bredde i browserens udviklerværktøj er der ingen vandret scroll (tabeller scroller i deres egen boks)
+  - Med Tab-tasten kan man nå alle knapper og felter, og fokus er synligt
+  - Kontrasten følger research R12 (stikprøve med udviklerværktøjets kontrastmåler på knapper, labels og fejlstrimlen)
+  - Gennemgå siderne mod styleguidens afsnit 11 (regel 1–10) og skærmbillederne. Skriv afvigelser og begrundelser i `specs/001-booking-kpi-bar/converge.md`
+- [ ] T072 Kør `/speckit-analyze` og `/speckit-converge`, og opdatér `specs/001-booking-kpi-bar/HANDOFF.md` (status og næste skridt) og `specs/001-booking-kpi-bar/converge.md` "Converge #2" med resultatet af T066, T070 og T071 (afslutter den del af T055, der gælder Converge #2)
 
 ---
 

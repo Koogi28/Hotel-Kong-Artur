@@ -107,7 +107,7 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | T050 afsluttet uden screenshots | Gruppens beslutning 30/10: afprøvet i Swagger UI. `docs/screenshots/` findes derfor ikke |
 | De gamle passwords ligger i Git-historikken | Kendt og håndteret: nye passwords i `.env`, og `.env.example` advarer. Historikken omskrives ikke |
 | G1: kontrakt og kode i samme commit | Ikke længere et fund: opfyldt i commit `f6e95a1` |
-| T071 udgået (03/11): SC-010, FR-031 og FR-032 (kontrast 4,5:1, kun tokens, 375 px, synligt fokus) er ikke tjekket formelt | Gruppen har gennemgået designet og godkendt det. Quickstart trin 9 med 375 px og Tab køres stadig i T049. Kontrastmålingen og gennemgangen af styleguidens regel 1–10 springes over |
+| T071 (03/11): feltkanten `--color-input-border` (#CED4DA) har 1,49:1 mod hvid, under WCAG 1.4.11's 3:1 for kanter på felter | Farven er målt på hotellets egen bookingside (research R12, styleguide regel 5). SC-010 kræver kontrast for tekst, og al tekst består. Felterne har labels over sig, og fokus vises med en grøn kontur på 11,99:1 |
 | C1 (03/11): filterkombinationer i Tableau (fx indtjening pr. land i lavsæson) findes ikke som endpoint og vises ikke i frontenden | Bevidst valg (konstitution 5.1.0, princip IV): casen beder om et interaktivt dashboard, og filtre på tværs af ark gør det mere brugbart for beslutningstagere. Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) findes som endpoint og i frontenden, og data hentes kun via API'et. Kombinationerne kan ikke tjekkes mod API'et, men de bygger på de samme rækker som de tjekkede totaler (T070) |
 
 **Rettet under Converge #1**: U3 (US2 scenarie 7 har nu aktøren "administratoren åbner
@@ -176,6 +176,34 @@ SC-008, FR-028).**
 +1000 Espresso gav efter *Refresh* 11.237.634 (= 11.234.034 + 3.600) og Coffee 47,44 %
 (= (6.343.884,91 + 69.100) / 13.517.740,34). Testdataene er slettet igen. Kontrolleret mod
 API'et: 0 nye bookinger og 0 registrerede salg.
+
+### T071: frontend efter styleguiden (SC-010, FR-031, FR-032) (03/11)
+
+**Kørt**: statiske tjek på `backend/public/`, WCAG-kontrast beregnet for hvert farvepar, som
+`style.css` bruger, og alle fire sider (`index.html`, `bookings.html`, `overview.html`,
+`bar.html`) åbnet med startdata i headless Edge 156 via DevTools-protokollen: bredde 375 og
+768 px, og Tab gennem hele siden ved 1280 px.
+
+**Resultat: bestået. Én afvigelse er accepteret (feltkanten, se "Fund vi bevidst ikke retter").**
+
+| Tjek | Resultat |
+|------|----------|
+| HEX kun i `:root` | ✅ Alle 14 HEX-værdier står i `:root` (linje 9–33) |
+| Ingen `style="` og ingen `.style` i JS | ✅ 0 træf. Én CSS-fil (`css/style.css`), ingen `border-radius` (kun `0`) og ingen `box-shadow` |
+| 375 px uden vandret scroll | ✅ `scrollWidth` = `clientWidth` = 375 på alle fire sider. Tabellerne scroller i deres egen `.table-wrap` |
+| 768 px uden vandret scroll | ✅ Alle fire sider |
+| Tab når alle knapper og felter | ✅ Alle fokuserbare elementer nået: index 8, bookings 14, overview 9, bar 37. På bookings og overview giver datofeltet ét ekstra tabstop (delfelterne) |
+| Synligt fokus | ✅ `:focus-visible` giver 2 px kontur i `--color-secondary` (11,99:1). Datofelterne fokuserer et indre delfelt. Skærmbillede: feltet får den grønne kontur, og delfeltet fremhæves |
+| Tekstkontrast ≥ 4,5:1 (stor tekst ≥ 3:1) | ✅ Brødtekst 7,96–9,08, overskrifter 11,99, links/nøgletal 5,38–6,14, dæmpet tekst 4,69–5,36, knapper 4,39 (19 px fed = stor tekst) / 6,14 / 7,57 / 13,69, fejlstrimmel 4,99, beskeder 7,57–13,69 |
+| Ikke-tekst-kontrast (WCAG 1.4.11) | ⚠️ Feltkant `#CED4DA` 1,49:1 mod hvid. Accepteret, se "Fund vi bevidst ikke retter" |
+| Styleguide regel 1–10 | ✅ Samme `<head>`, header (`.brand`, `.nav` med aktiv side), `lang="da"` og viewport på alle sider (regel 3, 7, 8). Kun styleguidens farver og skrifter (Times New Roman og Barlow) plus de kontrast-varianter og den ene fejlfarve, der er begrundet i research R12 (regel 4, 5). Styling kun i CSS (regel 9). Ingen ændringer i backend (regel 10) |
+
+**Bemærkninger**:
+
+- `.band` (`--color-band`) bruges ikke på nogen side. Dæmpet tekst og links ville kun have
+  3,85:1 og 4,41:1 på båndet, så det skal tjekkes, hvis båndet tages i brug.
+- Tab-tjekket kørte headless med simulerede tastetryk. Kontrasten er beregnet ud fra tokens
+  efter WCAG-formlen og ikke målt med browserens kontrastmåler.
 
 ---
 
