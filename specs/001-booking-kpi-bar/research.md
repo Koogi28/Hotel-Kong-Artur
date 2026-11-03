@@ -144,6 +144,53 @@ De må ikke genbruges i `.env`.
 
 ## R7. Tableau og datatilgang
 
+### Ændret 03/11: dashboardet summerer rå rækker fra API'et (T048)
+
+**Beslutning** *(rettet 03/11 efter workbooken `HotelKongArthurDashboard.twbx`)*: Dashboardet
+`HotelStatistik` bruger tre datakilder via REST API Connector:
+
+| Datakilde | JSONPath | Tableau beregner |
+|-----------|----------|------------------|
+| `GET /api/bookings` | `$[*]` (1000 rækker) | Arkene `Yearly room revenue` (`SUM(total_price)`), `GuestsMap` og `GuestsPrCountry` (antal bookinger pr. `country`), `RevenuePrCountry` (`SUM(total_price)` pr. `country`) og `RevenuePrRoomType` (`SUM(total_price)` pr. `room_type`). Indtjening pr. sæson aflæses med `season`-filteret. Filtrene `season` og `country` virker på alle ark med denne datakilde, og kortet filtrerer `GuestsPrCountry`, `RevenuePrRoomType` og `Yearly room revenue` med filter-actionen `Action (country)` |
+| `GET /api/bar/kpi/revenue-by-drink` | `$[*]` (30 rækker) | Arkene `DrinkRevenue` (`SUM(revenue)` pr. drink) og `Sheet 13` ("Oversigt over mest solgte drink og kaffe", gruppens nøgletal FR-019: det beregnede felt "Mest solgte drink og kaffe" = `[units_sold] = {FIXED [category] : MAX([units_sold])}` som filter) |
+| `GET /api/bar/kpi/category-split` | `$[*]` (2 rækker) | Arkene `Yearly bar revenue` (barens omsætning = `SUM(revenue)` af de to kategorier) og `PercentCategory` (kategorifordelingen: "Percent of Total" på `SUM(percent)` og `SUM(revenue)` pr. `category`). Procenterne er derfor API'ets egne fra `category-split` |
+
+Gruppens nøgletal svarer til `GET /api/kpi/top-drinks`, som frontenden bruger og T070
+sammenligner med. Arkene `Sheet 5`, `Sheet 8`, `Sheet 11` og `Sheet 12` er ikke med i
+dashboardet. KPI-endpoints (`/api/kpi/*`, `/api/bar/kpi/*`) er uændrede. Frontenden bruger dem, og de
+opfylder FR-028 (hvert af casens nøgletal i Tableau kan også hentes fra et endpoint).
+
+**Filtre (konstitution 5.1.0, princip IV)**: `season` og `country` virker på tværs af ark
+(*Apply to Worksheets → All Using This Data Source*). Tableau kan derfor vise kombinationer som
+indtjening pr. land i lavsæson. De findes ikke som endpoint og behøver det ikke (FR-028 gælder
+casens nøgletal uden filter). `analyze` C1 (03/11) fandt, at det stred mod princip IV i 5.0.0.
+Gruppen valgte at ændre princippet frem for at begrænse filtrene.
+
+**Begrundelse**:
+- Casen siger, at dashboardet skal være interaktivt og "vise og beregne" nøgletallene med
+  udgangspunkt i REST API'et. Filtre på land og sæson på tværs af ark gør dashboardet mere
+  brugbart for beslutningstagere.
+- Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) findes stadig som endpoint og vises i
+  frontenden. Data hentes stadig kun via API'et, aldrig direkte fra databasen (princip IV).
+- Princip II gælder backendens lag, og forbuddet mod selv at beregne (IV, FR-029) gælder
+  frontenden. Tableau er en ekstern klient.
+
+**Trade-off**:
+- Summerne findes nu to steder: i forretningslaget (`kpiCalculations.js`,
+  `barCalculations.js`) og i Tableau. To implementeringer kan i princippet give forskellige tal.
+  Det sikres af SC-007/SC-008: T070 sammenligner hvert af casens nøgletal **uden filter** i
+  Tableau med KPI-endpointet og frontenden.
+- Kombinationer som "indtjening pr. land i lavsæson" findes kun i Tableau og kan ikke hentes fra
+  API'et eller kontrolleres mod det. Det accepterer vi bevidst (converge.md, "Fund vi bevidst
+  ikke retter").
+- Belægning pr. nat vises ikke i dashboardet. FR-021 er stadig opfyldt, fordi
+`kpi/occupancy/nights` kan hentes ind, og den vises i `overview.html`.
+
+Teksten nedenfor (29/10) er baggrund. Punktet "*Nøgletal i backenden, ikke i Tableau*" er
+erstattet af denne beslutning for dashboardets vedkommende.
+
+### Baggrund: KPI-endpoints som datakilder (29/10)
+
 **Beslutning (ændret 29/10)**: Tableau **Desktop** henter nøgletallene direkte fra REST API'et
 som JSON med Tableaus **REST API Connector** fra Tableau Exchange. Det er **plan A**.
 CSV-eksport er fravalgt (se nedenfor). Den første beslutning (CSV-eksport til Tableau Public)
@@ -189,7 +236,7 @@ sæson. Alle 24 kombinationer kommer med (også 0), så en værelsestype ikke fo
 grafen, når der filtreres på en sæson uden bookinger af den.
 
 **Begrundelse**:
-- *Nøgletal i backenden, ikke i Tableau*: Tableau får færdigberegnede nøgletal og viser dem.
+- *Nøgletal i backenden, ikke i Tableau* *(erstattet 03/11, se ovenfor)*: Tableau får færdigberegnede nøgletal og viser dem.
   Hvis Tableau fik rå bookingrækker og selv lavede `SUM`/`GROUP BY`, ville nøgletallene være
   beregnet i Tableau. Det strider mod princip II og SC-007, og to implementeringer kan give
   forskellige tal.
@@ -407,6 +454,9 @@ npm-afhængighed, så princip I holder.
   Sekundær = gennemsigtig med 1 px kant. Tydelig `:hover` (`--color-primary-strong`),
   `:focus-visible` (2 px kontur) og `:disabled`.
 - **Formularer**: hvide felter, 1 px `--color-input-border`, højde 48 px, label over feltet.
+  *(T071, 03/11: kanten har 1,49:1 mod hvid, under WCAG 1.4.11's 3:1. Accepteret, fordi farven
+  er hotellets egen, og SC-010 kun kræver tekstkontrast. Se converge.md, "Fund vi bevidst ikke
+  retter".)*
   Ugyldigt felt får en strimmel under sig i `--color-error-bg` med teksten i
   `--color-warning`, som "Nødvendig information" på bookingsiden.
 - **Kort og nøgletal**: hvid flade på baggrunden (som gæstekortet), tal i serif og

@@ -96,7 +96,7 @@ Kør på frisk startdata, dvs. før/efter oprettelse og sletning i trin 4:
 |------|-----------|
 | `GET $API/kpi/revenue/total` | `total_revenue: 11234034`, `booking_count: 1000` |
 | `GET $API/kpi/revenue/by-country` / `by-room-type` / `by-season` | 20 / 8 / 3 rækker. Σ `revenue` = 11234034 i hver |
-| `GET $API/kpi/revenue/by-room-type-season` | 24 rækker (8 × 3, også med `revenue: 0`). Σ `revenue` = 11234034 |
+| `GET $API/kpi/revenue/by-room-type-season` | 24 rækker (8 × 3). Σ `revenue` = 11234034. Med startdata har alle 24 kombinationer bookinger (mindst 30). At en kombination uden bookinger kommer med som `revenue: 0`, dækker unit-testen i `kpiCalculations.test.js` |
 | `GET $API/kpi/occupancy?date=2026-12-07` | `booked_rooms: 0`, `occupancy_percent: 0` (historiske tæller ikke) |
 | `GET $API/kpi/occupancy?date=2026-13-01` | `400` |
 | `GET $API/kpi/occupancy/nights` | `[]` (ingen bookinger med ankomstdato endnu) |
@@ -125,29 +125,56 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 
 ## 7. Tableau Desktop (FR-021, FR-027, SC-007)
 
+*(Ændret 03/11, research R7)* Dashboardet henter rå rækker fra API'et og summerer selv. Det
+forbinder aldrig direkte til databasen.
+
+Workbooken ligger i repo-roden: `HotelKongArthurDashboard.twbx` (dashboard `HotelStatistik`).
+
 1. I Tableau Desktop: *Connect → REST API Connector* (installeret fra Tableau Exchange). Opret
-   én datakilde pr. endpoint med metoden GET og URL `http://localhost:3000/api/...`:
+   tre datakilder med metoden GET og URL `http://localhost:3000/api/...`:
 
-   | Endpoint | JSONPath | Forventet på frisk startdata |
-   |----------|----------|------------------------------|
-   | `kpi/revenue/total` | `$` | 1 række: `total_revenue` 11234034, `booking_count` 1000 |
-   | `kpi/revenue/by-country` / `by-room-type` / `by-season` | `$[*]` | 20 / 8 / 3 rækker |
-   | `kpi/revenue/by-room-type-season` | `$[*]` | 24 rækker. Læg `season` på *Filters* |
-   | `kpi/occupancy/nights` | `$[*]` | 0 rækker (ingen bookinger med ankomstdato endnu) |
-   | `kpi/top-drinks` | `$[*]` | 2 rækker: Espresso 14656, Whiskey Sour 3824 |
-   | `bar/kpi/total` | `$` | 1 række: `units_sold` 179958, `revenue` 13448640.34 |
-   | `bar/kpi/revenue-by-drink` | `$[*]` | 30 rækker |
-   | `bar/kpi/category-split` | `$[*]` | 2 rækker: Cocktail 52.83, Coffee 47.17 |
+   | Datakilde | JSONPath | Forventet i Tableau på frisk startdata |
+   |-----------|----------|----------------------------------------|
+   | `bookings` | `$[*]` | 1000 rækker. `Yearly room revenue` 11234034, antal bookinger 1000. Pr. `country` 20, pr. `room_type` 8 og pr. `season` 3 grupper, og hver fordeling summerer til 11234034 (uden filter) |
+   | `bar/kpi/revenue-by-drink` | `$[*]` | 30 rækker. `DrinkRevenue`: Espresso 1012729.60, Mocha 842019.23. `Sheet 13` (eget nøgletal): Espresso 14656, Whiskey Sour 3824 (se nedenfor) |
+   | `bar/kpi/category-split` | `$[*]` | 2 rækker. `Yearly bar revenue` 13448640.34. `PercentCategory`: Cocktail 52.83 %, Coffee 47.17 % |
 
-   Vis værdierne direkte (én række = ét mærke). Tableau skal ikke selv beregne nøgletal
-   (research R7).
-2. Sammenlign hvert tal i Tableau med det samme endpoint i Swagger UI eller med `curl` (SC-007).
+   **Filtrene** (konstitution 5.1.0, princip IV, research R7): `season` og `country` virker på
+   alle ark med datakilden `bookings` (*Apply to Worksheets → All Using This Data Source*), og et
+   klik på kortet filtrerer `GuestsPrCountry`, `RevenuePrRoomType` og `Yearly room revenue`
+   (filter-action `Action (country)`). **Workbooken er gemt med `season` = high**, så sæt
+   filteret til *(All)*, før tallene sammenlignes. Med et filter valgt kan
+   Tableau vise kombinationer, der ikke findes som endpoint, fx indtjening pr. land i `low`. Det
+   er tilladt. Én kombination kan dog tjekkes: `RevenuePrRoomType` med `season` = `high` skal give
+   de samme 8 værdier som `high`-rækkerne i `kpi/revenue/by-room-type-season`.
+
+   **Kategorifordelingen** (`PercentCategory`, datakilde `category-split`): `category` på
+   *Color*/*Label*, `SUM(revenue)` og *Percent of Total* på `SUM(percent)`. De to rækkers
+   `percent` summerer til 100, så Tableau viser API'ets procenter: Cocktail 52.83 %, Coffee
+   47.17 %. `Yearly bar revenue` er `SUM(revenue)` af de samme to rækker: 13448640.34.
+
+   **Eget nøgletal (FR-019)** i det separate ark `Sheet 13` ("Oversigt over mest solgte drink
+   og kaffe") på datakilden `bar/kpi/revenue-by-drink`: den mest solgte kaffe og cocktail i
+   antal. `category` på *Columns*, `name` og `SUM(units_sold)` som mærker, og det beregnede felt
+   "Mest solgte drink og kaffe" = `[units_sold] = {FIXED [category] : MAX([units_sold])}` på
+   *Filters* (`True`).
+   Så vises den største pr. kategori, og ved uafgjort vises alle, ligesom i `kpi/top-drinks`.
+   Forventet: Coffee Espresso 14656, Cocktail Whiskey Sour 3824.
+2. Sæt alle filtre til *(All)*, og sammenlign hvert tal i Tableau med det tilsvarende
+   KPI-endpoint i Swagger UI eller med `curl` (SC-007): `Yearly room revenue` ↔ `kpi/revenue/total`, `GuestsPrCountry` og
+   `RevenuePrCountry` ↔ `kpi/revenue/by-country`, `RevenuePrRoomType` ↔ `by-room-type`,
+   `Yearly room revenue` pr. `season`-filter ↔ `by-season`, `RevenuePrRoomType` med
+   `season`-filter ↔ `kpi/revenue/by-room-type-season`, `Yearly bar revenue` ↔ `bar/kpi/total`,
+   `PercentCategory` ↔ `bar/kpi/category-split`, `DrinkRevenue` ↔ `bar/kpi/revenue-by-drink` og
+   `Sheet 13` ↔ `kpi/top-drinks`. Hele tabellen laves i T070
+   (SC-008).
 3. **Tilføj data → Refresh → nye tal vises** ("live", princip V):
    - Opret bookingen fra trin 4 og registrér 2 × Espresso (trin 6).
    - Vælg *Data → Refresh* for hver datakilde i Tableau.
-   - Forventet: `total_revenue` stiger med 3600, `Denmark` dukker op i `by-country`,
-     `occupancy/nights` får 3 rækker med `booked_rooms: 1`, og Espresso får `units_sold` 14658 i
-     `revenue-by-drink` og `top-drinks`.
+   - Forventet: `Yearly room revenue` stiger med 3600 til 11237634, `Denmark` dukker op på
+     landekortet med 1 booking, `Yearly bar revenue` stiger med 138.20, og Espresso får
+     `units_sold` 14658 i `revenue-by-drink` og i `Sheet 13` (også i
+     `kpi/top-drinks`).
 
 ## 8. Konstitutionstjek efter implementering
 
@@ -176,7 +203,8 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 | Alle | Tab gennem siden | Synligt fokus på alle links, knapper og felter (FR-032) |
 
 **SC-008**: Tallene på `overview.html` og `bar.html` skal være de samme som i Swagger UI
-(trin 5–6) og Tableau (trin 7). Tabellen over alle 11 endpoints laves i T070.
+(trin 5–6) og Tableau (trin 7). Tabellen over hvert Tableau-nøgletal ↔ KPI-endpoint ↔ frontend
+laves i T070.
 
 Slet testbookingen bagefter (eller kør `docker compose down -v`), så startdata-tallene passer igen.
 Barsalget kan kun fjernes med `docker compose down -v`.

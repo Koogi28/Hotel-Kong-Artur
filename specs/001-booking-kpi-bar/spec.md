@@ -31,7 +31,9 @@ opdigtes."
 
 - Q: Skal nøgletallene kun ses i Tableau? → A: Nej. Hotellet vil læse dataanalyserne direkte i
   API'et. Alle beregninger, der vises i Tableau, SKAL kunne hentes fra REST API'et og vises i
-  frontend-prototypen, læst fra API'et (FR-028, FR-029).
+  frontend-prototypen, læst fra API'et (FR-028, FR-029). *(Præciseret 03/11: gælder casens
+  nøgletal uden filter. Filterkombinationer i Tableau behøver ikke et endpoint, se Session
+  2026-11-03 og konstitution 5.1.0.)*
 - Q: Må vi fortsætte med MySQL? → A: Nej. Hotellet vil ikke have MySQL. Databasen skiftes til en
   anden type efter gruppens valg (FR-030). Startdata og alle nøgletal skal være de samme efter
   skiftet (SC-009).
@@ -46,6 +48,28 @@ opdigtes."
   enheder fra datafilen kan ikke slettes (FR-003, FR-034). Menuen selv er fast og ændres ikke.
 - Q: Skal arbejdet fra uge 1 kunne vises, selvom databasen skiftes? → A: Ja. Det er gemt i Git
   som tagget `uge1-mysql` på `main`, før arbejdet med tillægsopgaven begyndte.
+
+### Session 2026-11-03 (Tableau-dashboardet, T048)
+
+- Q: Må Tableau selv beregne nøgletallene ud fra rå rækker fra API'et? → A: Ja. Casen siger, at
+  dashboardet skal "vise og beregne" nøgletallene med udgangspunkt i REST API'et, og rå rækker
+  giver kort og filtre på tværs af ark direkte i Tableau. Dashboardet læser `GET /api/bookings`,
+  `GET /api/bar/kpi/revenue-by-drink` og `GET /api/bar/kpi/category-split` og summerer selv. Data hentes stadig kun via API'et
+  (konstitution IV). Tallene skal være de samme som KPI-endpoints og frontenden (SC-007, SC-008),
+  og det tjekkes i T070 (research R7, ændret 03/11).
+- Q: Skal alle KPI-endpoints bruges som datakilder i Tableau? → A: Nej. FR-028 kræver kun, at
+  hvert af casens nøgletal i Tableau *også* kan hentes fra et endpoint. Det gør de via `/api/kpi/*` og
+  `/api/bar/kpi/*`, som frontenden bruger. Gruppens eget nøgletal (FR-019) beregnes i Tableau
+  fra `bar/kpi/revenue-by-drink` som den mest solgte kaffe og cocktail efter `units_sold`, og
+  svarer til `/api/kpi/top-drinks`.
+- Q: Må Tableau filtrere og kombinere nøgletallene på tværs af ark (fx indtjening pr. land i
+  lavsæson), selvom kombinationen ikke findes som endpoint? → A: Ja (konstitution 5.1.0, princip
+  IV). Filtrene `season` og `country` virker på tværs af ark, fordi casen beder om et interaktivt
+  dashboard, og det gør det mere brugbart for beslutningstagere. FR-028 og SC-008 gælder casens
+  nøgletal (FR-016–FR-019, FR-024–FR-026) uden filter, og hvert af dem findes stadig som
+  endpoint og i frontenden. Kombinationerne findes kun i Tableau. Det er et bevidst trade-off.
+- Q: Skal belægning pr. nat vises i dashboardet? → A: Nej. FR-021 er opfyldt, fordi
+  `/api/kpi/occupancy/nights` kan hentes ind i Tableau. Belægningen vises i `overview.html`.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -259,8 +283,11 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 
 **Nøgletal i API og frontend og databaseskift (tillægsopgave uge 2)**
 
-- **FR-028**: Hver beregning, der vises i Tableau-dashboardet (FR-016–FR-019, FR-024–FR-026),
-  SKAL kunne hentes direkte fra et endpoint i REST API'et og være dokumenteret i Swagger UI.
+- **FR-028**: Hvert af casens nøgletal, der vises i Tableau-dashboardet (FR-016–FR-019,
+  FR-024–FR-026), SKAL kunne hentes direkte fra et endpoint i REST API'et og være dokumenteret i
+  Swagger UI. Kravet gælder nøgletallene uden filter. Kombinationer, som Tableau laver med filtre
+  på tværs af ark (fx indtjening pr. land i én sæson), behøver ikke et endpoint (konstitution
+  5.1.0, princip IV).
 - **FR-029**: Frontend-prototypen SKAL vise de samme beregninger (overblikket for FR-016–FR-019,
   barens side for FR-024–FR-026) og SKAL hente dem fra REST API'et. Browseren MÅ IKKE selv
   beregne nøgletal, sæson eller pris.
@@ -315,8 +342,8 @@ omsætningen pr. drikkevare og fordelingen mellem kaffe og cocktails ændrer sig
 - **SC-006**: Efter indlæsning findes præcis 1000 historiske bookinger og 30 drikkevarer, og alle
   værdier er identiske med datafilerne.
 - **SC-007**: Tableau-dashboardet viser de samme tal som systemets egne oversigter.
-- **SC-008**: 100 % af nøgletallene i Tableau-dashboardet kan også findes i frontend-prototypen og
-  i et API-svar, med samme værdi.
+- **SC-008**: 100 % af casens nøgletal i Tableau-dashboardet (FR-016–FR-019, FR-024–FR-026, uden
+  filter) kan også findes i frontend-prototypen og i et API-svar, med samme værdi.
 - **SC-009**: Efter databaseskiftet giver startdataene præcis de samme tal som før skiftet
   (fx samlet indtjening 11.234.034 for 1000 bookinger, og 179.958 solgte enheder for
   13.448.640,34 DKK i baren).
