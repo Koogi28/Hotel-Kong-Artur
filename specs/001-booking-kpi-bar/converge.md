@@ -147,6 +147,35 @@ quickstart trin 1–6 og 8 mod den kørende stack (T057–T065 færdige). Ingen 
 - Under udviklingen viste en test, at et salg fra en forbindelse i UTC fik en time forkert
   tidspunkt. Derfor sætter `db.js` forbindelsens tidszone (research R11, review-rettelse).
 
+### T048 + T070: Tableau-dashboardet og SC-007/SC-008 (03/11)
+
+**Kørt**: `docker compose down -v` (startdata), *Data → Refresh* i Tableau for begge
+datakilder (`bookings` og `bar/kpi/revenue-by-drink`) og alle filtre på *(All)*. Hvert tal er
+aflæst i Tableau, i Swagger UI (endpointet) og i frontenden. Filterkombinationer på tværs af
+ark sammenlignes ikke, fordi de ikke har et endpoint (konstitution 5.1.0, "Fund vi bevidst ikke
+retter").
+
+**Resultat: alle 10 af casens nøgletal har samme værdi i Tableau, API og frontend (SC-007,
+SC-008, FR-028).**
+
+| Nøgletal | Tableau-ark (datakilde) | Endpoint | Frontend-element | Værdi med startdata | |
+|----------|-------------------------|----------|------------------|---------------------|---|
+| Årets indtjening (FR-016) | Indtjening i alt (`bookings`, `SUM(total_price)`) | `GET /api/kpi/revenue/total` | `overview.html` `#total-revenue`, `#booking-count` | 11.234.034 (1000 bookinger) | ✅ |
+| Gæster pr. land (FR-017) | Kort (`bookings`, antal pr. `country`) | `GET /api/kpi/revenue/by-country` (`booking_count`) | `overview.html` `#country-rows` | South Korea 63, Egypt 31 | ✅ |
+| Indtjening pr. land (FR-017) | Indtjening pr. land (`bookings`) | `GET /api/kpi/revenue/by-country` | `overview.html` `#country-rows` | South Korea 767.699, China 722.928, Egypt 335.786 | ✅ |
+| Indtjening pr. værelsestype (FR-017) | Indtjening pr. værelsestype (`bookings`) | `GET /api/kpi/revenue/by-room-type` | `overview.html` `#room-type-rows` | Suite 2.119.671, Standard Single 730.444 | ✅ |
+| Indtjening pr. sæson (FR-017) | Indtjening pr. sæson (`bookings`) | `GET /api/kpi/revenue/by-season` | `overview.html` `#season-rows` | high 4.070.570, mid 3.809.387, low 3.354.077 | ✅ |
+| Værelsestype pr. sæson (FR-017) | Indtjening pr. værelsestype med `season` = low (`bookings`) | `GET /api/kpi/revenue/by-room-type-season` | `overview.html` `#matrix-rows` med `#season-filter` = low | Suite low 626.488 | ✅ |
+| Barens omsætning (FR-024) | Barens total (`revenue-by-drink`, `SUM(revenue)`, `SUM(units_sold)`) | `GET /api/bar/kpi/total` | `bar.html` `#total-revenue`, `#total-units` | 13.448.640,34 (179.958 enheder) | ✅ |
+| Omsætning pr. drink (FR-025) | Omsætning pr. drink (`revenue-by-drink`) | `GET /api/bar/kpi/revenue-by-drink` | `bar.html` `#drink-rows` | Espresso 1.012.729,60, Mocha 842.019,23 | ✅ |
+| Kategorifordeling (FR-026) | Kategorifordeling (`revenue-by-drink`, "Percent of Total") | `GET /api/bar/kpi/category-split` | `bar.html` `#split-cocktail`, `#split-coffee` | Cocktail 52,83 %, Coffee 47,17 % | ✅ |
+| Eget nøgletal (FR-019) | Mest solgte (`revenue-by-drink`, filter `{FIXED [category] : MAX([units_sold])}`) | `GET /api/kpi/top-drinks` | `overview.html` `#top-coffee`, `#top-cocktail` | Espresso 14.656, Whiskey Sour 3.824 | ✅ |
+
+**Live-test** (princip V): +1 booking (Denmark, december, Standard Single, 3 nætter) og
++1000 Espresso gav efter *Refresh* 11.237.634 (= 11.234.034 + 3.600) og Coffee 47,44 %
+(= (6.343.884,91 + 69.100) / 13.517.740,34). Testdataene er slettet igen. Kontrolleret mod
+API'et: 0 nye bookinger og 0 registrerede salg.
+
 ---
 
 ## Sidste Converge-tjek

@@ -147,16 +147,18 @@ forbinder aldrig direkte til databasen.
    `category` (*Compute Using → Table*). Tableau dividerer så hver kategoris omsætning med
    13448640.34: Cocktail 7104755.43 → 52.83 %, Coffee → 47.17 %. Sæt formatet til 2 decimaler.
 
-   **Eget nøgletal (FR-019)**, også fra `bar/kpi/revenue-by-drink`: den mest solgte kaffe og
-   cocktail i antal. `category` og `name` på *Rows*, `SUM(units_sold)` på *Text*, og et
+   **Eget nøgletal (FR-019)** i det separate ark **"Mest solgte"**, også på datakilden
+   `bar/kpi/revenue-by-drink`: den mest solgte kaffe og cocktail i antal. `category` og `name` på
+   *Rows*, `SUM(units_sold)` på *Text*, og et
    beregnet felt `[units_sold] = {FIXED [category] : MAX([units_sold])}` på *Filters* (`True`).
    Så vises den største pr. kategori, og ved uafgjort vises alle, ligesom i `kpi/top-drinks`.
    Forventet: Coffee Espresso 14656, Cocktail Whiskey Sour 3824.
-2. Nulstil alle filtre (*Show All*), og sammenlign hvert tal i Tableau med det tilsvarende
+2. Sæt alle filtre til *(All)*, og sammenlign hvert tal i Tableau med det tilsvarende
    KPI-endpoint i Swagger UI eller med `curl` (SC-007): `SUM(total_price)` ↔ `kpi/revenue/total`, fordelingerne ↔ `kpi/revenue/by-country`,
    `by-room-type` og `by-season`, værelsestype-arket med `season`-filter ↔
    `kpi/revenue/by-room-type-season`, barens total ↔ `bar/kpi/total` og kategorifordelingen ↔
-   `bar/kpi/category-split` og eget nøgletal ↔ `kpi/top-drinks`. Hele tabellen laves i T070
+   `bar/kpi/category-split`, omsætning pr. drink ↔ `bar/kpi/revenue-by-drink` og arket "Mest
+   solgte" ↔ `kpi/top-drinks`. Hele tabellen laves i T070
    (SC-008).
 3. **Tilføj data → Refresh → nye tal vises** ("live", princip V):
    - Opret bookingen fra trin 4 og registrér 2 × Espresso (trin 6).
