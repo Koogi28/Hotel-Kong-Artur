@@ -13,7 +13,8 @@ forretningslaget ved hvert kald. Databasen seedes én gang fra ITAKEA/hoteldata 
 bookinger og 30 drinks) via `db-init/*.sql`. API'et beskrives i
 [contracts/openapi.yaml](contracts/openapi.yaml) og serveres i Swagger UI. Tableau Desktop
 henter JSON fra samme API med REST API Connector: rå rækker fra `GET /api/bookings` og
-`GET /api/bar/kpi/revenue-by-drink`, som Tableau selv summerer (research R7, ændret 03/11). `docker compose up` starter
+`GET /api/bar/kpi/revenue-by-drink`, som Tableau selv summerer, og `GET /api/bar/kpi/category-split`
+(research R7, ændret 03/11). `docker compose up` starter
 `db` og `backend`. Dev-containeren ligger bag profilen `dev`. Frontenden (ren HTML/CSS/JS i
 `backend/public`) bygges i uge 2.
 
@@ -106,7 +107,7 @@ Styleguiden (research R12) tilføjer ingen afhængigheder: ren CSS med variabler
 overskrifter og Barlow via ét `<link>` til Google Fonts med fald-tilbage til systemskrift.
 **Gate-resultat (2026-11-03, konstitution 5.1.0)**: PASS. Princip IV tillader nu, at Tableau
 filtrerer og kombinerer nøgletal på tværs af ark, så længe data kommer fra API'et. Tableau-
-dashboardet (T048) læser kun `/api/bookings` og `bar/kpi/revenue-by-drink`.
+dashboardet (T048) læser kun `/api/bookings`, `bar/kpi/revenue-by-drink` og `bar/kpi/category-split`.
 Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) har stadig et endpoint og vises i
 frontenden uden beregning i browseren. Ingen kode, endpoints eller afhængigheder er ændret. Kun
 kontraktens beskrivelser er opdateret (research R7, ændret 03/11).
@@ -211,11 +212,12 @@ objekter med `$`. Connectoren laver udtræk, så nye bookinger og barsalg vises 
 felter ud. Tableau forbinder ikke direkte til databasen (princip IV), og `db` har ingen port på
 værten.
 
-*(Ændret 03/11)* Dashboardet (T048) har to datakilder: `bookings` (`$[*]`, Tableau summerer
+*(Ændret 03/11)* Dashboardet (T048, `HotelKongArthurDashboard.twbx`) har tre datakilder: `bookings` (`$[*]`, Tableau summerer
 indtjening i alt, pr. land, værelsestype og sæson og antal bookinger pr. land, med filtre på
-`season` og `country` på tværs af ark, konstitution 5.1.0), `bar/kpi/revenue-by-drink` (`$[*]`, Tableau summerer barens total og
-beregner kategorifordelingen som "Percent of Total" og gruppens nøgletal: den mest solgte kaffe
-og cocktail efter `units_sold`). KPI-endpoints er uændrede og bruges af frontenden (FR-028, FR-029).
+`season` og `country` på tværs af ark og filter-actionen `Action (country)` fra kortet,
+konstitution 5.1.0), `bar/kpi/revenue-by-drink` (`$[*]`, omsætning pr. drink og gruppens
+nøgletal: den mest solgte kaffe og cocktail efter `units_sold`) og `bar/kpi/category-split`
+(`$[*]`, barens omsætning og kategorifordelingen). KPI-endpoints er uændrede og bruges af frontenden (FR-028, FR-029).
 
 Backend-imaget bygges med repo-roden som context, så
 `specs/001-booking-kpi-bar/contracts/openapi.yaml` kan kopieres ind som den eneste kopi af

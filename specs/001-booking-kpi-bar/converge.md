@@ -94,7 +94,7 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | 02/11 | research R11 (PostgreSQL 16 + `pg`), plan.md, data-model.md og quickstart.md opdateret. R4 og R8 markeret som erstattet | PostgreSQL ligner MySQL mest og holder Docker-designet og fire biblioteker. MariaDB og SQLite fravalgt (R11) |
 | 02/11 | Styleguide (`styleguide/`) koblet på: spec FR-031, FR-032, SC-010, research R12 (farver og skrifter målt på skærmbillederne) og afsnittet "Frontend-design" i plan.md | Gruppen har lavet en styleguide, så frontenden skal ligne hotellets hjemmeside. Uden krav i spec og plan ville `/speckit-tasks` og Converge ikke kende den (princip X) |
 | 02/11 | FR-033 (land som dropdown med 21 lande), FR-034 (se og slette registrerede barsalg), US3 scenarie 8, to edge cases. Kontrakt 2.1.0 → 2.2.0: `GET /api/bar/sales` og `DELETE /api/bar/sales/{id}`. Tasks T073–T075 | Gruppens ønsker efter T043: fritekst gav stavevarianter, der splitter indtjening pr. land, og en fejlregistrering i baren kunne ikke rettes. Danmark tilføjet, fordi hotellet ligger i København |
-| 03/11 | Tableau-dashboardet (T048) bygget på `GET /api/bookings` og `bar/kpi/revenue-by-drink`, hvor Tableau summerer selv. Gruppens nøgletal (mest solgte kaffe og cocktail) beregnes også fra `revenue-by-drink` efter `units_sold`. research R7 ("Ændret 03/11"), spec.md Clarifications 2026-11-03, plan.md, quickstart trin 7, README, T048 og T070 opdateret. `/speckit-analyze` C1: filtrene på `season` og `country` på tværs af ark viser kombinationer, som intet endpoint har, og det stred mod princip IV. Gruppen valgte at ændre princippet: konstitution 5.0.0 → 5.1.0, og FR-028 og SC-008 er præciseret til casens nøgletal uden filter. T070 har fået en række for `by-room-type-season` (H1), og kontraktens beskrivelse nævner `/api/bookings` som Tableau-kilde (I1) | Casen siger, at dashboardet skal være interaktivt og "vise og beregne" nøgletallene med udgangspunkt i REST API'et. Filtre på land og sæson på tværs af ark gør det mere brugbart for beslutningstagere. Hvert af casens nøgletal findes stadig som endpoint og i frontenden, og data hentes kun via API'et. Summerne findes to steder, og det sikres af SC-008 (T070) |
+| 03/11 | Tableau-dashboardet (T048, `HotelKongArthurDashboard.twbx`) bygget på `GET /api/bookings` og `bar/kpi/revenue-by-drink`, hvor Tableau summerer selv, og `bar/kpi/category-split` til barens omsætning og kategorifordelingen. Gruppens nøgletal (mest solgte kaffe og cocktail) beregnes fra `revenue-by-drink` efter `units_sold` i `Sheet 13`. research R7 ("Ændret 03/11"), spec.md Clarifications 2026-11-03, plan.md, quickstart trin 7, README, T048 og T070 opdateret. `/speckit-analyze` C1: filtrene på `season` og `country` på tværs af ark viser kombinationer, som intet endpoint har, og det stred mod princip IV. Gruppen valgte at ændre princippet: konstitution 5.0.0 → 5.1.0, og FR-028 og SC-008 er præciseret til casens nøgletal uden filter. T070 har fået en række for `by-room-type-season` (H1), og kontraktens beskrivelse nævner `/api/bookings` som Tableau-kilde (I1) | Casen siger, at dashboardet skal være interaktivt og "vise og beregne" nøgletallene med udgangspunkt i REST API'et. Filtre på land og sæson på tværs af ark gør det mere brugbart for beslutningstagere. Hvert af casens nøgletal findes stadig som endpoint og i frontenden, og data hentes kun via API'et. Summerne findes to steder, og det sikres af SC-008 (T070) |
 
 ### 4. Fund vi bevidst ikke retter
 
@@ -107,6 +107,7 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | T050 afsluttet uden screenshots | Gruppens beslutning 30/10: afprøvet i Swagger UI. `docs/screenshots/` findes derfor ikke |
 | De gamle passwords ligger i Git-historikken | Kendt og håndteret: nye passwords i `.env`, og `.env.example` advarer. Historikken omskrives ikke |
 | G1: kontrakt og kode i samme commit | Ikke længere et fund: opfyldt i commit `f6e95a1` |
+| T071 udgået (03/11): SC-010, FR-031 og FR-032 (kontrast 4,5:1, kun tokens, 375 px, synligt fokus) er ikke tjekket formelt | Gruppen har gennemgået designet og godkendt det. Quickstart trin 9 med 375 px og Tab køres stadig i T049. Kontrastmålingen og gennemgangen af styleguidens regel 1–10 springes over |
 | C1 (03/11): filterkombinationer i Tableau (fx indtjening pr. land i lavsæson) findes ikke som endpoint og vises ikke i frontenden | Bevidst valg (konstitution 5.1.0, princip IV): casen beder om et interaktivt dashboard, og filtre på tværs af ark gør det mere brugbart for beslutningstagere. Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) findes som endpoint og i frontenden, og data hentes kun via API'et. Kombinationerne kan ikke tjekkes mod API'et, men de bygger på de samme rækker som de tjekkede totaler (T070) |
 
 **Rettet under Converge #1**: U3 (US2 scenarie 7 har nu aktøren "administratoren åbner
@@ -149,8 +150,8 @@ quickstart trin 1–6 og 8 mod den kørende stack (T057–T065 færdige). Ingen 
 
 ### T048 + T070: Tableau-dashboardet og SC-007/SC-008 (03/11)
 
-**Kørt**: `docker compose down -v` (startdata), *Data → Refresh* i Tableau for begge
-datakilder (`bookings` og `bar/kpi/revenue-by-drink`) og alle filtre på *(All)*. Hvert tal er
+**Kørt**: `docker compose down -v` (startdata), *Data → Refresh* i Tableau for alle tre
+datakilder (`bookings`, `bar/kpi/revenue-by-drink` og `bar/kpi/category-split`) og alle filtre på *(All)*. Hvert tal er
 aflæst i Tableau, i Swagger UI (endpointet) og i frontenden. Filterkombinationer på tværs af
 ark sammenlignes ikke, fordi de ikke har et endpoint (konstitution 5.1.0, "Fund vi bevidst ikke
 retter").
@@ -160,16 +161,16 @@ SC-008, FR-028).**
 
 | Nøgletal | Tableau-ark (datakilde) | Endpoint | Frontend-element | Værdi med startdata | |
 |----------|-------------------------|----------|------------------|---------------------|---|
-| Årets indtjening (FR-016) | Indtjening i alt (`bookings`, `SUM(total_price)`) | `GET /api/kpi/revenue/total` | `overview.html` `#total-revenue`, `#booking-count` | 11.234.034 (1000 bookinger) | ✅ |
-| Gæster pr. land (FR-017) | Kort (`bookings`, antal pr. `country`) | `GET /api/kpi/revenue/by-country` (`booking_count`) | `overview.html` `#country-rows` | South Korea 63, Egypt 31 | ✅ |
-| Indtjening pr. land (FR-017) | Indtjening pr. land (`bookings`) | `GET /api/kpi/revenue/by-country` | `overview.html` `#country-rows` | South Korea 767.699, China 722.928, Egypt 335.786 | ✅ |
-| Indtjening pr. værelsestype (FR-017) | Indtjening pr. værelsestype (`bookings`) | `GET /api/kpi/revenue/by-room-type` | `overview.html` `#room-type-rows` | Suite 2.119.671, Standard Single 730.444 | ✅ |
-| Indtjening pr. sæson (FR-017) | Indtjening pr. sæson (`bookings`) | `GET /api/kpi/revenue/by-season` | `overview.html` `#season-rows` | high 4.070.570, mid 3.809.387, low 3.354.077 | ✅ |
-| Værelsestype pr. sæson (FR-017) | Indtjening pr. værelsestype med `season` = low (`bookings`) | `GET /api/kpi/revenue/by-room-type-season` | `overview.html` `#matrix-rows` med `#season-filter` = low | Suite low 626.488 | ✅ |
-| Barens omsætning (FR-024) | Barens total (`revenue-by-drink`, `SUM(revenue)`, `SUM(units_sold)`) | `GET /api/bar/kpi/total` | `bar.html` `#total-revenue`, `#total-units` | 13.448.640,34 (179.958 enheder) | ✅ |
-| Omsætning pr. drink (FR-025) | Omsætning pr. drink (`revenue-by-drink`) | `GET /api/bar/kpi/revenue-by-drink` | `bar.html` `#drink-rows` | Espresso 1.012.729,60, Mocha 842.019,23 | ✅ |
-| Kategorifordeling (FR-026) | Kategorifordeling (`revenue-by-drink`, "Percent of Total") | `GET /api/bar/kpi/category-split` | `bar.html` `#split-cocktail`, `#split-coffee` | Cocktail 52,83 %, Coffee 47,17 % | ✅ |
-| Eget nøgletal (FR-019) | Mest solgte (`revenue-by-drink`, filter `{FIXED [category] : MAX([units_sold])}`) | `GET /api/kpi/top-drinks` | `overview.html` `#top-coffee`, `#top-cocktail` | Espresso 14.656, Whiskey Sour 3.824 | ✅ |
+| Årets indtjening (FR-016) | `Yearly room revenue` (`bookings`, `SUM(total_price)`) | `GET /api/kpi/revenue/total` | `overview.html` `#total-revenue`, `#booking-count` | 11.234.034 (1000 bookinger) | ✅ |
+| Gæster pr. land (FR-017) | `GuestsMap` og `GuestsPrCountry` (`bookings`, antal pr. `country`) | `GET /api/kpi/revenue/by-country` (`booking_count`) | `overview.html` `#country-rows` | South Korea 63, Egypt 31 | ✅ |
+| Indtjening pr. land (FR-017) | `RevenuePrCountry` (`bookings`) | `GET /api/kpi/revenue/by-country` | `overview.html` `#country-rows` | South Korea 767.699, China 722.928, Egypt 335.786 | ✅ |
+| Indtjening pr. værelsestype (FR-017) | `RevenuePrRoomType` (`bookings`) | `GET /api/kpi/revenue/by-room-type` | `overview.html` `#room-type-rows` | Suite 2.119.671, Standard Single 730.444 | ✅ |
+| Indtjening pr. sæson (FR-017) | `Yearly room revenue` med `season`-filteret pr. sæson (`bookings`) | `GET /api/kpi/revenue/by-season` | `overview.html` `#season-rows` | high 4.070.570, mid 3.809.387, low 3.354.077 | ✅ |
+| Værelsestype pr. sæson (FR-017) | `RevenuePrRoomType` med `season` = low (`bookings`) | `GET /api/kpi/revenue/by-room-type-season` | `overview.html` `#matrix-rows` med `#season-filter` = low | Suite low 626.488 | ✅ |
+| Barens omsætning (FR-024) | `Yearly bar revenue` (`category-split`, `SUM(revenue)`) | `GET /api/bar/kpi/total` | `bar.html` `#total-revenue`, `#total-units` | 13.448.640,34 (179.958 enheder) | ✅ |
+| Omsætning pr. drink (FR-025) | `DrinkRevenue` (`revenue-by-drink`) | `GET /api/bar/kpi/revenue-by-drink` | `bar.html` `#drink-rows` | Espresso 1.012.729,60, Mocha 842.019,23 | ✅ |
+| Kategorifordeling (FR-026) | `PercentCategory` (`category-split`, API'ets `percent`) | `GET /api/bar/kpi/category-split` | `bar.html` `#split-cocktail`, `#split-coffee` | Cocktail 52,83 %, Coffee 47,17 % | ✅ |
+| Eget nøgletal (FR-019) | `Sheet 13` "Oversigt over mest solgte drink og kaffe" (`revenue-by-drink`, filter `{FIXED [category] : MAX([units_sold])}`) | `GET /api/kpi/top-drinks` | `overview.html` `#top-coffee`, `#top-cocktail` | Espresso 14.656, Whiskey Sour 3.824 | ✅ |
 
 **Live-test** (princip V): +1 booking (Denmark, december, Standard Single, 3 nætter) og
 +1000 Espresso gav efter *Refresh* 11.237.634 (= 11.234.034 + 3.600) og Coffee 47,44 %

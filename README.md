@@ -121,15 +121,19 @@ med en forståelig besked og de berørte felter, fx
 Tableau Desktop (2023.3+) henter data som JSON direkte fra API'et med **REST API Connector** fra
 Tableau Exchange. Der er ingen CSV-eksport og ingen direkte databaseforbindelse.
 
+Workbooken er `HotelKongArthurDashboard.twbx` i repo-roden (dashboard `HotelStatistik`).
+
 1. *Connect → REST API Connector*, metode GET, URL `http://localhost:3000/api/...`, JSONPath `$[*]`.
-2. Dashboardet har to datakilder:
+2. Dashboardet har tre datakilder:
 
    | Datakilde | Tableau viser | Forventet på startdata |
    |-----------|---------------|------------------------|
-   | `bookings` | Indtjening i alt, pr. land, værelsestype og sæson, og bookinger pr. land (kort). Filtre på `season` og `country` på tværs af ark | 1000 rækker, `SUM(total_price)` 11234034 |
-   | `bar/kpi/revenue-by-drink` | Barens total, fordelingen Cocktail/Coffee ("Percent of Total" på `SUM(revenue)` pr. `category`) og gruppens nøgletal: mest solgte kaffe og cocktail efter `units_sold` | 30 rækker, 179958 enheder, 13448640.34 DKK, 52.83 % / 47.17 %, Espresso 14656, Whiskey Sour 3824 |
+   | `bookings` | `Yearly room revenue`, `GuestsMap` (kort), `GuestsPrCountry`, `RevenuePrCountry`, `RevenuePrRoomType`. Filtre på `season` og `country` på tværs af ark, og klik på kortet filtrerer | 1000 rækker, 11234034 |
+   | `bar/kpi/revenue-by-drink` | `DrinkRevenue` og `Sheet 13` (gruppens nøgletal: mest solgte kaffe og cocktail efter `units_sold`) | 30 rækker, Espresso 14656, Whiskey Sour 3824 |
+   | `bar/kpi/category-split` | `Yearly bar revenue` og `PercentCategory` (kategorifordelingen) | 2 rækker, 13448640.34 DKK, 52.83 % / 47.17 % |
 
-   Tableau summerer de rå rækker selv. Hvert af casens nøgletal findes også som KPI-endpoint (`/api/kpi/*`,
+   Tableau summerer de rå rækker selv. Workbooken er gemt med `season` = high, så sæt filteret til
+   *(All)* for årets tal. Hvert af casens nøgletal findes også som KPI-endpoint (`/api/kpi/*`,
    `/api/bar/kpi/*`), og tallene uden filter skal være ens (SC-008). Filtrene kan kombinere
    nøgletallene, fx indtjening pr. land i én sæson. Sådanne kombinationer findes kun i Tableau
    (konstitution 5.1.0, princip IV).

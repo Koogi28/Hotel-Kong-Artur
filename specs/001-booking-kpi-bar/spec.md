@@ -53,8 +53,8 @@ opdigtes."
 
 - Q: Må Tableau selv beregne nøgletallene ud fra rå rækker fra API'et? → A: Ja. Casen siger, at
   dashboardet skal "vise og beregne" nøgletallene med udgangspunkt i REST API'et, og rå rækker
-  giver kort og filtre på tværs af ark direkte i Tableau. Dashboardet læser `GET /api/bookings` og
-  `GET /api/bar/kpi/revenue-by-drink` og summerer selv. Data hentes stadig kun via API'et
+  giver kort og filtre på tværs af ark direkte i Tableau. Dashboardet læser `GET /api/bookings`,
+  `GET /api/bar/kpi/revenue-by-drink` og `GET /api/bar/kpi/category-split` og summerer selv. Data hentes stadig kun via API'et
   (konstitution IV). Tallene skal være de samme som KPI-endpoints og frontenden (SC-007, SC-008),
   og det tjekkes i T070 (research R7, ændret 03/11).
 - Q: Skal alle KPI-endpoints bruges som datakilder i Tableau? → A: Nej. FR-028 kræver kun, at

@@ -128,44 +128,52 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 *(Ændret 03/11, research R7)* Dashboardet henter rå rækker fra API'et og summerer selv. Det
 forbinder aldrig direkte til databasen.
 
+Workbooken ligger i repo-roden: `HotelKongArthurDashboard.twbx` (dashboard `HotelStatistik`).
+
 1. I Tableau Desktop: *Connect → REST API Connector* (installeret fra Tableau Exchange). Opret
-   to datakilder med metoden GET og URL `http://localhost:3000/api/...`:
+   tre datakilder med metoden GET og URL `http://localhost:3000/api/...`:
 
    | Datakilde | JSONPath | Forventet i Tableau på frisk startdata |
    |-----------|----------|----------------------------------------|
-   | `bookings` | `$[*]` | 1000 rækker. `SUM(total_price)` 11234034, `CNT(id)` 1000. Pr. `country` 20, pr. `room_type` 8 og pr. `season` 3 grupper, og hver fordeling summerer til 11234034 (uden filter) |
-   | `bar/kpi/revenue-by-drink` | `$[*]` | 30 rækker. `SUM(units_sold)` 179958, `SUM(revenue)` 13448640.34. Kategorifordeling: Cocktail 52.83 %, Coffee 47.17 %. Eget nøgletal: Espresso 14656, Whiskey Sour 3824 (se nedenfor) |
+   | `bookings` | `$[*]` | 1000 rækker. `Yearly room revenue` 11234034, antal bookinger 1000. Pr. `country` 20, pr. `room_type` 8 og pr. `season` 3 grupper, og hver fordeling summerer til 11234034 (uden filter) |
+   | `bar/kpi/revenue-by-drink` | `$[*]` | 30 rækker. `DrinkRevenue`: Espresso 1012729.60, Mocha 842019.23. `Sheet 13` (eget nøgletal): Espresso 14656, Whiskey Sour 3824 (se nedenfor) |
+   | `bar/kpi/category-split` | `$[*]` | 2 rækker. `Yearly bar revenue` 13448640.34. `PercentCategory`: Cocktail 52.83 %, Coffee 47.17 % |
 
    **Filtrene** (konstitution 5.1.0, princip IV, research R7): `season` og `country` virker på
-   tværs af ark (*Apply to Worksheets → All Using This Data Source*). Med et filter valgt kan
+   alle ark med datakilden `bookings` (*Apply to Worksheets → All Using This Data Source*), og et
+   klik på kortet filtrerer `GuestsPrCountry`, `RevenuePrRoomType` og `Yearly room revenue`
+   (filter-action `Action (country)`). **Workbooken er gemt med `season` = high**, så sæt
+   filteret til *(All)*, før tallene sammenlignes. Med et filter valgt kan
    Tableau vise kombinationer, der ikke findes som endpoint, fx indtjening pr. land i `low`. Det
-   er tilladt. Én kombination kan dog tjekkes: værelsestype-arket med `season` = `high` skal give
+   er tilladt. Én kombination kan dog tjekkes: `RevenuePrRoomType` med `season` = `high` skal give
    de samme 8 værdier som `high`-rækkerne i `kpi/revenue/by-room-type-season`.
 
-   **Kategorifordelingen**: `category` på *Rows* (eller *Color*), `SUM(revenue)` på *Text*, og
-   derefter *Quick Table Calculation → Percent of Total* på `SUM(revenue)`, beregnet pr.
-   `category` (*Compute Using → Table*). Tableau dividerer så hver kategoris omsætning med
-   13448640.34: Cocktail 7104755.43 → 52.83 %, Coffee → 47.17 %. Sæt formatet til 2 decimaler.
+   **Kategorifordelingen** (`PercentCategory`, datakilde `category-split`): `category` på
+   *Color*/*Label*, `SUM(revenue)` og *Percent of Total* på `SUM(percent)`. De to rækkers
+   `percent` summerer til 100, så Tableau viser API'ets procenter: Cocktail 52.83 %, Coffee
+   47.17 %. `Yearly bar revenue` er `SUM(revenue)` af de samme to rækker: 13448640.34.
 
-   **Eget nøgletal (FR-019)** i det separate ark **"Mest solgte"**, også på datakilden
-   `bar/kpi/revenue-by-drink`: den mest solgte kaffe og cocktail i antal. `category` og `name` på
-   *Rows*, `SUM(units_sold)` på *Text*, og et
-   beregnet felt `[units_sold] = {FIXED [category] : MAX([units_sold])}` på *Filters* (`True`).
+   **Eget nøgletal (FR-019)** i det separate ark `Sheet 13` ("Oversigt over mest solgte drink
+   og kaffe") på datakilden `bar/kpi/revenue-by-drink`: den mest solgte kaffe og cocktail i
+   antal. `category` på *Columns*, `name` og `SUM(units_sold)` som mærker, og det beregnede felt
+   "Mest solgte drink og kaffe" = `[units_sold] = {FIXED [category] : MAX([units_sold])}` på
+   *Filters* (`True`).
    Så vises den største pr. kategori, og ved uafgjort vises alle, ligesom i `kpi/top-drinks`.
    Forventet: Coffee Espresso 14656, Cocktail Whiskey Sour 3824.
 2. Sæt alle filtre til *(All)*, og sammenlign hvert tal i Tableau med det tilsvarende
-   KPI-endpoint i Swagger UI eller med `curl` (SC-007): `SUM(total_price)` ↔ `kpi/revenue/total`, fordelingerne ↔ `kpi/revenue/by-country`,
-   `by-room-type` og `by-season`, værelsestype-arket med `season`-filter ↔
-   `kpi/revenue/by-room-type-season`, barens total ↔ `bar/kpi/total` og kategorifordelingen ↔
-   `bar/kpi/category-split`, omsætning pr. drink ↔ `bar/kpi/revenue-by-drink` og arket "Mest
-   solgte" ↔ `kpi/top-drinks`. Hele tabellen laves i T070
+   KPI-endpoint i Swagger UI eller med `curl` (SC-007): `Yearly room revenue` ↔ `kpi/revenue/total`, `GuestsPrCountry` og
+   `RevenuePrCountry` ↔ `kpi/revenue/by-country`, `RevenuePrRoomType` ↔ `by-room-type`,
+   `Yearly room revenue` pr. `season`-filter ↔ `by-season`, `RevenuePrRoomType` med
+   `season`-filter ↔ `kpi/revenue/by-room-type-season`, `Yearly bar revenue` ↔ `bar/kpi/total`,
+   `PercentCategory` ↔ `bar/kpi/category-split`, `DrinkRevenue` ↔ `bar/kpi/revenue-by-drink` og
+   `Sheet 13` ↔ `kpi/top-drinks`. Hele tabellen laves i T070
    (SC-008).
 3. **Tilføj data → Refresh → nye tal vises** ("live", princip V):
    - Opret bookingen fra trin 4 og registrér 2 × Espresso (trin 6).
    - Vælg *Data → Refresh* for hver datakilde i Tableau.
-   - Forventet: `SUM(total_price)` stiger med 3600 til 11237634, `Denmark` dukker op på
-     landekortet med 1 booking, barens total stiger med 2 enheder og 138.20, og Espresso får
-     `units_sold` 14658 i `revenue-by-drink` og i arket med eget nøgletal (også i
+   - Forventet: `Yearly room revenue` stiger med 3600 til 11237634, `Denmark` dukker op på
+     landekortet med 1 booking, `Yearly bar revenue` stiger med 138.20, og Espresso får
+     `units_sold` 14658 i `revenue-by-drink` og i `Sheet 13` (også i
      `kpi/top-drinks`).
 
 ## 8. Konstitutionstjek efter implementering

@@ -146,16 +146,18 @@ De må ikke genbruges i `.env`.
 
 ### Ændret 03/11: dashboardet summerer rå rækker fra API'et (T048)
 
-**Beslutning**: Tableau-dashboardet bruger to datakilder via REST API Connector, og Tableau
-beregner alle nøgletal selv ud fra dem:
+**Beslutning** *(rettet 03/11 efter workbooken `HotelKongArthurDashboard.twbx`)*: Dashboardet
+`HotelStatistik` bruger tre datakilder via REST API Connector:
 
 | Datakilde | JSONPath | Tableau beregner |
 |-----------|----------|------------------|
-| `GET /api/bookings` | `$[*]` (1000 rækker) | `SUM(total_price)` i alt, pr. `country`, pr. `room_type` og pr. `season`, og antal bookinger pr. land (kort). Filtrene `season` og `country` virker på tværs af ark |
-| `GET /api/bar/kpi/revenue-by-drink` | `$[*]` (30 rækker) | barens total (`SUM(units_sold)`, `SUM(revenue)`), fordelingen mellem Cocktail og Coffee ("Percent of Total" på `SUM(revenue)` pr. `category`) og gruppens eget nøgletal: den mest solgte kaffe og cocktail efter `units_sold` (FR-019) |
+| `GET /api/bookings` | `$[*]` (1000 rækker) | Arkene `Yearly room revenue` (`SUM(total_price)`), `GuestsMap` og `GuestsPrCountry` (antal bookinger pr. `country`), `RevenuePrCountry` (`SUM(total_price)` pr. `country`) og `RevenuePrRoomType` (`SUM(total_price)` pr. `room_type`). Indtjening pr. sæson aflæses med `season`-filteret. Filtrene `season` og `country` virker på alle ark med denne datakilde, og kortet filtrerer `GuestsPrCountry`, `RevenuePrRoomType` og `Yearly room revenue` med filter-actionen `Action (country)` |
+| `GET /api/bar/kpi/revenue-by-drink` | `$[*]` (30 rækker) | Arkene `DrinkRevenue` (`SUM(revenue)` pr. drink) og `Sheet 13` ("Oversigt over mest solgte drink og kaffe", gruppens nøgletal FR-019: det beregnede felt "Mest solgte drink og kaffe" = `[units_sold] = {FIXED [category] : MAX([units_sold])}` som filter) |
+| `GET /api/bar/kpi/category-split` | `$[*]` (2 rækker) | Arkene `Yearly bar revenue` (barens omsætning = `SUM(revenue)` af de to kategorier) og `PercentCategory` (kategorifordelingen: "Percent of Total" på `SUM(percent)` og `SUM(revenue)` pr. `category`). Procenterne er derfor API'ets egne fra `category-split` |
 
-Der er ingen tredje datakilde. Gruppens nøgletal svarer til `GET /api/kpi/top-drinks`, som
-frontenden bruger og T070 sammenligner med. KPI-endpoints (`/api/kpi/*`, `/api/bar/kpi/*`) er uændrede. Frontenden bruger dem, og de
+Gruppens nøgletal svarer til `GET /api/kpi/top-drinks`, som frontenden bruger og T070
+sammenligner med. Arkene `Sheet 5`, `Sheet 8`, `Sheet 11` og `Sheet 12` er ikke med i
+dashboardet. KPI-endpoints (`/api/kpi/*`, `/api/bar/kpi/*`) er uændrede. Frontenden bruger dem, og de
 opfylder FR-028 (hvert af casens nøgletal i Tableau kan også hentes fra et endpoint).
 
 **Filtre (konstitution 5.1.0, princip IV)**: `season` og `country` virker på tværs af ark
