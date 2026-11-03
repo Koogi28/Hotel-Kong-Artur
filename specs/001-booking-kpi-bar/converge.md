@@ -121,8 +121,7 @@ T056: kontrakten beskriver nu, at `search` over 100 tegn afkortes.
 **Kørt 02/11–03/11**: T066 (PostgreSQL), T048 + T070 (Tableau, SC-007/SC-008), T071 (styleguide,
 SC-010), T049 (hele quickstart) og T072 (`/speckit-analyze` og `/speckit-converge`).
 
-**Status**: 69/71 tasks færdige (97 %). Åbne: T049 (kun tidsmålingerne SC-001 og SC-003) og
-T055 (sidste tjek nedenfor).
+**Status**: 71/71 tasks færdige (100 %).
 
 ### T066: databaseskift MySQL → PostgreSQL verificeret (02/11)
 
@@ -227,7 +226,7 @@ slettet igen (1000 bookinger / 11.234.034 og 179.958 enheder / 13.448.640,34, 0 
 | 7: Tableau | ✅ T048/T070 |
 | 8: konstitution | ✅ SQL kun i `repositories/`, `.env` ikke i Git, booking overlever `docker compose restart`, fire afhængigheder |
 | 9: frontend | ✅ 11/11: header og navigation, opret (`high`, 3.600 kr.), søg "muller" (54 uden knapper), fejlstrimler, ret (`low`, 2.700 kr.), afbestil, overblikket (11.234.034 kr., 3/8/20/24 rækker, topdrinks), sæsonfilter (8 rækker), belægning 0,5 %, bar (+2 Espresso, 179.960 enheder) og antal 0 → fejl |
-| SC-001 (< 2 min) og SC-003 (< 15 sek) | ⏳ Skal tages af en person i browseren |
+| SC-001 (< 2 min) og SC-003 (< 15 sek) | ✅ Taget af gruppen i browseren: ny booking på `bookings.html` 1 min, barsalg på `bar.html` 10 sek. Testdataene er slettet igen (kontrolleret mod API'et: 0 nye bookinger, 0 salg) |
 
 ---
 
@@ -253,8 +252,8 @@ slettet igen (1000 bookinger / 11.234.034 og 179.958 enheder / 13.448.640,34, 0 
 T070), styleguide-tjek i browseren (T071), `/speckit-analyze` og `/speckit-converge` (T072).
 
 **Resultat**: implementationen opfylder spec, plan og tasks. `/speckit-converge` gav
-"converged", og `/speckit-analyze` gav 0 CRITICAL og 0 HIGH. 69/71 tasks er færdige. De to
-åbne er tidsmålingerne (T049) og dette afsnit (T055), som afsluttes, når tiderne er skrevet ind.
+"converged", og `/speckit-analyze` gav 0 CRITICAL og 0 HIGH. Alle 71 tasks er færdige, også
+tidsmålingerne: en ny booking tog 1 min (SC-001 < 2 min) og et barsalg 10 sek (SC-003 < 15 sek).
 
 | User story / krav | Status | Bevis |
 |-------------------|--------|-------|
@@ -264,7 +263,7 @@ T070), styleguide-tjek i browseren (T071), `/speckit-analyze` og `/speckit-conve
 | Tillægsopgave: nøgletal i API og frontend (FR-028, FR-029, SC-008) | ✅ | T070: 10/10 nøgletal ens i Tableau, API og frontend |
 | Tillægsopgave: ny database (FR-030, SC-009) | ✅ | T066 og T049: PostgreSQL, samme tal som `uge1-mysql` |
 | Styleguide (FR-031, FR-032, SC-010) | ✅ | T071. Feltkanten er accepteret som afvigelse |
-| SC-001 booking < 2 min / SC-003 barsalg < 15 sek | ⏳ | Tages af en person (T049) |
+| SC-001 booking < 2 min / SC-003 barsalg < 15 sek | ✅ | T049: 1 min og 10 sek, taget af gruppen i browseren |
 | Afleveringsmateriale (README med diagram, CONTRIBUTE.md, converge.md) | ✅ | T045, T053, T052, denne fil |
 
 **Bevidst accepteret** (se "Fund vi bevidst ikke retter" under Converge #1): intet

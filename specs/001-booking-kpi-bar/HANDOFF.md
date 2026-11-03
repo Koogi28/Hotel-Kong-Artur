@@ -10,17 +10,17 @@ Log til den næste AI eller det næste gruppemedlem, der tager over. Læs i denn
 
 ## Status
 
-**69/71 tasks færdige (97 %).** Backend, frontend (`backend/public/`) og Tableau-dashboardet
+**71/71 tasks færdige (100 %).** Backend, frontend (`backend/public/`) og Tableau-dashboardet
 (`HotelKongArthurDashboard.twbx` i repo-roden) er færdige. Databasen er PostgreSQL 16.
 55/55 unit-tests er grønne, og hele quickstart er kørt fra tom volumen 03/11 (T049, trin 1–9
-bestået). Converge #2: `/speckit-analyze` gav 0 CRITICAL og 0 HIGH, og `/speckit-converge` gav
+bestået, ny booking 1 min og barsalg 10 sek). Converge #2: `/speckit-analyze` gav 0 CRITICAL og 0 HIGH, og `/speckit-converge` gav
 "converged" uden nye tasks.
 
 | Phase | Færdig | Mangler |
 |-------|--------|---------|
 | 1–5 (setup, foundational, US1–US3), 7, 9 (PostgreSQL), 10 (fælles frontend), 12 (gruppens ønsker) | alle | – |
-| 6 Polish | 4/5 | T049: kun tidsmålingerne SC-001 og SC-003 |
-| 8 Convergence | 4/5 | T055: "Sidste Converge-tjek" i converge.md |
+| 6 Polish | 5/5 | – |
+| 8 Convergence | 5/5 | – (T055: "Sidste Converge-tjek" i converge.md) |
 | 11 Verificering | 3/3 | – (T070 SC-008, T071 styleguide, T072 Converge #2) |
 
 **Vigtige beslutninger siden Converge #1** (detaljer i converge.md, "Ændringer siden spec'en"):
@@ -34,11 +34,10 @@ bestået). Converge #2: `/speckit-analyze` gav 0 CRITICAL og 0 HIGH, og `/specki
 
 ## Næste skridt
 
-1. **T049: tidsmålinger** (en person i browseren, quickstart trin 9). Opret en booking på
-   `bookings.html` på under 2 minutter (SC-001), og registrér et barsalg på `bar.html` på under
-   15 sekunder (SC-003). Skriv tiderne i converge.md under "T049" og sæt [X] ved T049.
-2. **T055: Sidste Converge-tjek** i converge.md. Det er det afsnit, der afleveres.
-3. Merge `uge2-tableau-dashboard` til `main` via PR med review.
+Featurens specificerede omfang er færdigt. Tilbage er:
+
+1. Merge `uge2-tableau-dashboard` til `main` via PR med review.
+2. Præsentationen: brug converge.md, "Sidste Converge-tjek", som afleveret resultat.
 
 ## Praktiske noter
 
