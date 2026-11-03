@@ -16,7 +16,7 @@ kildefilerne (se [research.md](research.md) R1).
 
 ```bash
 cp .env.example .env          # udfyld passwords (brug IKKE de gamle fra Git-historikken)
-docker compose down -v        # KUN første gang: fjerner den gamle tomme mysql_data-volumen
+docker compose down -v        # nulstiller pg_data (startdata indlæses igen). Gammel MySQL-volumen: docker volume rm hotel-kong-artur_mysql_data
 docker compose up --build
 ```
 
@@ -35,8 +35,8 @@ bliver "ü" i kommandolinje-argumenter ødelagt, så `Müller`-tjekket fejlagtig
 `-T` er nødvendig, når der sendes data ind via stdin.
 
 ```bash
-docker compose exec -T db sh -c 'mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -t' <<'SQL'
-SELECT COUNT(*), SUM(is_historical), SUM(arrival_date IS NULL) FROM booking;
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+SELECT COUNT(*), COUNT(*) FILTER (WHERE is_historical), COUNT(*) FILTER (WHERE arrival_date IS NULL) FROM booking;
 SELECT category, COUNT(*) FROM drink GROUP BY category;
 SELECT COUNT(*) FROM booking WHERE last_name = 'Müller';
 SELECT SUM(total_price) FROM booking;
@@ -114,11 +114,14 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
 | `GET $API/bar/drinks` | 30 drinks |
 | `GET $API/bar/kpi/total` | `units_sold: 179958`, `revenue: 13448640.34` |
 | `GET $API/bar/kpi/category-split` | Cocktail `52.83`, Coffee `47.17` (sum 100) |
-| `POST $API/bar/sales` `{"drink_id":<Espresso>,"quantity":2}` | `201` med `sold_at` sat automatisk |
+| `POST $API/bar/sales` `{"drink_id":<Espresso>,"quantity":2}` | `201` med `sold_at` sat automatisk i dansk tid (research R11) |
 | Derefter `bar/kpi/total` | `units_sold: 179960`, `revenue` + 138.20 |
 | Derefter `bar/kpi/revenue-by-drink` | Espresso `units_sold: 14658` |
 | `POST $API/bar/sales` med `quantity: 0` eller `-1` | `400`, `fields: ["quantity"]` |
 | `POST $API/bar/sales` med ukendt `drink_id` | `400`, `fields: ["drink_id"]` |
+| `GET $API/bar/sales` | Det registrerede salg øverst med `name: "Espresso"`, `quantity: 2` og `sold_at` (FR-034) |
+| `DELETE $API/bar/sales/<id fra salget>` | `204`. Derefter `bar/kpi/total` → `units_sold: 179958` igen, og `GET $API/bar/sales` → `[]` |
+| `DELETE` samme id igen / `DELETE $API/bar/sales/abc` | `404` / `400` med `fields: ["id"]` |
 
 ## 7. Tableau Desktop (FR-021, FR-027, SC-007)
 
@@ -152,3 +155,28 @@ giver `booked_rooms: 1`, `occupancy_percent: 0.5`. For `2026-12-09` (afrejsedage
   træffere i `backend/src/repositories/`.
 - `git ls-files | grep -E '^\.env$'` giver intet. `.env.example` er committet.
 - Genstart (`docker compose restart`): den oprettede booking findes stadig (named volume).
+
+## 9. Frontend i browseren (FR-014, FR-029, FR-031, FR-032, SC-001, SC-003, SC-008, SC-010)
+
+Åbn http://localhost:3000/ efter trin 1 med startdata (intet oprettet endnu).
+
+| Side | Handling | Forventet |
+|------|----------|-----------|
+| `/` | Åbn forsiden | Hotellets header ("Hotel" / "KONG ARTHUR"), navigation til Bookinger, Overblik og Bar. Farver og skrifter som research R12 |
+| `bookings.html` | Opret Test Gæst, Standard Single, 2026-12-06, 3 nætter (tag tid) | Under 2 minutter (SC-001). Succesbesked, og rækken viser `high` og 3.600 kr. fra API'et |
+| `bookings.html` | Søg "muller" | 54 rækker. Historiske har ingen ret- og slet-knapper |
+| `bookings.html` | Gem med dato `2026-02-31` og 0 nætter | Strimlen under "Ankomstdato" og "Nætter" (som "Nødvendig information" på hotellets side). Intet gemt |
+| `bookings.html` | Ret bookingen til 2026-11-30, derefter slet (bekræft) | `low` og 2.700 kr. Derefter væk fra listen |
+| `overview.html` | Åbn | Samlet indtjening 11.234.034 kr. (1000 bookinger), fordelinger på land (20), værelsestype (8) og sæson (3), 24 rækker pr. værelsestype pr. sæson, mest solgte Espresso 14.656 og Whiskey Sour 3.824 |
+| `overview.html` | Vælg sæson "high" | 8 rækker, kun `high` (filtrering af de hentede rækker, ingen beregning) |
+| `overview.html` | Opret en booking igen, opdatér siden, vælg 2026-12-06 | Belægning 0,5 %, og tabellen over belægning pr. nat har rækker (SC-004) |
+| `bar.html` | Vælg Espresso, antal 2, "Registrér" (tag tid) | Under 15 sekunder (SC-003). Besked "2 × Espresso registreret", total +2 enheder og +138,20 kr. |
+| `bar.html` | Antal 0 | Fejlbesked, intet registreres |
+| Alle | Udviklerværktøj, 375 px og 768 px bredde | Ingen vandret scroll, tabeller scroller i deres egen boks (SC-010) |
+| Alle | Tab gennem siden | Synligt fokus på alle links, knapper og felter (FR-032) |
+
+**SC-008**: Tallene på `overview.html` og `bar.html` skal være de samme som i Swagger UI
+(trin 5–6) og Tableau (trin 7). Tabellen over alle 11 endpoints laves i T070.
+
+Slet testbookingen bagefter (eller kør `docker compose down -v`), så startdata-tallene passer igen.
+Barsalget kan kun fjernes med `docker compose down -v`.

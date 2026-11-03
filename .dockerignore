@@ -7,6 +7,5 @@ __pycache__
 *.sqlite
 *.sqlite3
 *.db
-mysql_data
 **/node_modules
 **/npm-debug.log*

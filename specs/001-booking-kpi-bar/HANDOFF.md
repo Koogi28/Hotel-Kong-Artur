@@ -44,17 +44,28 @@ T049 og det sidste Converge-tjek (T055).
 
 ## Praktiske noter
 
+- **Databasen er PostgreSQL 16 fra uge 2** (research R11). MySQL-versionen ligger i Git-tagget
+  `uge1-mysql`. Efter pull skal hver enkelt:
+  1. Tilføje `POSTGRES_DB`, `POSTGRES_USER` og `POSTGRES_PASSWORD` i sin egen `.env` (se
+     `.env.example`; `.env` committes ikke). `MYSQL_*` kan slettes, når T066 er bestået.
+  2. Starte på en tom volumen: `docker compose down -v && docker compose up --build`. Data ligger
+     nu i volumen `pg_data`. Den gamle MySQL-volumen kan slettes med
+     `docker volume rm hotel-kong-artur_mysql_data` (hvis den findes).
+- Databasen åbnes med
+  `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` (quickstart trin 2).
 - Backenden kører i Docker. Efter kodeændringer, også i `backend/public/`:
   `docker compose up -d --build backend` og Ctrl + F5 i browseren (filerne er bagt ind i imaget).
-- Startdata: `docker compose down -v && docker compose up -d`. Barsalg kan ikke slettes via
-  API'et, så det er eneste vej tilbage efter testsalg. `-v` sletter også oprettede bookinger.
+- Startdata: `docker compose down -v && docker compose up -d`. Enkelte registrerede barsalg
+  kan slettes på barens side eller med `DELETE /api/bar/sales/{id}` (FR-034). `-v` sletter også oprettede bookinger.
 - Lokalt findes ingen `node_modules`. Unit-tests kører alligevel (`cd backend && npm test`).
   Kode, der kræver `express`/`yaml`, køres i containeren:
   `MSYS_NO_PATHCONV=1 docker compose exec -T -w /app backend node -` (Git Bash på Windows
   omskriver ellers `/app`).
 - Pipe ikke et script, der opretter testdata, gennem `head`. Det afbryder scriptet, før det
   sletter sine testbookinger.
-- `sold_at` er dansk tid (databasen kører CET). Beløb regnes i øre i `barCalculations.js`.
+- `sold_at` er dansk tid i hele sekunder: `backend/src/db.js` sætter forbindelsens tidszone til
+  `Europe/Copenhagen`, og kolonnen er `TIMESTAMP(0)` (research R11). Beløb regnes i øre i
+  `barCalculations.js`.
 - Tableau: REST API Connector, JSONPath `$` for objekter og `$[*]` for arrays (research R7).
 - Projektets dokumenter og kommentarer er på dansk; kode-identifikatorer på engelsk.
 - Brugeren vil have en begrundelse pr. ændring og stop til review efter hvert trin.

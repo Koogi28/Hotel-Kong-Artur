@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overblik – Hotel Kong Arthur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__small">Hotel</span>
+        <span class="brand__name">Kong Arthur</span>
+      </a>
+      <nav class="nav" aria-label="Hovedmenu">
+        <a class="nav__link" href="bookings.html">Bookinger</a>
+        <a class="nav__link nav__link--active" href="overview.html" aria-current="page">Overblik</a>
+        <a class="nav__link" href="bar.html">Bar</a>
+        <a class="nav__link" href="/api-docs">Swagger UI</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Overblik</h1>
+    <p class="lead">Indtjening, belægning og mest solgte drinks. Alle tal beregnes af hotellets
+      REST API ved hvert kald, så nye bookinger og barsalg tæller med, når du opdaterer.</p>
+
+    <div class="button-row section">
+      <button id="refresh" class="button button--secondary" type="button">Opdatér tal</button>
+      <span id="updated" class="muted" aria-live="polite"></span>
+    </div>
+    <div id="message" class="alert" aria-live="polite"></div>
+
+    <!-- FR-016, FR-019 -->
+    <section class="section" aria-labelledby="kpi-title">
+      <h2 id="kpi-title" class="visually-hidden">Nøgletal</h2>
+      <div class="kpi-grid">
+        <div class="card kpi"><span class="kpi__label">Samlet indtjening i år</span><span id="total-revenue" class="kpi__value">–</span></div>
+        <div class="card kpi"><span class="kpi__label">Bookinger i alt</span><span id="booking-count" class="kpi__value">–</span></div>
+        <div class="card kpi"><span id="top-coffee-label" class="kpi__label">Mest solgte kaffe</span><span id="top-coffee" class="kpi__value">–</span></div>
+        <div class="card kpi"><span id="top-cocktail-label" class="kpi__label">Mest solgte cocktail</span><span id="top-cocktail" class="kpi__value">–</span></div>
+      </div>
+    </section>
+
+    <!-- FR-018: belægning for en valgt nat og pr. nat -->
+    <section class="section" aria-labelledby="occupancy-title">
+      <h2 id="occupancy-title">Belægning</h2>
+      <p class="muted">Bookede værelser en nat divideret med hotellets 214 værelser. Kun bookinger med
+        ankomstdato tæller (historiske bookinger har ingen datoer).</p>
+      <div class="card-grid section">
+        <form id="occupancy-form" class="card form" novalidate>
+          <div class="field">
+            <label for="occupancy-date">Vælg en nat</label>
+            <input id="occupancy-date" name="date" type="date">
+          </div>
+          <div class="button-row">
+            <button class="button button--primary" type="submit">Vis belægning</button>
+          </div>
+        </form>
+        <div class="card kpi" aria-live="polite">
+          <span id="occupancy-label" class="kpi__label">Belægning</span>
+          <span id="occupancy-value" class="kpi__value">–</span>
+        </div>
+      </div>
+      <h3>Belægning pr. nat</h3>
+      <p id="nights-status" class="muted"></p>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Belægning pr. nat</caption>
+          <thead><tr><th scope="col">Nat</th><th scope="col" class="num">Bookede værelser</th><th scope="col" class="num">Belægning</th></tr></thead>
+          <tbody id="nights-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FR-017: indtjening fordelt på sæson, værelsestype og land -->
+    <section class="section" aria-labelledby="revenue-title">
+      <h2 id="revenue-title">Indtjening</h2>
+      <div class="card-grid card-grid--top">
+        <div class="table-wrap">
+          <table>
+            <caption>Pr. sæson</caption>
+            <thead><tr><th scope="col">Sæson</th><th scope="col" class="num">Bookinger</th><th scope="col" class="num">Indtjening</th></tr></thead>
+            <tbody id="season-rows"></tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>Pr. værelsestype</caption>
+            <thead><tr><th scope="col">Værelsestype</th><th scope="col" class="num">Bookinger</th><th scope="col" class="num">Indtjening</th></tr></thead>
+            <tbody id="room-type-rows"></tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>Pr. gæsteland</caption>
+            <thead><tr><th scope="col">Land</th><th scope="col" class="num">Bookinger</th><th scope="col" class="num">Indtjening</th></tr></thead>
+            <tbody id="country-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR-017 (casen: "pr værelsestype (pr sæson)"), US2 scenarie 7 -->
+    <section class="section" aria-labelledby="matrix-title">
+      <h2 id="matrix-title">Indtjening pr. værelsestype pr. sæson</h2>
+      <div class="form-grid section">
+        <div class="field">
+          <label for="season-filter">Sæson</label>
+          <select id="season-filter">
+            <option value="">Alle sæsoner</option>
+            <option value="low">Lavsæson</option>
+            <option value="mid">Mellemsæson</option>
+            <option value="high">Højsæson</option>
+          </select>
+        </div>
+      </div>
+      <p id="matrix-status" class="muted" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Indtjening pr. værelsestype pr. sæson</caption>
+          <thead><tr><th scope="col">Værelsestype</th><th scope="col">Sæson</th><th scope="col" class="num">Bookinger</th><th scope="col" class="num">Indtjening</th></tr></thead>
+          <tbody id="matrix-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/overview.js"></script>
+</body>
+</html>

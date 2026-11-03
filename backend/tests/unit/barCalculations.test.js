@@ -10,7 +10,7 @@ const {
   validateSaleInput,
 } = require('../../src/services/barCalculations');
 
-// Samme form som rækkerne efter withUnitsSold(): price er DECIMAL-streng fra MySQL.
+// Samme form som rækkerne efter withUnitsSold(): price er NUMERIC-streng fra databasen.
 const DRINKS = [
   {
     id: 1, name: 'Mojito', category: 'Cocktail', price: '100.00',
@@ -33,7 +33,7 @@ test('withUnitsSold: units_sold = historiske + registrerede enheder', () => {
   assert.strictEqual(drink.name, 'Espresso');
 });
 
-test('withUnitsSold: registered_units som streng fra MySQL (SUM giver DECIMAL)', () => {
+test('withUnitsSold: registered_units som streng fra databasen (SUM kan give tekst)', () => {
   const rows = [{ id: 1, historical_units_sold: 100, registered_units: '2' }];
   const [drink] = withUnitsSold(rows);
   assert.strictEqual(drink.registered_units, 2);

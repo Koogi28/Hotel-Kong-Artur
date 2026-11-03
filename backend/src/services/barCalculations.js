@@ -1,7 +1,7 @@
 // Forretningslag: rene funktioner til barens tal (data ind, resultat ud – ingen SQL, ingen HTTP).
 
 // Lægger historiske og registrerede enheder sammen pr. drink (research R9).
-// registered_units kommer fra SUM() i MySQL og kan derfor være en streng.
+// registered_units kommer fra SUM() i databasen og kan derfor være en streng.
 function withUnitsSold(rows) {
   return rows.map((row) => {
     const registered = Number(row.registered_units);

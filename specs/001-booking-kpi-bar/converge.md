@@ -88,6 +88,12 @@ og T056 (søgningens begrænsning i kontrakten) er lavet under Converge #1.
 | 29/10 | CSV-eksport erstattet af JSON via Tableaus REST API Connector. T028, T030 og T042 udgået, T034 omskrevet til `GET /api/kpi/occupancy/nights`, `top-drinks` gjort flad | Tableau Desktop kan hente JSON direkte fra API'et, så der kun er én datakilde (research R7, princip IV) |
 | 30/10 | FR-017 udvidet med indtjening pr. værelsestype pr. sæson: `GET /api/kpi/revenue/by-room-type-season`, 24 rækker inkl. 0. Kontrakt 2.0.0 → 2.1.0. US2 fik acceptscenarie 7 | Casen kræver "pr værelsestype (pr sæson)", og et sæsonfilter i Tableau kræver et `season`-felt på hver række (research R7) |
 | 30/10 | Afsnittet "Afleveringsmateriale" tilføjet i plan.md (README med diagram, CONTRIBUTE.md, converge.md) | Casens afleveringskrav stod ingen steder i artefakterne, så Converge kunne ikke finde dem (princip X) |
+| 02/11 | Uge 1-arbejdet gemt: PR #7 merget til `main`, tagget `uge1-mysql` pushet | Tillægsopgave uge 2: arbejdet indtil nu skal være tilgængeligt ved præsentationen, før de nye løsninger udvikles |
+| 02/11 | Konstitution 4.0.0 → 5.0.0: PostgreSQL i stedet for MySQL (II, V, IX), og alle Tableau-nøgletal skal kunne hentes fra API'et og vises i frontenden (IV) | Tillægsopgave uge 2: hotellet vil ikke have MySQL og vil læse dataanalyserne direkte i API'et |
+| 02/11 | spec.md: FR-028–FR-030, SC-008, SC-009, US2 scenarie 8, US3 scenarie 7 og Clarifications 2026-11-02 | Samme. FR-028 er allerede opfyldt af de 11 KPI-endpoints. FR-029 dækkes af T035 og T043 |
+| 02/11 | research R11 (PostgreSQL 16 + `pg`), plan.md, data-model.md og quickstart.md opdateret. R4 og R8 markeret som erstattet | PostgreSQL ligner MySQL mest og holder Docker-designet og fire biblioteker. MariaDB og SQLite fravalgt (R11) |
+| 02/11 | Styleguide (`styleguide/`) koblet på: spec FR-031, FR-032, SC-010, research R12 (farver og skrifter målt på skærmbillederne) og afsnittet "Frontend-design" i plan.md | Gruppen har lavet en styleguide, så frontenden skal ligne hotellets hjemmeside. Uden krav i spec og plan ville `/speckit-tasks` og Converge ikke kende den (princip X) |
+| 02/11 | FR-033 (land som dropdown med 21 lande), FR-034 (se og slette registrerede barsalg), US3 scenarie 8, to edge cases. Kontrakt 2.1.0 → 2.2.0: `GET /api/bar/sales` og `DELETE /api/bar/sales/{id}`. Tasks T073–T075 | Gruppens ønsker efter T043: fritekst gav stavevarianter, der splitter indtjening pr. land, og en fejlregistrering i baren kunne ikke rettes. Danmark tilføjet, fordi hotellet ligger i København |
 
 ### 4. Fund vi bevidst ikke retter
 
@@ -109,7 +115,35 @@ T056: kontrakten beskriver nu, at `search` over 100 tegn afkortes.
 
 ## Converge #2
 
-*Kommer tirsdag efter frontend (T025, T035, T043) og Tableau-dashboardet (T048).*
+*Det samlede tjek kommer efter frontend (T025, T035, T043), Tableau-dashboardet (T048) og T070–T072.
+Her står delresultaterne, efterhånden som de er kørt.*
+
+### T066: databaseskift MySQL → PostgreSQL verificeret (02/11)
+
+**Kørt**: `docker compose down -v && docker compose up -d --build` fra tom volumen, derefter
+quickstart trin 1–6 og 8 mod den kørende stack (T057–T065 færdige). Ingen gammel
+`hotel-kong-artur_mysql_data`-volumen fandtes.
+
+**Resultat: samme tal som `uge1-mysql` (SC-009) og ingen MySQL tilbage (FR-030).**
+
+| Tjek | Resultat |
+|------|----------|
+| Trin 1: kun `db` + `backend`, `backend` venter på healthy `db`, `/api/health` | ✅ `{"status":"ok"}`, `/api-docs` → 200 |
+| Trin 2: SQL-tjek i `psql` | ✅ 1000/1000/1000, Cocktail 20/Coffee 10, 54 Müller, Σ 11234034, bar 13448640.34, 8 værelsestyper |
+| Trin 3: `npm test` i containeren (Node 20) | ✅ 55/55 |
+| Trin 4: bookinger | ✅ POST → 201 `high` 3600 + `Location`. `search=muller` → 54. PUT 30/11 → `low` 2700. 400 med `fields` (dato/nætter, 6 felter, ukendt type). **PUT/DELETE historisk → 409** (boolean-rettelsen i T063 virker). 404. DELETE → 204 |
+| Trin 5: nøgletal | ✅ Total 11234034/1000. 20/8/3/24 rækker med Σ 11234034. Belægning 0 → 0.5 % efter ny booking, 0 på afrejsedagen, `occupancy/nights` 3 nætter. Espresso 14656 / Whiskey Sour 3824 |
+| Trin 6: bar | ✅ 179958 / 13448640.34, 52.83 / 47.17. +2 Espresso → 179960 og +138.20, Espresso 14658. `sold_at` `2026-11-02 13:35:55` (dansk tid, hele sekunder som kontrakten). quantity 0/-1 og ukendt drink → 400 |
+| Trin 8: genstart | ✅ Testsalget tæller stadig efter `docker compose restart` (named volume `pg_data`) |
+| Trin 8: SQL kun i `repositories/`, fire afhængigheder | ✅ `express, pg, swagger-ui-express, yaml` |
+| `grep -rni mysql backend/src backend/tests compose.yaml docker db-init scripts .env.example .dockerignore .gitignore` | ✅ 0 træf |
+
+**Bemærkninger**:
+
+- `sold_at` lå 2 sekunder foran værtens ur. Det er urforskel mellem Docker-VM'en og Windows,
+  ikke en tidszonefejl.
+- Under udviklingen viste en test, at et salg fra en forbindelse i UTC fik en time forkert
+  tidspunkt. Derfor sætter `db.js` forbindelsens tidszone (research R11, review-rettelse).
 
 ---
 

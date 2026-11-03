@@ -17,8 +17,8 @@ services:
     # Passwords hentes fra .env i roden (stien er relativ til denne fil)
     env_file: ../.env
     environment:
-      MYSQL_HOST: db
-      MYSQL_PORT: "3306"
+      DB_HOST: db
+      DB_PORT: "5432"
     # Ingen depends_on: db, fordi en inkluderet fil ikke kan pege på services i compose.yaml (research R5)
     stdin_open: true
     tty: true

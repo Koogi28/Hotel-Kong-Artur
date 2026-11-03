@@ -1,0 +1,577 @@
+/*
+ * Hotel Kong Arthur – fælles stil for alle sider (T067).
+ * Kilde: styleguide/style.md og skærmbillederne i styleguide/screenshots/ (research R12).
+ * Regler: HEX-værdier står KUN i :root. Ingen border-radius og ingen box-shadow (hotellets side
+ * bruger firkantede knapper, felter og kort). Ingen framework (princip I).
+ */
+
+/* ---------- Tokens (research R12) ---------- */
+:root {
+  /* Farver målt på skærmbillederne */
+  --color-primary: #AA6A11;         /* "Find dit ophold", aktivt trin, "Læs mere" */
+  --color-secondary: #003523;       /* Mørkegrønne overskrifter */
+  --color-background: #F4EFEB;      /* Sidens og headerens baggrund */
+  --color-band: #E5D8D1;            /* Sandfarvede bånd */
+  --color-surface: #FFFFFF;         /* Kort, felter og tabeller; også tekst på mørke knapper */
+  --color-text: #4B4845;            /* Brødtekst */
+  --color-border: #D2CDCA;          /* Skillelinjer */
+  --color-input-border: #CED4DA;    /* Felternes kant på bookingsiden */
+  --color-error-bg: #DBD3C8;        /* Strimlen "Nødvendig information" */
+
+  /* Afledt for kontrast (WCAG AA, research R12) */
+  --color-primary-strong: #8A560E;  /* 5,38:1 på baggrund – små tekster og hover */
+  --color-text-muted: #6E6A67;      /* 4,69:1 på baggrund */
+  --color-warning: #7A4B0C;         /* 4,99:1 på --color-error-bg – feltfejl (400) */
+  --color-error: #9B2C1F;           /* Eneste nye farve: slet og alvorlige fejl */
+  --color-success: #003523;         /* = sekundær */
+
+  /* Skrift */
+  --font-heading: "Times New Roman", Georgia, serif;
+  --font-body: "Barlow", "Segoe UI", Arial, sans-serif;
+
+  /* Afstande og bredde */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 48px;
+  --space-6: 96px;
+  --content-width: 1290px;
+  --control-height: 48px;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* hidden-attributten skal altid skjule, også elementer med display i deres egen klasse (.button) */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-background);
+  overflow-x: hidden; /* Ingen vandret scroll på siden; brede tabeller scroller i .table-wrap */
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0 0 var(--space-3);
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--color-secondary);
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+}
+
+a {
+  color: var(--color-primary-strong);
+}
+
+a:hover {
+  color: var(--color-secondary);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  /* Kun vandret padding, så <main class="container"> beholder sin lodrette luft */
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+main {
+  padding: var(--space-5) 0 var(--space-6);
+}
+
+.section {
+  margin-bottom: var(--space-5);
+}
+
+.lead {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  max-width: 60ch;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* Til labels, der kun er for skærmlæsere */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Synligt fokus på alt interaktivt (FR-032) */
+:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* ---------- Header og navigation ---------- */
+.site-header {
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--color-text);
+  text-decoration: none;
+  line-height: 1.1;
+}
+
+.brand:hover {
+  color: var(--color-text);
+}
+
+.brand__small {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.brand__name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-4);
+}
+
+.nav__link {
+  display: inline-block;
+  padding: var(--space-2) 0;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.nav__link:hover {
+  color: var(--color-primary-strong);
+}
+
+/* Teksten i primary-strong (kontrast), stregen i hotellets ravfarve */
+.nav__link--active {
+  color: var(--color-primary-strong);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ---------- Knapper ---------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-family: var(--font-body);
+  /* 19px fed = "stor tekst" i WCAG, så hvid på --color-primary (4,39:1) består (research R12) */
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.button--primary:hover {
+  background: var(--color-primary-strong);
+  color: var(--color-surface);
+}
+
+.button--secondary {
+  background: transparent;
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.button--secondary:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.button--danger {
+  background: var(--color-error);
+  color: var(--color-surface);
+}
+
+/* Slet forbliver rød ved hover (ingen grøn "ok"-farve på en farlig handling) */
+.button--danger:hover {
+  color: var(--color-surface);
+  text-decoration: underline;
+}
+
+/* Mindre knapper i tabelrækker (ret/slet). Tekst i fuld kontrast, da den ikke er "stor" */
+.button--small {
+  min-height: 40px;
+  padding: var(--space-1) var(--space-3);
+  font-size: 1rem;
+}
+
+.button--small.button--primary {
+  background: var(--color-primary-strong);
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- Formularer ---------- */
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* 300px: 3 kolonner på computer, 2 på tablet, 1 på mobil */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.input,
+.select {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-input-border);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.field input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.field--invalid input,
+.field--invalid select {
+  border-color: var(--color-warning);
+}
+
+/* Strimlen under et ugyldigt felt, som "Nødvendig information" på hotellets bookingside */
+.field-error {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-error-bg);
+  color: var(--color-warning);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Label til et felt uden <input>, fx "Valgt drikkevare" */
+.field__label {
+  font-weight: 500;
+}
+
+.heading-inline {
+  margin: 0;
+}
+
+/* ---------- Barens drikkevareknapper (T043, SC-003) ---------- */
+.drink-groups {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.drink-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.drink-group legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+}
+
+.drink-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--space-2);
+}
+
+/* Store knapper, nemme at ramme på en tablet i baren */
+.drink-button {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 64px;
+  text-align: left;
+  background: var(--color-surface);
+  border-color: var(--color-input-border);
+}
+
+.drink-button__price {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* Valgt drikkevare: hotellets mørkegrønne farve (11,99:1 med hvid tekst) */
+.drink-button[aria-pressed="true"],
+.drink-button[aria-pressed="true"]:hover {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-surface);
+}
+
+.drink-button[aria-pressed="true"] .drink-button__price {
+  color: var(--color-surface);
+}
+
+.selected-drink {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ---------- Beskeder ---------- */
+.alert {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-left: 4px solid currentColor;
+  background: var(--color-surface);
+}
+
+.alert:empty {
+  display: none;
+}
+
+.alert--success {
+  color: var(--color-success);
+}
+
+.alert--error {
+  color: var(--color-error);
+}
+
+.alert--info {
+  color: var(--color-text-muted);
+}
+
+/* ---------- Kort, nøgletal og bånd ---------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+}
+
+.card > :last-child {
+  margin-bottom: 0;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Kort af forskellig højde (fx tabeller med 3, 8 og 20 rækker) strækkes ikke */
+.card-grid--top {
+  align-items: start;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column-reverse; /* Label først i HTML (læserækkefølge), tal øverst visuelt */
+  justify-content: center;        /* Midt i kortet, også når kortet er højere end indholdet */
+  gap: var(--space-1);
+}
+
+.kpi__value {
+  font-family: var(--font-heading);
+  /* Følger skærmbredden, så lange beløb (fx 13.448.778,54 kr.) bliver i kortet */
+  font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+  overflow-wrap: anywhere;
+  line-height: 1.1;
+  color: var(--color-primary-strong);
+}
+
+.kpi__label {
+  color: var(--color-text-muted);
+}
+
+.band {
+  background: var(--color-band);
+  padding: var(--space-5) 0;
+}
+
+/* ---------- Tabeller ---------- */
+.table-wrap {
+  /* relative: skjulte elementer (.visually-hidden) i tabellen holdes inde i scroll-boksen,
+     ellers kan de gøre hele siden bredere end skærmen på mobil */
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+caption {
+  padding: var(--space-3);
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+}
+
+th,
+td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Responsivt (FR-032, SC-010) ---------- */
+@media (max-width: 767px) {
+  main {
+    padding: var(--space-4) 0 var(--space-5);
+  }
+
+  .form-grid,
+  .card-grid,
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .button-row .button {
+    flex: 1 1 auto;
+  }
+
+  .kpi__value {
+    font-size: 2rem;
+  }
+
+  /* To drikkevarer pr. række, så baren ikke skal scrolle forbi 30 lange knapper */
+  .drink-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .drink-button {
+    padding: var(--space-2) var(--space-3);
+    font-size: 1rem;
+  }
+}

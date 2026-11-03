@@ -1,12 +1,12 @@
 FROM python:3.11-bookworm
 
-# Install system dependencies (curl, git, jq for JSON parsing, MySQL client)
+# Install system dependencies (curl, git, jq for JSON parsing, PostgreSQL client (psql))
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     jq \
     sudo \
-    default-mysql-client \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user to work as (replaces the "vscode" user from the devcontainer image)
