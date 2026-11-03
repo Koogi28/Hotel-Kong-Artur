@@ -8,8 +8,9 @@ Et system til Hotel Kong Arthur i København (3. semester, gruppeprojekt):
   mest solgte drinks, både i browseren og i Tableau.
 - **Baren** (Helene Christine) registrerer salg af kaffe og cocktails og ser barens omsætning.
 
-Alle tal beregnes af et REST API ud fra databasen ved hvert kald. Browseren og Tableau læser de
-samme endpoints, så tallene er ens overalt. Startdata er de 1000 bookinger og 30 drikkevarer fra
+Alle tal beregnes af et REST API ud fra databasen ved hvert kald. Browseren viser de færdige
+nøgletal fra API'et. Tableau henter rå rækker fra det samme API og summerer selv, og det tjekkes,
+at tallene er ens overalt (SC-008). Startdata er de 1000 bookinger og 30 drikkevarer fra
 [ITAKEA/hoteldata](https://github.com/ITAKEA/hoteldata).
 
 ## Arkitektur
@@ -117,12 +118,21 @@ med en forståelig besked og de berørte felter, fx
 
 ## Tableau
 
-Tableau Desktop (2023.3+) henter nøgletallene som JSON direkte fra API'et med **REST API
-Connector** fra Tableau Exchange. Der er ingen CSV-eksport og ingen direkte databaseforbindelse.
+Tableau Desktop (2023.3+) henter data som JSON direkte fra API'et med **REST API Connector** fra
+Tableau Exchange. Der er ingen CSV-eksport og ingen direkte databaseforbindelse.
 
-1. *Connect → REST API Connector*, metode GET, URL `http://localhost:3000/api/...`.
-2. JSONPath `$` for endpoints, der svarer med ét objekt (fx `kpi/revenue/total`), og `$[*]` for
-   lister (fx `kpi/revenue/by-country`).
+1. *Connect → REST API Connector*, metode GET, URL `http://localhost:3000/api/...`, JSONPath `$[*]`.
+2. Dashboardet har to datakilder:
+
+   | Datakilde | Tableau viser | Forventet på startdata |
+   |-----------|---------------|------------------------|
+   | `bookings` | Indtjening i alt, pr. land, værelsestype og sæson, og bookinger pr. land (kort). Filtre på `season` og `country` på tværs af ark | 1000 rækker, `SUM(total_price)` 11234034 |
+   | `bar/kpi/revenue-by-drink` | Barens total, fordelingen Cocktail/Coffee ("Percent of Total" på `SUM(revenue)` pr. `category`) og gruppens nøgletal: mest solgte kaffe og cocktail efter `units_sold` | 30 rækker, 179958 enheder, 13448640.34 DKK, 52.83 % / 47.17 %, Espresso 14656, Whiskey Sour 3824 |
+
+   Tableau summerer de rå rækker selv. Hvert af casens nøgletal findes også som KPI-endpoint (`/api/kpi/*`,
+   `/api/bar/kpi/*`), og tallene uden filter skal være ens (SC-008). Filtrene kan kombinere
+   nøgletallene, fx indtjening pr. land i én sæson. Sådanne kombinationer findes kun i Tableau
+   (konstitution 5.1.0, princip IV).
 3. Nye bookinger og salg vises efter *Data → Refresh*.
 
 Alle datakilder og de forventede tal står i [quickstart trin 7](specs/001-booking-kpi-bar/quickstart.md#7-tableau-desktop-fr-021-fr-027-sc-007).

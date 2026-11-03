@@ -1,3 +1,32 @@
+<!--
+Sync Impact Report (2026-11-03)
+- Version: 5.0.0 → 5.1.0 (MINOR). Princip IV får en udtrykkelig tilladelse til, at Tableau
+  filtrerer og kombinerer nøgletal på tværs af ark. Kravet om, at hvert af casens nøgletal skal
+  kunne hentes fra et endpoint og vises i frontenden, er uændret. Det samme gælder "kun via
+  API'et" og forbuddet mod beregning i frontenden. Ingen principper er fjernet eller tilføjet.
+- Ændrede principper:
+  - IV. OpenAPI og Swagger: "Alle nøgletal, der vises i Tableau, SKAL også kunne hentes …" →
+    "Hvert af casens nøgletal SKAL kunne hentes fra et endpoint … Tableau MÅ filtrere og
+    kombinere dem på tværs af ark, så længe de underliggende data kommer fra API'et."
+  - Kvalitetsporte: spørgsmålet om Tableau-nøgletal har fået samme formulering.
+- Begrundelse:
+  - Casen siger, at dashboardet skal være interaktivt og "vise og beregne" nøgletallene med
+    udgangspunkt i REST API'et. Filtre på land og sæson på tværs af ark gør dashboardet mere
+    brugbart for beslutningstagere.
+  - Hvert af casens nøgletal (spec FR-016–FR-019, FR-024–FR-026) findes stadig som endpoint og
+    vises i frontenden. Data hentes stadig kun via API'et, aldrig direkte fra databasen.
+  - Trade-off: kombinationer som "indtjening pr. land i lavsæson" findes kun i Tableau og kan
+    ikke hentes fra API'et. Det accepterer vi bevidst.
+- Aftalt i gruppen 03/11.
+- Tilføjede sektioner: ingen. Fjernede sektioner: ingen.
+- Skabeloner: .specify/templates/plan-template.md, spec-template.md og tasks-template.md ✅
+  ingen ændring nødvendig (de henviser til konstitutionen generelt, ikke til princip IV's
+  ordlyd).
+- Opfølgning i feature 001: spec.md (Clarifications 2026-11-03, FR-028, SC-008), research.md R7,
+  plan.md (Constitution Check), quickstart.md trin 7, README.md, tasks.md T048/T070 og
+  converge.md ✅ opdateret i samme commit.
+-->
+
 # Hotel Kong Arthur Constitution
 
 ## Core Principles
@@ -41,9 +70,12 @@ HTTP og uden database.
 - API'et SKAL være beskrevet i en OpenAPI-specifikation og kunne afprøves i Swagger UI.
 - Frontend og Tableau SKAL hente data via det samme API; der findes ikke separate
   "genveje" til databasen.
-- Alle nøgletal, der vises i Tableau, SKAL også kunne hentes fra et endpoint i REST API'et og
-  vises i frontend-prototypen. Frontenden SKAL læse tallene fra API'et og MÅ IKKE selv beregne
-  dem (se II).
+- Hvert af casens nøgletal SKAL kunne hentes fra et endpoint i REST API'et og vises i
+  frontend-prototypen. Frontenden SKAL læse tallene fra API'et og MÅ IKKE selv beregne dem
+  (se II).
+- Tableau MÅ filtrere og kombinere nøgletallene på tværs af ark (fx indtjening pr. land i én
+  sæson), så længe de underliggende data kommer fra API'et. Sådanne kombinationer behøver ikke
+  et eget endpoint.
 - Når et endpoint ændres, SKAL specifikationen opdateres i samme commit.
 
 ### V. Databasen er sandheden (live data)
@@ -119,7 +151,8 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ligger SQL kun i datalaget og beregninger kun i forretningslaget? (II)
 - Bruger nye endpoints rigtige metoder, statuskoder og JSON-fejl? (III)
 - Er OpenAPI-specifikationen opdateret? (IV)
-- Kan alle Tableau-nøgletal hentes fra API'et og ses i frontenden? (IV)
+- Kan hvert af casens nøgletal hentes fra et endpoint og ses i frontenden, og henter Tableau
+  kun data via API'et? (IV)
 - Beregnes nøgletal fra databasen ved hver forespørgsel? (V)
 - Har bookingændringer test for ankomstdato, antal nætter, sæson og pris? (VI, XII)
 - Starter systemet stadig med `docker compose up`? (IX)
@@ -146,4 +179,4 @@ Før en plan godkendes, og før en task markeres som færdig, tjekkes:
 - Ved hver kodegennemgang SKAL reviewer tjekke ændringen mod Kvalitetsporte.
 - Afvigelser fra et princip SKAL begrundes skriftligt i planen.
 
-**Version**: 5.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-02
+**Version**: 5.1.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-03

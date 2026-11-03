@@ -5,9 +5,11 @@ info:
   description: |
     REST API til bookinger, nøgletal og barsalg (feature 001-booking-kpi-bar).
     Alle nøgletal beregnes ud fra databasen ved hvert kald. Beløb er i DKK.
-    Frontend og Tableau bruger kun dette API. Tableau Desktop henter nøgletallene som JSON
-    med REST API Connector (research R7). Alle nøgletalssvar er flade: et objekt (JSONPath $)
-    eller et array af objekter (JSONPath `$[*]`) uden nestede objekter.
+    Frontend og Tableau bruger kun dette API. Tableau Desktop henter JSON med REST API
+    Connector (research R7, ændret 03/11): rå rækker fra `GET /api/bookings` og
+    `GET /api/bar/kpi/revenue-by-drink`, som Tableau selv summerer.
+    Hvert af casens nøgletal kan også hentes fra et nøgletals-endpoint (FR-028). Alle nøgletalssvar er
+    flade: et objekt (JSONPath $) eller et array af objekter (JSONPath `$[*]`) uden nestede objekter.
 servers:
   - url: http://localhost:3000
 tags:
@@ -37,6 +39,9 @@ paths:
     get:
       tags: [Bookinger]
       summary: List eller søg bookinger (nye og historiske)
+      description: |
+        Uden `search` returneres alle bookinger. Tableau-dashboardet bruger dette svar som
+        datakilde (JSONPath `$[*]`) og summerer `total_price` selv (research R7, ændret 03/11).
       parameters:
         - name: search
           in: query

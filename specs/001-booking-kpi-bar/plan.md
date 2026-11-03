@@ -12,14 +12,14 @@ omsætning og belægning og registrering af barsalg. Backenden er Node.js 20 + E
 forretningslaget ved hvert kald. Databasen seedes én gang fra ITAKEA/hoteldata (1000 historiske
 bookinger og 30 drinks) via `db-init/*.sql`. API'et beskrives i
 [contracts/openapi.yaml](contracts/openapi.yaml) og serveres i Swagger UI. Tableau Desktop
-henter færdigberegnede nøgletal som JSON direkte fra de samme endpoints med REST API Connector
-(research R7). `docker compose up` starter
+henter JSON fra samme API med REST API Connector: rå rækker fra `GET /api/bookings` og
+`GET /api/bar/kpi/revenue-by-drink`, som Tableau selv summerer (research R7, ændret 03/11). `docker compose up` starter
 `db` og `backend`. Dev-containeren ligger bag profilen `dev`. Frontenden (ren HTML/CSS/JS i
 `backend/public`) bygges i uge 2.
 
 **Tillægsopgave uge 2** (spec FR-028–FR-030, konstitution 5.0.0):
 
-1. **Nøgletal i API'et**: alle beregninger fra Tableau findes allerede som endpoints
+1. **Nøgletal i API'et**: alle casens nøgletal fra Tableau findes allerede som endpoints
    (`/api/kpi/*` og `/api/bar/kpi/*`, 11 i alt). Der kommer ingen nye beregninger. Kravet
    opfyldes ved at vise dem i frontenden: overblikket (`overview.html`) og barens side
    (`bar.html`) henter dem med `fetch` og beregner intet selv (FR-029).
@@ -78,7 +78,7 @@ Ingen `NEEDS CLARIFICATION` tilbage. Åbne valg er afgjort i [research.md](resea
 | I | Simpelt frem for smart | ✅ | 4 runtime-biblioteker, hver med begrundelse (tabel nedenfor). Ingen ORM, intet dato-/xlsx-/CSV-/test-bibliotek |
 | II | 3-lagsarkitektur | ✅ | `controllers/` → `services/` → `repositories/`. SQL kun i repositories. Controllers kun HTTP ↔ service |
 | III | REST + JSON | ⚠️ begrundet | GET/POST/PUT/DELETE med 200/201/204/400/404. **Afvigelser**: 409 (historisk booking), 500 (uventet fejl) og 503 (health). Se Complexity Tracking |
-| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau henter JSON fra de samme endpoints (REST API Connector), ingen DB-genvej. DB-porten udstilles ikke. Alle Tableau-nøgletal har et endpoint og vises i `overview.html` og `bar.html` via `fetch` (FR-028, FR-029) |
+| IV | OpenAPI + Swagger | ✅ | Kontrakten skrives først i `contracts/openapi.yaml` og serveres direkte af backend. Tableau henter JSON fra samme API (REST API Connector), ingen DB-genvej. DB-porten udstilles ikke. Tableau summerer rå rækker fra `/api/bookings` og `bar/kpi/revenue-by-drink` og må filtrere og kombinere på tværs af ark (konstitution 5.1.0, research R7, ændret 03/11). Hvert af casens nøgletal har et KPI-endpoint og vises i `overview.html` og `bar.html` via `fetch` (FR-028, FR-029). At tallene uden filter er ens, tjekkes i T070 (SC-008) |
 | V | Databasen er sandheden | ✅ | PostgreSQL, ikke MySQL (research R11). Seed kun ved første opstart. Ingen nøgletalskolonner. Alle KPI'er beregnes pr. kald |
 | VI | Ankomstdato + nætter | ✅ | Ny booking kræver `arrival_date` + `nights ≥ 1`. Sæson/pris kan ikke indtastes. Historiske uden datoer (DB-CHECK), PUT/DELETE → 409 |
 | VII | Kapacitet 214 | ✅ | Belægning = bookede værelser pr. nat ÷ 214, kun bookinger med dato, beregnet i `kpiCalculations.js`. Intet kapacitetstjek ved oprettelse: 214 er hotellets samlede kapacitet uden fordeling pr. værelsestype og bruges kun til belægningsgraden (research R9). Hver booking tæller som ét værelse (FR-013) |
@@ -104,6 +104,12 @@ for principperne. Ingen nye afhængigheder er kommet til under design.
 biblioteker). Ingen nye endpoints, så kontrakten ændres ikke. Afvigelserne fra III er uændrede.
 Styleguiden (research R12) tilføjer ingen afhængigheder: ren CSS med variabler, systemskrift til
 overskrifter og Barlow via ét `<link>` til Google Fonts med fald-tilbage til systemskrift.
+**Gate-resultat (2026-11-03, konstitution 5.1.0)**: PASS. Princip IV tillader nu, at Tableau
+filtrerer og kombinerer nøgletal på tværs af ark, så længe data kommer fra API'et. Tableau-
+dashboardet (T048) læser kun `/api/bookings` og `bar/kpi/revenue-by-drink`.
+Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) har stadig et endpoint og vises i
+frontenden uden beregning i browseren. Ingen kode, endpoints eller afhængigheder er ændret. Kun
+kontraktens beskrivelser er opdateret (research R7, ændret 03/11).
 
 ## Project Structure
 
@@ -192,8 +198,9 @@ fejl.
 og **er** forretningslaget. Det er rene funktioner (data ind, resultat ud) uden SQL og HTTP. De
 `*Service.js`-filer i samme mappe henter rækker fra repositories og kalder de rene funktioner.
 Der er stadig præcis tre lag. Opdelingen gør, at sæson, pris og nøgletal kan unit-testes uden
-database (princip XII). Tableau læser de samme JSON-svar som frontenden, så Tableau-tallene
-ikke beregnes et andet sted (research R7).
+database (princip XII). Tableau summerer selv rå rækker fra API'et, så summerne findes både
+her og i Tableau. Det sikres af SC-008 (T070), der sammenligner Tableau med KPI-endpoints og
+frontenden (research R7, ændret 03/11).
 
 ### Tableau (research R7)
 
@@ -203,6 +210,12 @@ objekter med `$`. Connectoren laver udtræk, så nye bookinger og barsalg vises 
 *Data → Refresh* (princip V). Alle nøgletalssvar er flade, så Tableau ikke skal folde nestede
 felter ud. Tableau forbinder ikke direkte til databasen (princip IV), og `db` har ingen port på
 værten.
+
+*(Ændret 03/11)* Dashboardet (T048) har to datakilder: `bookings` (`$[*]`, Tableau summerer
+indtjening i alt, pr. land, værelsestype og sæson og antal bookinger pr. land, med filtre på
+`season` og `country` på tværs af ark, konstitution 5.1.0), `bar/kpi/revenue-by-drink` (`$[*]`, Tableau summerer barens total og
+beregner kategorifordelingen som "Percent of Total" og gruppens nøgletal: den mest solgte kaffe
+og cocktail efter `units_sold`). KPI-endpoints er uændrede og bruges af frontenden (FR-028, FR-029).
 
 Backend-imaget bygges med repo-roden som context, så
 `specs/001-booking-kpi-bar/contracts/openapi.yaml` kan kopieres ind som den eneste kopi af

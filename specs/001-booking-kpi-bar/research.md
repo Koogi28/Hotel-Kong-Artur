@@ -144,6 +144,51 @@ De må ikke genbruges i `.env`.
 
 ## R7. Tableau og datatilgang
 
+### Ændret 03/11: dashboardet summerer rå rækker fra API'et (T048)
+
+**Beslutning**: Tableau-dashboardet bruger to datakilder via REST API Connector, og Tableau
+beregner alle nøgletal selv ud fra dem:
+
+| Datakilde | JSONPath | Tableau beregner |
+|-----------|----------|------------------|
+| `GET /api/bookings` | `$[*]` (1000 rækker) | `SUM(total_price)` i alt, pr. `country`, pr. `room_type` og pr. `season`, og antal bookinger pr. land (kort). Filtrene `season` og `country` virker på tværs af ark |
+| `GET /api/bar/kpi/revenue-by-drink` | `$[*]` (30 rækker) | barens total (`SUM(units_sold)`, `SUM(revenue)`), fordelingen mellem Cocktail og Coffee ("Percent of Total" på `SUM(revenue)` pr. `category`) og gruppens eget nøgletal: den mest solgte kaffe og cocktail efter `units_sold` (FR-019) |
+
+Der er ingen tredje datakilde. Gruppens nøgletal svarer til `GET /api/kpi/top-drinks`, som
+frontenden bruger og T070 sammenligner med. KPI-endpoints (`/api/kpi/*`, `/api/bar/kpi/*`) er uændrede. Frontenden bruger dem, og de
+opfylder FR-028 (hvert af casens nøgletal i Tableau kan også hentes fra et endpoint).
+
+**Filtre (konstitution 5.1.0, princip IV)**: `season` og `country` virker på tværs af ark
+(*Apply to Worksheets → All Using This Data Source*). Tableau kan derfor vise kombinationer som
+indtjening pr. land i lavsæson. De findes ikke som endpoint og behøver det ikke (FR-028 gælder
+casens nøgletal uden filter). `analyze` C1 (03/11) fandt, at det stred mod princip IV i 5.0.0.
+Gruppen valgte at ændre princippet frem for at begrænse filtrene.
+
+**Begrundelse**:
+- Casen siger, at dashboardet skal være interaktivt og "vise og beregne" nøgletallene med
+  udgangspunkt i REST API'et. Filtre på land og sæson på tværs af ark gør dashboardet mere
+  brugbart for beslutningstagere.
+- Hvert af casens nøgletal (FR-016–FR-019, FR-024–FR-026) findes stadig som endpoint og vises i
+  frontenden. Data hentes stadig kun via API'et, aldrig direkte fra databasen (princip IV).
+- Princip II gælder backendens lag, og forbuddet mod selv at beregne (IV, FR-029) gælder
+  frontenden. Tableau er en ekstern klient.
+
+**Trade-off**:
+- Summerne findes nu to steder: i forretningslaget (`kpiCalculations.js`,
+  `barCalculations.js`) og i Tableau. To implementeringer kan i princippet give forskellige tal.
+  Det sikres af SC-007/SC-008: T070 sammenligner hvert af casens nøgletal **uden filter** i
+  Tableau med KPI-endpointet og frontenden.
+- Kombinationer som "indtjening pr. land i lavsæson" findes kun i Tableau og kan ikke hentes fra
+  API'et eller kontrolleres mod det. Det accepterer vi bevidst (converge.md, "Fund vi bevidst
+  ikke retter").
+- Belægning pr. nat vises ikke i dashboardet. FR-021 er stadig opfyldt, fordi
+`kpi/occupancy/nights` kan hentes ind, og den vises i `overview.html`.
+
+Teksten nedenfor (29/10) er baggrund. Punktet "*Nøgletal i backenden, ikke i Tableau*" er
+erstattet af denne beslutning for dashboardets vedkommende.
+
+### Baggrund: KPI-endpoints som datakilder (29/10)
+
 **Beslutning (ændret 29/10)**: Tableau **Desktop** henter nøgletallene direkte fra REST API'et
 som JSON med Tableaus **REST API Connector** fra Tableau Exchange. Det er **plan A**.
 CSV-eksport er fravalgt (se nedenfor). Den første beslutning (CSV-eksport til Tableau Public)
@@ -189,7 +234,7 @@ sæson. Alle 24 kombinationer kommer med (også 0), så en værelsestype ikke fo
 grafen, når der filtreres på en sæson uden bookinger af den.
 
 **Begrundelse**:
-- *Nøgletal i backenden, ikke i Tableau*: Tableau får færdigberegnede nøgletal og viser dem.
+- *Nøgletal i backenden, ikke i Tableau* *(erstattet 03/11, se ovenfor)*: Tableau får færdigberegnede nøgletal og viser dem.
   Hvis Tableau fik rå bookingrækker og selv lavede `SUM`/`GROUP BY`, ville nøgletallene være
   beregnet i Tableau. Det strider mod princip II og SC-007, og to implementeringer kan give
   forskellige tal.
